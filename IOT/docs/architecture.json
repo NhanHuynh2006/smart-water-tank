@@ -1,0 +1,304 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Hệ thống bồn nước thông minh",
+    "quality_profile": "showcase",
+    "viewBox": [
+      1234,
+      640
+    ],
+    "views": [
+      {
+        "id": "huong-bac",
+        "label": "Đường bắc: đo và giám sát",
+        "focus": [
+          "sensors",
+          "esp32",
+          "broker",
+          "backend",
+          "db",
+          "dashboard"
+        ],
+        "note": "Số đo đi từ cảm biến lên tới giao diện, mỗi bản tin mang dấu thời gian do thiết bị sinh."
+      },
+      {
+        "id": "huong-nam",
+        "label": "Đường nam: lệnh và xác nhận",
+        "focus": [
+          "dashboard",
+          "backend",
+          "broker",
+          "esp32",
+          "pump"
+        ],
+        "note": "Nút bấm không tự đổi trạng thái; đèn báo chỉ đổi khi thiết bị gửi xác nhận trở lại."
+      },
+      {
+        "id": "tu-tri",
+        "label": "Tự trị khi mất mạng",
+        "focus": [
+          "sensors",
+          "esp32",
+          "pump"
+        ],
+        "note": "Toàn bộ luật điều khiển và bảy luật phát hiện sự cố nằm trong ESP32, không nằm trên máy chủ."
+      },
+      {
+        "id": "khong-phan-cung",
+        "label": "Chạy thử không cần phần cứng",
+        "focus": [
+          "simulator",
+          "broker",
+          "backend",
+          "dashboard"
+        ],
+        "note": "Simulator đóng vai ESP32 ảo, phát bản tin đúng đặc tả nên toàn hệ thống chạy được khi chưa có mạch."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "sensors",
+      "type": "external",
+      "label": "Cảm biến và phao",
+      "sublabel": "Siêu âm, lưu lượng, dòng",
+      "pos": [
+        40,
+        320
+      ],
+      "size": [
+        176,
+        80
+      ]
+    },
+    {
+      "id": "esp32",
+      "type": "backend",
+      "label": "ESP32",
+      "sublabel": "FSM và 7 luật lỗi",
+      "pos": [
+        366,
+        320
+      ],
+      "size": [
+        176,
+        80
+      ]
+    },
+    {
+      "id": "pump",
+      "type": "external",
+      "label": "Rơ le và bơm",
+      "sublabel": "GPIO 26, mặc định ngắt",
+      "pos": [
+        366,
+        520
+      ],
+      "size": [
+        176,
+        80
+      ]
+    },
+    {
+      "id": "simulator",
+      "type": "external",
+      "label": "Simulator",
+      "sublabel": "ESP32 ảo, mô hình thuỷ lực",
+      "pos": [
+        692,
+        120
+      ],
+      "size": [
+        176,
+        80
+      ]
+    },
+    {
+      "id": "broker",
+      "type": "messagebus",
+      "label": "Mosquitto",
+      "sublabel": "MQTT 1883, mật khẩu + ACL",
+      "pos": [
+        692,
+        320
+      ],
+      "size": [
+        176,
+        80
+      ]
+    },
+    {
+      "id": "backend",
+      "type": "backend",
+      "label": "FastAPI",
+      "sublabel": "Thu nhận MQTT và REST",
+      "brand": "fastapi",
+      "pos": [
+        1018,
+        320
+      ],
+      "size": [
+        176,
+        80
+      ]
+    },
+    {
+      "id": "db",
+      "type": "database",
+      "label": "SQLite",
+      "sublabel": "telemetry, faults, cmds",
+      "brand": "sqlite",
+      "pos": [
+        1018,
+        520
+      ],
+      "size": [
+        176,
+        80
+      ]
+    },
+    {
+      "id": "dashboard",
+      "type": "frontend",
+      "label": "Dashboard",
+      "sublabel": "Một file HTML, cổng 8000",
+      "pos": [
+        1018,
+        120
+      ],
+      "size": [
+        176,
+        80
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "security-group",
+      "label": "Biên thiết bị: quyết định điều khiển nằm ở đây",
+      "wraps": [
+        "sensors",
+        "esp32",
+        "pump"
+      ],
+      "pad": 26
+    }
+  ],
+  "connections": [
+    {
+      "id": "sensor-to-esp32",
+      "from": "sensors",
+      "to": "esp32",
+      "label": "GPIO, xung, ADC",
+      "variant": "emphasis"
+    },
+    {
+      "id": "esp32-to-pump",
+      "from": "esp32",
+      "to": "pump",
+      "label": "đóng cắt qua pumpBlockReason",
+      "variant": "emphasis",
+      "labelDy": 75
+    },
+    {
+      "id": "esp32-to-broker",
+      "from": "esp32",
+      "to": "broker",
+      "label": "publish telemetry 1 Hz",
+      "variant": "emphasis",
+      "labelDy": 30
+    },
+    {
+      "id": "broker-to-esp32",
+      "from": "broker",
+      "to": "esp32",
+      "label": "cmd, QoS 1",
+      "variant": "dashed",
+      "labelDy": -26
+    },
+    {
+      "id": "simulator-to-broker",
+      "from": "simulator",
+      "to": "broker",
+      "label": "thay chỗ ESP32 khi chưa có mạch",
+      "variant": "dashed",
+      "labelDy": 70
+    },
+    {
+      "id": "broker-to-backend",
+      "from": "broker",
+      "to": "backend",
+      "label": "subscribe wt/lab1/#",
+      "variant": "emphasis",
+      "labelDy": 30
+    },
+    {
+      "id": "backend-to-broker",
+      "from": "backend",
+      "to": "broker",
+      "label": "publish cmd",
+      "variant": "dashed",
+      "labelDy": -26
+    },
+    {
+      "id": "backend-to-db",
+      "from": "backend",
+      "to": "db",
+      "label": "ghi kèm dấu thời gian máy chủ",
+      "labelDy": 75
+    },
+    {
+      "id": "backend-to-dashboard",
+      "from": "backend",
+      "to": "dashboard",
+      "label": "REST /api",
+      "variant": "emphasis",
+      "labelAt": [
+        1065,
+        270
+      ]
+    },
+    {
+      "id": "dashboard-to-backend",
+      "from": "dashboard",
+      "to": "backend",
+      "label": "POST /api/command",
+      "variant": "dashed",
+      "labelAt": [
+        1163,
+        270
+      ]
+    }
+  ],
+  "cards": [
+    {
+      "dot": "emerald",
+      "title": "Vì sao luật nằm trong ESP32",
+      "items": [
+        "Mất mạng thì bồn vẫn được cấp đầy đúng ngưỡng, chỉ mất giám sát từ xa",
+        "Lệnh dừng an toàn phải quyết định tại biên, không chờ vòng qua máy chủ",
+        "Đệm offline 240 bản tin, phát lại kèm cờ replay khi nối lại"
+      ]
+    },
+    {
+      "dot": "cyan",
+      "title": "Lệnh và xác nhận",
+      "items": [
+        "Nút bấm chỉ gửi lệnh, đèn báo đợi bản tin cmd/ack mới đổi",
+        "Bật bơm lúc đang tự động bị từ chối với lý do auto_mode_active",
+        "Độ trễ khứ hồi đo bằng đồng hồ máy chủ ở cả hai đầu"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Bốn lớp chống tràn độc lập",
+      "items": [
+        "Ngưỡng cao của vùng trễ trong máy trạng thái",
+        "Ngưỡng an toàn 95 phần trăm trong luật phát hiện sự cố",
+        "Phao cơ khí, còn hiệu lực khi siêu âm hỏng",
+        "Rơ le mặc định ngắt, còn hiệu lực khi vi điều khiển mất nguồn"
+      ]
+    }
+  ]
+}

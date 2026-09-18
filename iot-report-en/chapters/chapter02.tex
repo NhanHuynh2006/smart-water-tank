@@ -1,0 +1,86 @@
+\chapter{THEORETICAL BACKGROUND AND SYSTEM REQUIREMENTS}
+
+\section{Mandatory requirements of the assignment}
+
+\begin{table}[H]
+\caption{Mapping of the mandatory requirements onto the report.}
+\label{tab:yeucau}
+\centering
+\renewcommand{\arraystretch}{1.1}
+\begin{tabular}{|p{8.8cm}|p{4.4cm}|}
+\hline
+\rowcolor[HTML]{B7E1F0}
+\textbf{Requirement} & \textbf{Where it is addressed} \\
+\hline
+ESP32 class microcontroller, level sensor and flow sensor & Section 3.3 \\
+\hline
+Low voltage pump behind a driver stage with inductive protection & Section 3.4 \\
+\hline
+Overflow prevention and safe behaviour on implausible readings & Section 6.4 \\
+\hline
+Instantaneous flow rate and accumulated volume & Section 6.2 \\
+\hline
+Publish telemetry, actuator state, faults and availability over MQTT & Chapter 4 \\
+\hline
+Time series storage, REST API and dashboard & Chapter 5 \\
+\hline
+Automatic control using a hysteresis band or a state machine, and at least one fault detection rule & Sections 6.3 and 6.4, seven rules implemented \\
+\hline
+Manual mode must not override safety, commands acknowledged, local control survives an outage & Sections 6.5, 4.3, 3.2 and 7.3 \\
+\hline
+Advanced component: leak detection using a rolling baseline & Section 6.6 \\
+\hline
+Calibration against a physical reference, control response, fault delay and volume error & Sections 8.2 and 8.3 \\
+\hline
+Sensor fault testing, outage testing and latency quantification & Section 8.4 \\
+\hline
+\end{tabular}
+\end{table}
+
+\section{Layered architecture and computation placement}
+
+An Internet of Things deployment is commonly described by a five layer model made of perception, transport, processing, application and business layers, allowing each stage of signal conversion, transport and storage to be optimised independently \cite{slide01}. Recommendation ITU-T Y.2060 adds two capability groups that cut across the stack, management and security \cite{itu2060}. Treating security as cross cutting rather than as a separate layer has a direct consequence for our design: it cannot be handled at a single point but must appear in broker authentication, per topic access control, transport encryption and API authorisation. Data flow is likewise split into a southbound path carrying commands down to the hardware and a northbound path carrying telemetry and alerts up to the server \cite{slide01}.
+
+Deciding where a computation belongs is driven by quantitative constraints rather than taste. Edge computation offers deterministic latency and very low bandwidth cost but only short term storage, while cloud computation offers durable storage and analytic capacity at the price of latency from hundreds of milliseconds to several seconds \cite{slide01}. The resulting rule is that any operation requiring an immediate safe stop must be computed at the edge, whereas trend analysis is routed upward. Cutting the pump on a dry run condition or when the level passes the safety threshold clearly belongs to the first category, which is the direct basis for the decision in Section 3.2.
+
+\section{Sensing, digitisation and actuation}
+
+Faithful reconstruction of a continuous analog signal requires a sampling rate greater than twice its highest frequency component \cite{shannon1949}. With the pump actually fitted, a JT-DC3L rated 100 litres per hour into a tank of 400 square centimetres, the level rises at $1.67/60 \times 1000/400 = 0.07$ centimetres per second, and slower still once the delivery head is not zero. A sampling period of 200 milliseconds therefore satisfies the condition by roughly three orders of magnitude. The group records the figure because an earlier draft quoted 0.6 centimetres per second, which was an estimate never checked against the pump datasheet and is nine times too fast; the conclusion is unchanged but the margin is far larger than first claimed. The ESP32 digitises voltage using a successive approximation register converter \cite{slide01, esp32ds}, and mapping a continuous range onto finite integer steps introduces an unavoidable loss of precision with a quantisation step of
+
+\begin{equation}
+\Delta V = \frac{V_{ref}}{2^N}
+\label{eq:lsb}
+\end{equation}
+
+and quantisation noise bounded within $\pm \frac{1}{2}\Delta V$. This error is mathematical in nature and can never be filtered away in software \cite{slide01}. At 12 bits and 3.3 volts the step is 0.806 millivolts, a figure used in Section 3.3. The lectures also warn that the transfer curve is severely nonlinear near both ends of the range, which is why our dividers place each signal near the middle of the span.
+
+A microcontroller operating at 3.3 volts with roughly 12 milliamperes per pin cannot perform mechanical work directly, so a power stage with galvanic separation has to be inserted. When current through an inductive load is interrupted abruptly, the collapsing field produces a reverse spike following Lenz law, $V = L\,di/dt$, which can exceed several hundred volts and destroy the switching device; the standard remedy is a flyback diode placed antiparallel across the load \cite{slide01}.
+
+\section{Application layer messaging}
+
+A standard HTTP header easily exceeds 500 to 1000 bytes, so sending a measurement of a few bytes spends most of the energy budget on framing, and every transaction additionally forces the radio through a complete TCP handshake \cite{slide03}. MQTT addresses this with a binary frame whose fixed header is two bytes, routed through a broker under a publish and subscribe model that decouples communication in space, time and synchronisation \cite{slide03, mqtt311}.
+
+Three MQTT mechanisms are exploited directly by our system. The three quality of service levels define delivery as at most once, at least once and exactly once, and the lectures caution against defaulting every topic to the highest level because a constrained node will exhaust its memory. The last will mechanism lets the broker publish a pre registered payload by itself once a client vanishes without a clean disconnect, and retained messages make the broker push the current value immediately to a newly subscribing client, eliminating the cold start gap \cite{slide03}. On the security side, MQTTS carries the same binary frames inside a TLS tunnel on port 8883 instead of the unencrypted port 1883, and the lectures stress that a username and password pair alone is insufficient without an access control list mapping each client to the topics it may read and write \cite{slide03, rfc8446}.
+
+\section{Data infrastructure and the feedback sync principle}
+
+Machine telemetry has three structural invariants: it is append only, indexed primarily by time, and its write to read ratio is very high \cite{slide04}. A relational engine is built for transactional integrity, so every inserted row forces a rebalancing of an in memory B-tree, whereas a time series engine optimises for tail appends and separates indexed tags from unindexed fields. The lectures also warn about index cardinality explosion when a randomly varying value is placed in a tag position \cite{slide04}, a principle our schema in Section 5.2 follows. The REST style demands client server separation and statelessness, favours nouns over verbs, and asks the designer to evaluate safety $f(s)=s$ and idempotency $f(f(s))=f(s)$ \cite{fielding2000, slide05}; on the microcontroller side, firmware must forbid dynamic allocation inside the loop and reserve a fixed buffer at startup \cite{slide05, arduinojson}.
+
+The single idea with the largest influence on our interface design is the feedback sync principle derived from the device shadow model \cite{slide04}. The anti pattern to avoid is a dashboard toggle that flips to the on state the instant the user presses it, before anything is known about whether the real machine started. The correct architecture splits the path: the user action maps to an outgoing command topic while the indicator stays unchanged until an explicit acknowledgement arrives from the device. This is the basis for the mechanism described in Section 4.3.
+
+\section{On off control with hysteresis}
+
+The material in this section does not appear in the course slides. The group added it from control engineering literature and states the sources here explicitly, so that it is clearly distinguished from the knowledge taken from the lectures.
+
+On off control, also called two position control, is the simplest form of feedback control, in which the actuator takes one of exactly two states \cite{ogata2010}. If the two thresholds coincide, even the smallest measurement noise around that point makes the actuator flip repeatedly, causing rapid wear and repeated inrush events. The standard remedy is to separate them into a hysteresis band inside which the state is held unchanged \cite{astrom2008}:
+
+\begin{equation}
+u(t) = 1 \text{ if } h < h_L; \quad u(t) = 0 \text{ if } h > h_H; \quad u(t) = u(t^-) \text{ if } h_L \le h \le h_H
+\label{eq:hysteresis}
+\end{equation}
+
+The width $h_H - h_L$ is a direct trade off parameter: a wider band lowers the switching frequency but widens the level excursion.
+
+For diagnosis, the group applies the principle of checking consistency between two independent signal sources, following established fault diagnosis theory \cite{isermann2006}. Slow leaks belong to the class of small persistent shift detection, for which the cumulative sum method of Page is far more sensitive than a fixed threshold because it accumulates small deviations over time \cite{page1954}.
+
+To select control parameters before hardware existed, the group built a dynamic model from the volume balance $dV/dt = Q_{in} - Q_{out} - Q_{leak}$ with $h = V/A$, where discharge follows Torricelli law $Q_{out} = C_d A_o \sqrt{2gh}$ \cite{white2011}. The square root dependence makes the plant nonlinear, since discharge at a full tank is appreciably faster than near empty. This is why the hysteresis parameters had to be swept in simulation, as described in Section 8.4.

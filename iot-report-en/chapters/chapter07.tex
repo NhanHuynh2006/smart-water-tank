@@ -1,0 +1,73 @@
+\chapter{SECURITY AND RELIABILITY}
+
+\section{Threat model and mitigations}
+
+Under the ITU-T Y.2060 model of Section 2.2, security is a cross cutting capability acting on every layer rather than a layer of its own \cite{itu2060}, so the analysis is organised per layer.
+
+\begin{table}[H]
+\caption{Threat scenarios and mitigations.}
+\label{tab:threat}
+\centering
+\renewcommand{\arraystretch}{1.1}
+\begin{tabular}{|p{5.2cm}|p{3.4cm}|p{4.4cm}|}
+\hline
+\rowcolor[HTML]{B7E1F0}
+\textbf{Attack scenario} & \textbf{Consequence} & \textbf{Mitigation} \\
+\hline
+Connect to the broker and publish a pump on command & Overflow, pump damage & Mandatory authentication, per topic access control \\
+\hline
+Sniff traffic to harvest credentials & Full control takeover & TLS transport on port 8883 \\
+\hline
+Forge telemetry so the system misreads the level & Incorrect pumping, possible overflow & Local interlock based on the mechanical float \\
+\hline
+Replay commands repeatedly to make the pump chatter & Mechanical pump damage & Minimum on and off times enforced on the device \\
+\hline
+Call the API directly, bypassing the web interface & Unauthorised commands & Token authentication, administrator and viewer roles \\
+\hline
+\end{tabular}
+\end{table}
+
+The two middle rows are worth highlighting because they are mitigated not by cryptography but by the control design itself. The mechanical float is a physical constraint that no network message can override, and the minimum switching times are enforced in firmware, so an attacker may send any number of commands without making the pump toggle faster than the limit. This illustrates the principle that safety in a cyber physical system cannot be separated from its control design.
+
+\section{Authentication, authorisation and encryption}
+
+The Mosquitto configuration disables anonymous connections entirely and mandates both a password file and an access control list file \cite{mosquitto}. The group applies least privilege: the edge device may only publish on the northbound topics under its own branch and may only subscribe to its own command topic, while the backend may publish on the command topic and read the whole northbound branch. The practical meaning is that if the edge device is compromised, the attacker still cannot use that device to issue control commands, because the device account has no write permission on the command topic. This is exactly the node compromise scenario the lectures raise when introducing access control lists \cite{slide03}.
+
+On the API side the system distinguishes an administrator role, allowed to call the command and configuration endpoints, from a viewer role restricted to read endpoints \cite{slide05, rfc7519}. The split maps directly onto HTTP status codes: a missing token returns 401 while a valid token with insufficient privilege returns 403.
+
+The default configuration runs on the unencrypted port 1883, which suits an isolated laboratory network. For a real deployment the group switches to MQTTS on port 8883 \cite{slide03, rfc8446}. The cost should be stated plainly: the TLS handshake requires the microcontroller to perform public key operations, which noticeably increases startup time and memory consumption. One principle holds in every configuration, namely that no secret ever appears inside the telemetry payload, so even a successful eavesdropper gains no credentials.
+
+\section{Reliability during a network outage}
+
+This is a mandatory requirement and also the most important property of the system. Four mechanisms are implemented.
+
+First, the control loop runs on a fixed cycle and contains no blocking network call, so during an outage the system loses only remote visibility while retaining every control and safety function.
+
+Second, when the link is down telemetry messages are not discarded but packed into a compact structure and pushed into a circular buffer holding 240 entries, about four minutes of data. The circular buffer was chosen for exactly the reason given in the lectures, namely constant time insertion with no array shifting \cite{slide01}. Each entry stores only the essential fields as scaled integers instead of a full JSON string. Once the link returns the whole buffer is replayed in order, tagged so it can be excluded from latency statistics.
+
+Third, accumulated volume is written to non volatile storage and reloaded at startup, so a sudden power loss does not erase the consumption history.
+
+Fourth, inside the initialisation routine and before any sensor is read, the relay control pin is driven to the pump off level, so every restart begins from a safe state. The integrated brownout detector acts as an additional protective layer: when the supply falls below the critical threshold, flash writes become unreliable and the core may execute corrupted instructions, so the hardware deliberately holds the device in a safe reset state until the voltage recovers \cite{slide01}.
+
+\begin{table}[H]
+\caption{Four independent layers of overflow protection.}
+\label{tab:layers}
+\centering
+\renewcommand{\arraystretch}{1.1}
+\begin{tabular}{|p{4.4cm}|p{4.0cm}|p{4.6cm}|}
+\hline
+\rowcolor[HTML]{B7E1F0}
+\textbf{Mechanism} & \textbf{Location} & \textbf{Still effective when} \\
+\hline
+High threshold of the hysteresis band & State machine & Sensor is healthy \\
+\hline
+Safety limit at 95 percent & Fault detection rule & Sensor is healthy \\
+\hline
+Upper mechanical float & Digital input of the microcontroller & Ultrasonic sensor has failed \\
+\hline
+Relay defaults to open & Hardware & Microcontroller loses power or hangs \\
+\hline
+\end{tabular}
+\end{table}
+
+The value of this arrangement lies in the independence of the layers. The first two both rely on the ultrasonic sensor and therefore fail together if it fails, but the third uses an entirely different sensing principle and the fourth requires no running software at all. Consequently no single point of failure can disable the overflow protection as a whole.

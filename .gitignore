@@ -1,0 +1,44 @@
+# ============================================================
+#  BI MAT — KHONG BAO GIO DUA LEN GITHUB
+# ============================================================
+# config.h chua ten Wi-Fi, mat khau Wi-Fi va IP mang noi bo.
+# Ban mau khong co bi mat la config.example.h, da duoc theo doi.
+# Sao chep no ra config.h roi dien gia tri that cua ban.
+**/config.h
+mosquitto/passwd
+
+# ============================================================
+#  Sinh ra tu build, khong commit
+# ============================================================
+.pio/
+.venv/
+__pycache__/
+*.pyc
+*.db
+node_modules/
+
+# LaTeX
+*.aux
+*.bbl
+*.blg
+*.fdb_latexmk
+*.fls
+*.log
+*.out
+*.toc
+*.synctex.gz
+
+# Cong cu lap trinh
+.vscode/
+.idea/
+graft/
+.claude/
+.ignore
+*.code-workspace
+
+# Goi nen, tao lai duoc bat cu luc nao
+*.zip
+
+# He dieu hanh
+.DS_Store
+Thumbs.db

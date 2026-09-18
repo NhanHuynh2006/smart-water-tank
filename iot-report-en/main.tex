@@ -1,0 +1,266 @@
+\documentclass[a4paper, oneside, 13.5pt, top=2.5cm, bottom=2.5cm, left=3cm, right=2.5cm]{book}
+
+% ================================
+% Các gói hỗ trợ định dạng văn bản
+% ================================
+\usepackage{hcmutethesis}
+\usepackage{graphicx}
+\usepackage[english]{babel}
+\usepackage[T5]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{indentfirst}
+\usepackage{titlesec}
+
+% ================================
+% Các gói hỗ trợ kỹ thuật
+% ================================
+\usepackage{tikz}
+\usetikzlibrary{calc}
+\usepackage{amsmath, amssymb}
+\usepackage{tabularx}
+\usepackage{makecell}
+\usepackage{wrapfig}
+\PassOptionsToPackage{hidelinks}{hyperref}
+\usepackage{array}
+\usepackage[table]{xcolor}
+\usepackage{multirow}
+\usepackage{longtable}
+\usepackage{float}
+\usepackage{chngcntr}
+\usepackage{textcomp}
+\usepackage{fancyhdr}
+\usepackage{caption}
+\usepackage{enumitem}
+\usepackage{tocloft}
+\usepackage{listings}
+\setlength{\cftfignumwidth}{2.5em}
+
+% ================================
+% Đánh số hình và bảng theo chương
+% ================================
+\counterwithin{figure}{section}
+\counterwithin{table}{section}
+
+% ================================
+% Định dạng tiêu đề
+% ================================
+\titleformat{\subsection}{\normalfont\large\bfseries}{\hspace{1em}\thesubsection}{0.5em}{}
+\titleformat{\subsubsection}{\normalfont\normalsize\bfseries}{\hspace{2em}\thesubsubsection}{0.5em}{}
+
+\setlist[itemize,enumerate]{
+    labelindent=1em,
+    leftmargin=3em,
+    listparindent=2em,
+    parsep=0pt
+}
+
+\renewcommand{\baselinestretch}{1.3}
+\titlespacing*{\section}{0pt}{20pt}{15pt}
+\titleformat*{\section}{\fontsize{18pt}{0pt}\selectfont \bfseries}
+\titlespacing*{\subsection}{0pt}{15pt}{10pt}
+\titleformat*{\subsection}{\fontsize{16pt}{0pt}\selectfont \bfseries}
+\titlespacing*{\subsubsection}{0pt}{15pt}{10pt}
+\titleformat*{\subsubsection}{\fontsize{14pt}{0pt}\selectfont\bfseries}
+\titlespacing*{\paragraph}{0pt}{15pt}{0pt}
+\titleformat*{\paragraph}{\fontsize{13pt}{0pt}\selectfont \bfseries}
+
+\setcounter{secnumdepth}{3}
+\setcounter{tocdepth}{3}
+
+% ================================
+% Định dạng khối mã nguồn
+% ================================
+\definecolor{codebg}{HTML}{F4F6F8}
+\definecolor{codekw}{HTML}{123E6B}
+\definecolor{codecm}{HTML}{5A6B78}
+\lstset{
+    backgroundcolor=\color{codebg},
+    basicstyle=\ttfamily\footnotesize,
+    keywordstyle=\color{codekw}\bfseries,
+    commentstyle=\color{codecm}\itshape,
+    breaklines=true,
+    frame=single,
+    rulecolor=\color{codecm},
+    xleftmargin=1em,
+    numbers=none,
+    showstringspaces=false,
+    captionpos=b
+}
+
+% ================================
+% Figure placeholder box
+% Replace \chohinh{...}{...} with
+% \includegraphics[width=0.9\textwidth]{fig/filename.png}
+% ================================
+\newcommand{\chohinh}[2]{%
+  \fbox{\parbox[c][2.9cm][c]{0.86\textwidth}{\centering \textit{#1}\\[0.5em]
+  \small Insert figure here: \texttt{fig/#2}}}%
+}
+
+% ================================
+% Cài đặt header và footer
+% ================================
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\leftmark}
+\fancyfoot[C]{\thepage}
+
+% ================================
+% Khai báo thông tin đồ án
+% ================================
+\thesislayout
+\ctname{\textbf{SMART WATER TANK: LEVEL AND FLOW MONITORING WITH AUTOMATIC PUMP CONTROL}}
+\cmjname{\textbf{MAJOR IN COMPUTER ENGINEERING}}
+\cstuname{\textbf{[FULL NAME OF MEMBER 1]} \\[0.15em] Student ID: [ID] \\[0.4em]
+            \textbf{[FULL NAME OF MEMBER 2]} \\[0.15em] Student ID: [ID] \\[0.4em]
+            \textbf{[FULL NAME OF MEMBER 3]} \\[0.15em] Student ID: [ID] \\[0.4em]
+            \textbf{[FULL NAME OF MEMBER 4]} \\[0.15em] Student ID: [ID] \\[0.4em]
+            \textbf{[FULL NAME OF MEMBER 5]} \\[0.15em] Student ID: [ID]}
+\csSupervise{\textbf{Dr. HUYNH THE THIEN}}
+\cttime{09/2026}
+
+\setstretch{1.5}
+
+% ================================
+% Cho phép dùng mục điều khiển của IEEEtran khi không dùng lớp IEEEtran
+% ================================
+\makeatletter
+\def\bstctlcite{\@ifnextchar[{\@bstctlcite}{\@bstctlcite[@auxout]}}
+\def\@bstctlcite[#1]#2{\@bsphack
+  \@for\@citeb:=#2\do{%
+    \edef\@citeb{\expandafter\@firstofone\@citeb}%
+    \if@filesw\immediate\write\csname #1\endcsname{\string\citation{\@citeb}}\fi}%
+  \@esphack}
+\makeatother
+
+\begin{document}
+\bstctlcite{BSTcontrol}
+
+% Trang bìa
+\coverpage
+\newpage
+\pagestyle{fancy}
+
+% ======== Acknowledgments ========
+\begin{acknowledgments}
+Throughout this final project for the course IoT Foundations and Applications, our group received careful guidance and valuable technical feedback from Dr. Huynh The Thien. His lectures on layered architecture, application layer messaging and time series data infrastructure provided the theoretical basis for most of the design decisions in the system we built.\\
+
+We also thank the Department of Computer and Communication Engineering for granting us laboratory access, which allowed us to complete the hardware prototype and carry out the measurements reported here.\\
+
+We would like to express our sincere and deepest gratitude.
+
+\begin{table}[!h]
+\centering
+\begin{tabular}{p{3cm} p{3cm} p{3cm} p{3cm}}
+&   & \multicolumn{2}{c}{Project group} \\
+&   & \multicolumn{2}{c}{\textit{(Signature and full name)}} \\
+&   &                                  \\
+&   &                                  \\
+&   &                                  \\
+&   &                                  \\
+&   &                                  \\
+&   &                                  \\
+\end{tabular}
+\end{table}
+\end{acknowledgments}
+\newpage
+\pagestyle{fancy}
+
+% ======== Declaration ========
+\begin{declaration}
+We declare that the entire content presented in this report is the result of our own research and implementation. The firmware, the backend service and the monitoring interface were written by us. The experimental data were collected directly on the physical prototype that we assembled. Every item taken from the course lectures, technical standards and scientific literature is cited at the point of use and listed in the references.
+\\
+\begin{table}[!h]
+\centering
+\begin{tabular}{p{3cm} p{3cm} p{3cm} p{3cm}}
+&   & \multicolumn{2}{c}{Project group} \\
+&   & \multicolumn{2}{c}{\textit{(Signature and full name)}} \\
+&   &                                  \\
+&   &                                  \\
+&   &                                  \\
+&   &                                  \\
+&   &                                  \\
+&   &                                  \\
+\end{tabular}
+\end{table}
+\end{declaration}
+\newpage
+\pagestyle{fancy}
+
+% ======== Abstract ========
+\begin{abstract}
+\sloppy
+
+This project builds a closed loop water management system able to measure water level and flow rate, drive a pump automatically, estimate consumed volume and detect abnormal hydraulic operating states. The system is implemented across the full layered model of the Internet of Things, from the perception layer on an ESP32 microcontroller, through a transport layer based on MQTT, a processing layer consisting of an ingestion service and a time series store, up to an application layer in the form of a real time monitoring dashboard.
+
+The central design decision is to place the entire control law and the entire fault detection logic inside the edge microcontroller rather than on the server. As a result, level regulation and every safety constraint keep working while the network link is down. The controller is built as a finite state machine combining a hysteresis band with minimum on and off times, which removes the rapid switching behaviour that shortens pump life.
+
+The evaluation covers calibration of the two main sensors against physical reference instruments, measurement of the closed loop response, a quantitative comparison between a single threshold policy and the proposed hysteresis policy, end to end latency measurement, and verification of system behaviour during a network outage.
+
+\end{abstract}
+\newpage
+\pagestyle{fancy}
+
+% ======== Contents ========
+\tableofcontents
+\newpage
+\listoftables
+\listoffigures
+\newpage
+\pagestyle{fancy}
+
+% ======== Abbreviations ========
+\begin{abbreviation}
+The following abbreviations are used throughout this report.
+\begin{table}[!h]
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{p{3cm} p{11cm}}
+\textbf{Abbreviation} &  \textbf{Definition} \\
+\hline
+IoT   & Internet of Things \\
+MQTT  & Message Queuing Telemetry Transport \\
+QoS   & Quality of Service \\
+LWT   & Last Will and Testament \\
+ACL   & Access Control List \\
+TLS   & Transport Layer Security \\
+REST  & Representational State Transfer \\
+API   & Application Programming Interface \\
+JSON  & JavaScript Object Notation \\
+JWT   & JSON Web Token \\
+TSDB  & Time Series Database \\
+ADC   & Analog to Digital Converter \\
+SAR   & Successive Approximation Register \\
+PWM   & Pulse Width Modulation \\
+GPIO  & General Purpose Input Output \\
+MCU   & Microcontroller Unit \\
+FSM   & Finite State Machine \\
+ISR   & Interrupt Service Routine \\
+NVS   & Non-Volatile Storage \\
+EMF   & Electromotive Force \\
+MAE   & Mean Absolute Error \\
+RMSE  & Root Mean Square Error \\
+EWMA  & Exponentially Weighted Moving Average \\
+CUSUM & Cumulative Sum \\
+\hline
+\end{tabular}
+\end{table}
+\end{abbreviation}
+\newpage
+\pagestyle{fancy}
+
+% ======== Main content ========
+
+\include{chapters/chapter01}
+\include{chapters/chapter02}
+\include{chapters/chapter03}
+\include{chapters/chapter04}
+\include{chapters/chapter05}
+\include{chapters/chapter06}
+\include{chapters/chapter07}
+\include{chapters/chapter08}
+
+% ======== References ========
+\bibliographystyle{IEEEtran}
+\bibliography{refs}
+
+\end{document}

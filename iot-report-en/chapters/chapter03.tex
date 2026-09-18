@@ -1,0 +1,69 @@
+\chapter{ARCHITECTURE AND HARDWARE DESIGN}
+
+\section{Overall architecture}
+
+The system consists of four blocks in series: an edge node built around an ESP32 with three sensors and one actuator; an MQTT broker acting as a content based message router; a backend service comprising an ingestion process, a database and an API server; and a web dashboard.
+
+\begin{figure}[H]
+    \centering
+    \chohinh{Overall system architecture diagram}{architecture.png}
+    \caption{Architecture of the smart water tank system.}
+    \label{fig:kientruc}
+\end{figure}
+
+Mapping onto the five layer model of Section 2.2: the perception layer is the ESP32 with its sensors and relay; the transport layer is a Mosquitto broker over Wi-Fi; the processing layer is the ingestion process, SQLite and a FastAPI server; the application layer is the dashboard; and the business layer, kept deliberately minimal at this scale, is the daily consumption report. The single most important property of the diagram is that the closed control loop lives entirely inside the first block, so the remaining three never sit on the path of a pump switching decision.
+
+Wi-Fi was selected over BLE, Zigbee and LoRaWAN for three reasons. The system is mains powered, so the low energy advantage of BLE and LoRaWAN carries no weight. The device sits indoors within a few tens of metres, comfortably inside Wi-Fi coverage. Most importantly, Wi-Fi gives the node a native IP address so it speaks to the broker directly, whereas every alternative needs an edge gateway to translate between two protocol worlds \cite{slide02}, adding hardware and a point of failure. The conclusion reverses for tanks spread over a wide area or for a battery powered node.
+
+\section{Function placement and edge autonomy}
+
+This is the central architectural decision of the project. The assignment requires that level control keep working during a network outage. Combined with the placement rule of Section 2.2, which states that any operation needing an immediate safe stop must be computed at the edge \cite{slide01}, the group adopted a single principle: \textbf{the server never issues a direct pump switching command.}
+
+The edge node therefore owns sensor reading and filtering, the control state machine, every safety interlock, all fault detection rules and volume accumulation, because each of these demands a deterministic cycle and has to survive an outage. The backend owns only the two things the node cannot do well, namely durable history for querying and statistical baseline leak detection, which needs a window of several hours and exceeds the memory available on the microcontroller.
+
+This split makes the system degrade in a controlled way when connectivity is lost: the user loses remote visibility and remote commands, but the tank is still refilled at the correct thresholds and every safety constraint is still enforced. The behaviour is verified experimentally in Section 8.4. So that leak diagnosis is not lost entirely during an outage, the node also runs a simpler leak rule based on consistency between pump state and measured flow, described in Section 6.6.
+
+\section{Sensor selection and signal conditioning}
+
+\begin{table}[H]
+\caption{Main bill of materials.}
+\label{tab:bom}
+\centering
+\renewcommand{\arraystretch}{1.1}
+\begin{tabular}{|p{5.2cm}|p{7.8cm}|}
+\hline
+\rowcolor[HTML]{B7E1F0}
+\textbf{Component} & \textbf{Role} \\
+\hline
+ESP32 DevKit V1 & Edge microcontroller \\
+\hline
+JSN-SR04T ultrasonic, Hall turbine flow, ACS712 & Level, flow rate and current presence sensing \\
+\hline
+Two mechanical float switches & Overflow guard and source tank empty guard \\
+\hline
+Single channel opto isolated relay, 5 V submersible pump & Switching stage and actuator \\
+\hline
+1N4007 diode, 100 nF ceramic, 1000 $\mu$F electrolytic & Inductive protection, brush noise filtering, inrush buffering \\
+\hline
+10 k$\Omega$ and 20 k$\Omega$ resistors, 5 V 3 A supply & Three divider networks and system power \\
+\hline
+\end{tabular}
+\end{table}
+
+\textbf{Level sensing.} Non contact ultrasonic measurement was chosen because the transducer never touches the water, so it neither corrodes nor accumulates deposits, and its output does not depend on water conductivity. Its main constraint is a blind zone of roughly 20 to 25 centimetres, so the bracket is mounted 30 centimetres above the tank rim.
+
+\textbf{Flow sensing.} Pulse frequency is proportional to flow through a factor $K$ as $Q = f/K$. The datasheet value only holds near the middle of the measuring span, so the group determines $K$ experimentally in Section 8.2. One risk was identified at design time: the 5 volt pump delivers roughly 1.5 litres per minute while typical turbine sensors begin measuring at 1 litre per minute, which places the operating point near the lower limit, exactly where nonlinearity is worst. Mitigations include shortening the tubing, reducing the lift height and mounting the sensor vertically with upward flow.
+
+\textbf{Float switches.} The two floats are not there to measure anything. The upper float forms an overflow guard that operates independently of software and, more importantly, supplies a level indication that is entirely independent of the ultrasonic path. Because two independent sources exist, the firmware can detect a contradiction between them and conclude that the ultrasonic reading is wrong. This is how the system satisfies the requirement to handle implausible sensor readings, as detailed in Section 6.4.
+
+\textbf{Divider networks.} All three signal lines exceed the 3.3 volt logic limit of the ESP32 and therefore pass through resistive dividers. The ultrasonic echo and the flow pulse lines use a 10 k$\Omega$ and 20 k$\Omega$ ratio, bringing 5 volts down to 3.33 volts. The current sensor line uses a one to one ratio, moving its no load operating point from 2.5 volts to 1.25 volts, that is to the middle of the span, avoiding the two nonlinear regions the lectures warn about \cite{slide01}.
+
+\textbf{Limits of the current measurement.} The sensor provides 185 millivolts per ampere and the pump draws roughly 200 milliamperes, giving only 37 millivolts, reduced to 18.5 millivolts after the divider, while the quantisation step from equation \eqref{eq:lsb} is 0.806 millivolts and real converter noise is several times larger. The measurement therefore lacks the resolution for a trustworthy quantitative value, so it is used only as a binary current present indicator obtained by averaging 200 samples and subtracting a startup offset. Stating this openly, instead of publishing a figure that cannot be trusted, was a deliberate choice.
+
+\section{Power stage, supply and mechanical build}
+
+The pump is switched through an opto isolated relay module. A power MOSFET was considered, since the lectures favour it in edge designs of modest power thanks to its very low on resistance \cite{slide01}, but the relay was chosen because the module already integrates optical isolation between logic and load, and because a pump running in two states at a low switching rate never exercises the frequency advantage of a MOSFET. Inductive protection uses a 1N4007 diode antiparallel across the pump terminals, alongside a 100 nF ceramic capacitor at the motor terminals whose purpose is not spike suppression but damping of brush noise that would otherwise propagate along the supply rail and disturb the ultrasonic measurement.
+
+The whole system runs from a single 5 volt 3 ampere supply. The issue to manage is the transient sag at pump start, since if the microcontroller supply falls below the critical threshold the integrated brownout detector puts the chip into reset \cite{slide01}; the remedy is a 1000 microfarad capacitor near the supply pin to buffer the inrush peak.
+
+The rig forms a closed water loop of a source bucket, the pump, an inlet flow sensor, a transparent main tank with a millimetre scale for calibration, a manual valve acting as the consumption load, and a second flow sensor on the outlet. Two sensors rather than one is a deliberate choice: a single inlet sensor measures only what the pump delivers, so consumption has to be inferred from the level derivative, which is noisy at low draw rates. Measuring both ends makes inflow and outflow independent observations and opens a water balance, where the difference between the two should account for the change in stored volume; a persistent mismatch is evidence of a leak that neither sensor alone would reveal. The two sensors carry separate calibration constants because they need not be the same model. The sensor bracket must be rigid, because vibration makes readings oscillate and would be misdiagnosed as a sensor fault. The circuit was assembled in seven steps, each with its own test program that had to pass before moving on.

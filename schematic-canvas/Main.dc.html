@@ -1,0 +1,241 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+  <style>
+    body { margin: 0; }
+    a { color: #b45309; } a:hover { color: #7c3f06; }
+    .t  { font-family: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif; }
+    .m  { font-family: "IBM Plex Mono", ui-monospace, "Courier New", monospace; }
+  </style>
+</helmet>
+
+<div style="width: 1600px; height: 1040px; background: #faf9f7; position: relative; overflow: hidden">
+  <svg width="1600" height="1040" viewBox="0 0 1600 1040" xmlns="http://www.w3.org/2000/svg">
+
+    <!-- luoi nen mo -->
+    <defs>
+      <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+        <path d="M 40 0 L 0 0 0 40" fill="none" stroke="#e6e2db" stroke-width="1"></path>
+      </pattern>
+      <marker id="ar" markerWidth="9" markerHeight="9" refX="8" refY="4.5" orient="auto">
+        <path d="M0,0 L9,4.5 L0,9 z" fill="context-stroke"></path>
+      </marker>
+    </defs>
+    <rect x="0" y="0" width="1600" height="1040" fill="url(#grid)"></rect>
+
+    <!-- ================= TIEU DE ================= -->
+    <text x="44" y="46" class="t" font-size="26" font-weight="700" fill="#16150f">Sơ đồ đấu dây tổng thể</text>
+    <text x="44" y="70" class="t" font-size="14" fill="#6b6558">ESP32 DevKit V1 · bơm 5 V · HAI cảm biến lưu lượng · 11 chân GPIO · mọi số lấy từ include/config.h</text>
+    <line x1="44" y1="88" x2="1556" y2="88" stroke="#16150f" stroke-width="2"></line>
+
+    <!-- ================= ESP32 ================= -->
+    <rect x="590" y="200" width="280" height="600" rx="8" fill="#ffffff" stroke="#16150f" stroke-width="2.5"></rect>
+    <rect x="590" y="200" width="280" height="46" rx="8" fill="#16150f"></rect>
+    <rect x="590" y="232" width="280" height="14" fill="#16150f"></rect>
+    <text x="730" y="231" class="t" font-size="17" font-weight="700" fill="#ffffff" text-anchor="middle">ESP32 DevKit V1</text>
+    <text x="730" y="272" class="t" font-size="12" fill="#8a8375" text-anchor="middle">nạp qua CP210x · logic 3,3 V</text>
+    <rect x="640" y="726" width="180" height="56" rx="5" fill="#f4f1ea" stroke="#cfc8ba" stroke-width="1"></rect>
+    <text x="730" y="748" class="t" font-size="11.5" fill="#6b6558" text-anchor="middle">GPIO 2 = LED xanh có sẵn</text>
+    <text x="730" y="766" class="t" font-size="11.5" fill="#6b6558" text-anchor="middle">trên bo, không đi dây</text>
+
+    <!-- ================= CANH TRAI: 6 duong tin hieu ================= -->
+
+    <!-- HC-SR04 -->
+    <rect x="50" y="228" width="200" height="172" rx="6" fill="#ffffff" stroke="#16150f" stroke-width="1.8"></rect>
+    <text x="66" y="254" class="t" font-size="15" font-weight="600" fill="#16150f">S1 · HC-SR04</text>
+    <text x="66" y="273" class="t" font-size="11.5" fill="#6b6558">cảm biến siêu âm, mức nước</text>
+    <rect x="66" y="284" width="168" height="20" rx="3" fill="#fdecec" stroke="#e8b4b4" stroke-width="1"></rect>
+    <text x="150" y="298" class="m" font-size="11" fill="#a01b1b" text-anchor="middle">VCC → 5 V · GND → GND sao</text>
+    <text x="66" y="326" class="m" font-size="12.5" font-weight="500" fill="#2563c9">TRIG</text>
+    <text x="66" y="368" class="m" font-size="12.5" font-weight="500" fill="#2e8b3d">ECHO  (ra 5 V)</text>
+    <text x="66" y="386" class="t" font-size="11" fill="#a01b1b">phải qua chia áp</text>
+
+    <!-- S2 luu luong DAU VAO -->
+    <rect x="50" y="412" width="200" height="72" rx="6" fill="#ffffff" stroke="#16150f" stroke-width="1.8"></rect>
+    <text x="66" y="436" class="t" font-size="15" font-weight="600" fill="#16150f">S2 · Lưu lượng VÀO</text>
+    <text x="66" y="454" class="t" font-size="11.5" fill="#6b6558">bơm đẩy lên bồn · K = 98</text>
+    <text x="66" y="474" class="m" font-size="11.5" font-weight="600" fill="#1f6b2e">dây vàng nối THẲNG</text>
+
+    <!-- S6 luu luong DAU RA -->
+    <rect x="50" y="494" width="200" height="72" rx="6" fill="#ffffff" stroke="#16150f" stroke-width="1.8"></rect>
+    <text x="66" y="518" class="t" font-size="15" font-weight="600" fill="#16150f">S6 · Lưu lượng RA</text>
+    <text x="66" y="536" class="t" font-size="11.5" fill="#6b6558">nước tiêu thụ · K riêng</text>
+    <text x="66" y="556" class="m" font-size="11.5" font-weight="600" fill="#1f6b2e">dây vàng nối THẲNG</text>
+
+    <!-- S4 phao muc cao -->
+    <rect x="50" y="580" width="200" height="66" rx="6" fill="#ffffff" stroke="#16150f" stroke-width="1.8"></rect>
+    <text x="66" y="604" class="t" font-size="15" font-weight="600" fill="#16150f">S4 · Phao mức cao</text>
+    <text x="66" y="623" class="t" font-size="11.5" fill="#6b6558">một chân → GPIO, một chân → GND</text>
+    <text x="66" y="639" class="m" font-size="11.5" font-weight="600" fill="#a01b1b">ĐÓNG khi nước dâng cao</text>
+
+    <!-- S5 phao bon nguon -->
+    <rect x="50" y="656" width="200" height="66" rx="6" fill="#ffffff" stroke="#16150f" stroke-width="1.8"></rect>
+    <text x="66" y="680" class="t" font-size="15" font-weight="600" fill="#16150f">S5 · Phao bồn nguồn</text>
+    <text x="66" y="699" class="t" font-size="11.5" fill="#6b6558">một chân → GPIO, một chân → GND</text>
+    <text x="66" y="715" class="m" font-size="11.5" font-weight="600" fill="#a01b1b">ĐÓNG khi CÒN nước</text>
+
+    <!-- SW1 -->
+    <rect x="50" y="732" width="200" height="56" rx="6" fill="#ffffff" stroke="#16150f" stroke-width="1.8"></rect>
+    <text x="66" y="756" class="t" font-size="15" font-weight="600" fill="#16150f">SW1 · Nút xoá lỗi</text>
+    <text x="66" y="775" class="t" font-size="11.5" fill="#6b6558">thường mở, chân còn lại → GND</text>
+
+    <!-- chia ap 1: ECHO -->
+    <rect x="322" y="323" width="158" height="64" rx="5" fill="#fff8e8" stroke="#c9962a" stroke-width="1.6" stroke-dasharray="5 3"></rect>
+    <text x="401" y="345" class="t" font-size="12.5" font-weight="600" fill="#8a6412" text-anchor="middle">Chia áp R1/R2</text>
+    <text x="401" y="362" class="m" font-size="12" fill="#8a6412" text-anchor="middle">10 kΩ / 20 kΩ</text>
+    <text x="401" y="378" class="m" font-size="11.5" fill="#8a6412" text-anchor="middle">5,0 V → 3,33 V</text>
+
+    <!-- KHONG chia ap cho hai cam bien luu luong -->
+    <rect x="300" y="408" width="200" height="158" rx="5" fill="#ffffff" stroke="#2e8b3d" stroke-width="2" stroke-dasharray="6 3"></rect>
+    <text x="400" y="432" class="t" font-size="12.5" font-weight="700" fill="#1f6b2e" text-anchor="middle">KHÔNG CHIA ÁP</text>
+    <text x="400" y="452" class="t" font-size="11" fill="#3a3529" text-anchor="middle">Ngõ ra hall là cực thu hở.</text>
+    <text x="400" y="468" class="t" font-size="11" fill="#3a3529" text-anchor="middle">Điện trở kéo lên NỘI BỘ của</text>
+    <text x="400" y="484" class="t" font-size="11" fill="#3a3529" text-anchor="middle">ESP32 giữ chân ở 3,3 V.</text>
+    <line x1="318" y1="498" x2="482" y2="498" stroke="#cfe5d2" stroke-width="1"></line>
+    <text x="400" y="518" class="m" font-size="11.5" font-weight="600" fill="#1f6b2e" text-anchor="middle">FLOW_PIN_PULLUP = 1</text>
+    <text x="400" y="536" class="m" font-size="11.5" font-weight="600" fill="#1f6b2e" text-anchor="middle">FLOW_OUT_PIN_PULLUP = 1</text>
+    <text x="400" y="556" class="t" font-size="10.5" fill="#a01b1b" text-anchor="middle">Thêm chia áp = hàng nghìn xung giả</text>
+
+    <!-- day tin hieu trai -->
+    <!-- TRIG: GPIO5, ESP32 -> S1 -->
+    <line x1="590" y1="270" x2="250" y2="270" stroke="#2563c9" stroke-width="2.6" marker-end="url(#ar)"></line>
+    <rect x="368" y="248" width="140" height="19" rx="3" fill="#faf9f7"></rect>
+    <text x="438" y="262" class="m" font-size="12.5" font-weight="600" fill="#2563c9" text-anchor="middle">GPIO 5 · TRIG</text>
+
+    <!-- ECHO: S1 -> DIV1 -> GPIO18 -->
+    <line x1="250" y1="355" x2="322" y2="355" stroke="#2e8b3d" stroke-width="2.6"></line>
+    <line x1="480" y1="355" x2="590" y2="355" stroke="#2e8b3d" stroke-width="2.6" marker-end="url(#ar)"></line>
+    <rect x="486" y="316" width="104" height="19" rx="3" fill="#faf9f7"></rect>
+    <text x="538" y="330" class="m" font-size="12.5" font-weight="600" fill="#2e8b3d" text-anchor="middle">GPIO 18</text>
+
+    <!-- FLOW vao: S2 -> GPIO4 -->
+    <line x1="250" y1="440" x2="300" y2="440" stroke="#2e8b3d" stroke-width="2.6"></line>
+    <line x1="500" y1="440" x2="590" y2="440" stroke="#2e8b3d" stroke-width="2.6" marker-end="url(#ar)"></line>
+    <rect x="502" y="418" width="88" height="19" rx="3" fill="#faf9f7"></rect>
+    <text x="546" y="432" class="m" font-size="12.5" font-weight="600" fill="#2e8b3d" text-anchor="middle">GPIO 4</text>
+
+    <!-- FLOW ra: S6 -> GPIO19 -->
+    <line x1="250" y1="524" x2="300" y2="524" stroke="#2e8b3d" stroke-width="2.6"></line>
+    <line x1="500" y1="524" x2="590" y2="524" stroke="#2e8b3d" stroke-width="2.6" marker-end="url(#ar)"></line>
+    <rect x="498" y="502" width="92" height="19" rx="3" fill="#faf9f7"></rect>
+    <text x="544" y="516" class="m" font-size="12.5" font-weight="600" fill="#2e8b3d" text-anchor="middle">GPIO 19</text>
+
+    <!-- FLOAT_MAX -->
+    <line x1="250" y1="608" x2="590" y2="608" stroke="#2e8b3d" stroke-width="2.6" marker-end="url(#ar)"></line>
+    <rect x="322" y="586" width="196" height="19" rx="3" fill="#faf9f7"></rect>
+    <text x="420" y="600" class="m" font-size="12.5" font-weight="600" fill="#2e8b3d" text-anchor="middle">GPIO 27 · kéo lên trong</text>
+
+    <!-- FLOAT_SRC -->
+    <line x1="250" y1="684" x2="590" y2="684" stroke="#2e8b3d" stroke-width="2.6" marker-end="url(#ar)"></line>
+    <rect x="322" y="662" width="196" height="19" rx="3" fill="#faf9f7"></rect>
+    <text x="420" y="676" class="m" font-size="12.5" font-weight="600" fill="#2e8b3d" text-anchor="middle">GPIO 14 · kéo lên trong</text>
+
+    <!-- BTN -->
+    <line x1="250" y1="758" x2="590" y2="758" stroke="#2e8b3d" stroke-width="2.6" marker-end="url(#ar)"></line>
+    <rect x="322" y="736" width="196" height="19" rx="3" fill="#faf9f7"></rect>
+    <text x="420" y="750" class="m" font-size="12.5" font-weight="600" fill="#2e8b3d" text-anchor="middle">GPIO 33 · kéo lên trong</text>
+
+    <!-- ================= CANH PHAI ================= -->
+
+    <!-- K1 ro le -->
+    <rect x="1150" y="222" width="250" height="96" rx="6" fill="#ffffff" stroke="#16150f" stroke-width="1.8"></rect>
+    <text x="1166" y="247" class="t" font-size="15" font-weight="600" fill="#16150f">K1 · Mô đun rơ le 5 V</text>
+    <rect x="1166" y="256" width="218" height="20" rx="3" fill="#fdecec" stroke="#e8b4b4" stroke-width="1"></rect>
+    <text x="1275" y="270" class="m" font-size="11.5" font-weight="600" fill="#a01b1b" text-anchor="middle">KÍCH MỨC THẤP · LOW = bơm chạy</text>
+    <text x="1166" y="294" class="t" font-size="11.5" fill="#6b6558">IN ← GPIO 26 · VCC → 5 V · GND → GND</text>
+    <text x="1166" y="310" class="t" font-size="11.5" fill="#6b6558">tiếp điểm dùng COM + NO, không dùng NC</text>
+
+    <!-- ACS712 -->
+    <rect x="1150" y="330" width="250" height="86" rx="6" fill="#ffffff" stroke="#16150f" stroke-width="1.8"></rect>
+    <text x="1166" y="355" class="t" font-size="15" font-weight="600" fill="#16150f">S3 · ACS712</text>
+    <text x="1166" y="373" class="t" font-size="11.5" fill="#6b6558">cảm biến dòng, mắc NỐI TIẾP đường bơm</text>
+    <text x="1166" y="393" class="m" font-size="12" fill="#2e8b3d">OUT: 2,5 V khi nghỉ</text>
+    <text x="1166" y="409" class="m" font-size="11" fill="#a01b1b">VCC/GND lấy từ nhánh sạch</text>
+
+    <!-- chia ap 3 -->
+    <rect x="920" y="338" width="158" height="64" rx="5" fill="#fff8e8" stroke="#c9962a" stroke-width="1.6" stroke-dasharray="5 3"></rect>
+    <text x="999" y="360" class="t" font-size="12.5" font-weight="600" fill="#8a6412" text-anchor="middle">Chia áp R5/R6</text>
+    <text x="999" y="377" class="m" font-size="12" fill="#8a6412" text-anchor="middle">10 kΩ / 10 kΩ</text>
+    <text x="999" y="393" class="m" font-size="11.5" fill="#8a6412" text-anchor="middle">2,5 V → 1,25 V</text>
+
+    <!-- R7 + LED1 -->
+    <rect x="920" y="438" width="110" height="44" rx="5" fill="#ffffff" stroke="#16150f" stroke-width="1.6"></rect>
+    <text x="975" y="456" class="t" font-size="12" font-weight="600" fill="#16150f" text-anchor="middle">R7</text>
+    <text x="975" y="472" class="m" font-size="12" fill="#16150f" text-anchor="middle">220 Ω</text>
+    <rect x="1150" y="432" width="250" height="56" rx="6" fill="#ffffff" stroke="#16150f" stroke-width="1.8"></rect>
+    <text x="1166" y="456" class="t" font-size="15" font-weight="600" fill="#16150f">LED1 · Đèn báo sự cố</text>
+    <text x="1166" y="475" class="t" font-size="11.5" fill="#6b6558">anode ← R7 · cathode → GND</text>
+
+    <!-- khoi nguon -->
+    <rect x="1150" y="640" width="250" height="140" rx="6" fill="#ffffff" stroke="#16150f" stroke-width="2.2"></rect>
+    <text x="1166" y="666" class="t" font-size="15" font-weight="700" fill="#16150f">Cọc ngõ ra buck 5 V</text>
+    <text x="1166" y="685" class="t" font-size="11.5" fill="#6b6558">điểm sao, mọi nhánh bắt đầu từ đây</text>
+    <line x1="1166" y1="696" x2="1384" y2="696" stroke="#cfc8ba" stroke-width="1"></line>
+    <circle cx="1176" cy="716" r="5" fill="#d92b2b"></circle>
+    <text x="1192" y="721" class="m" font-size="12.5" font-weight="600" fill="#16150f">5 V</text>
+    <circle cx="1176" cy="746" r="5" fill="#16150f"></circle>
+    <text x="1192" y="751" class="m" font-size="12.5" font-weight="600" fill="#16150f">GND</text>
+    <text x="1240" y="721" class="t" font-size="11" fill="#6b6558">→ VIN, cảm biến, rơ le</text>
+    <text x="1240" y="751" class="t" font-size="11" fill="#6b6558">→ đất chung hình sao</text>
+
+    <!-- day tin hieu phai -->
+    <line x1="870" y1="270" x2="1150" y2="270" stroke="#2563c9" stroke-width="2.6" marker-end="url(#ar)"></line>
+    <rect x="928" y="248" width="164" height="19" rx="3" fill="#faf9f7"></rect>
+    <text x="1010" y="262" class="m" font-size="12.5" font-weight="600" fill="#2563c9" text-anchor="middle">GPIO 26 · RELAY IN</text>
+
+    <line x1="1150" y1="370" x2="1078" y2="370" stroke="#2e8b3d" stroke-width="2.6"></line>
+    <line x1="920" y1="370" x2="870" y2="370" stroke="#2e8b3d" stroke-width="2.6" marker-end="url(#ar)"></line>
+    <rect x="866" y="410" width="130" height="19" rx="3" fill="#faf9f7"></rect>
+    <text x="931" y="424" class="m" font-size="12.5" font-weight="600" fill="#2e8b3d" text-anchor="middle">GPIO 34 · chỉ vào</text>
+
+    <line x1="870" y1="460" x2="920" y2="460" stroke="#2563c9" stroke-width="2.6"></line>
+    <line x1="1030" y1="460" x2="1150" y2="460" stroke="#2563c9" stroke-width="2.6" marker-end="url(#ar)"></line>
+    <rect x="866" y="490" width="164" height="19" rx="3" fill="#faf9f7"></rect>
+    <text x="948" y="504" class="m" font-size="12.5" font-weight="600" fill="#2563c9" text-anchor="middle">GPIO 25 · LED lỗi</text>
+
+    <line x1="870" y1="716" x2="1150" y2="716" stroke="#d92b2b" stroke-width="3"></line>
+    <text x="1010" y="709" class="m" font-size="12.5" font-weight="600" fill="#d92b2b" text-anchor="middle">VIN ← 5 V</text>
+    <line x1="870" y1="756" x2="1150" y2="756" stroke="#16150f" stroke-width="3"></line>
+    <text x="1010" y="749" class="m" font-size="12.5" font-weight="600" fill="#16150f" text-anchor="middle">GND</text>
+
+    <!-- ================= CHU THICH ================= -->
+    <line x1="44" y1="820" x2="1556" y2="820" stroke="#cfc8ba" stroke-width="1.5"></line>
+    <text x="44" y="848" class="t" font-size="14" font-weight="700" fill="#16150f">Quy ước màu dây</text>
+
+    <line x1="44" y1="874" x2="86" y2="874" stroke="#d4a017" stroke-width="4"></line>
+    <text x="96" y="879" class="t" font-size="12.5" fill="#3a3529">12 V từ nguồn tổ ong</text>
+    <line x1="290" y1="874" x2="332" y2="874" stroke="#d92b2b" stroke-width="4"></line>
+    <text x="342" y="879" class="t" font-size="12.5" fill="#3a3529">5 V nhánh sạch</text>
+    <line x1="500" y1="874" x2="542" y2="874" stroke="#e8730c" stroke-width="4"></line>
+    <text x="552" y="879" class="t" font-size="12.5" fill="#3a3529">5 V nhánh bơm, dây ≥ 20 AWG</text>
+    <line x1="820" y1="874" x2="862" y2="874" stroke="#16150f" stroke-width="4"></line>
+    <text x="872" y="879" class="t" font-size="12.5" fill="#3a3529">GND, về thẳng điểm sao</text>
+    <line x1="1090" y1="874" x2="1132" y2="874" stroke="#2e8b3d" stroke-width="4"></line>
+    <text x="1142" y="879" class="t" font-size="12.5" fill="#3a3529">tín hiệu vào ESP32</text>
+    <line x1="1330" y1="874" x2="1372" y2="874" stroke="#2563c9" stroke-width="4"></line>
+    <text x="1382" y="879" class="t" font-size="12.5" fill="#3a3529">tín hiệu ra</text>
+
+    <!-- canh bao -->
+    <rect x="44" y="906" width="740" height="102" rx="6" fill="#fdecec" stroke="#d92b2b" stroke-width="2"></rect>
+    <text x="64" y="932" class="t" font-size="14" font-weight="700" fill="#a01b1b">Ba lỗi phá hỏng mạch, kiểm tra trước khi cấp nguồn</text>
+    <text x="64" y="954" class="t" font-size="12.5" fill="#7d1616">1 · Thiếu chia áp trên GPIO 18 sẽ cháy chân. Nhưng GPIO 4 và 19 thì NGƯỢC LẠI: thêm chia áp là hỏng.</text>
+    <text x="64" y="974" class="t" font-size="12.5" fill="#7d1616">2 · Thiếu điốt D1 song song ngược hai cực bơm sẽ hỏng tiếp điểm rơ le khi ngắt.</text>
+    <text x="64" y="994" class="t" font-size="12.5" fill="#7d1616">3 · Đấu đất kiểu chuỗi thay vì hình sao sẽ làm ESP32 khởi động lại lúc bơm chạy.</text>
+
+    <rect x="816" y="906" width="740" height="102" rx="6" fill="#f4f1ea" stroke="#cfc8ba" stroke-width="1.5"></rect>
+    <text x="836" y="932" class="t" font-size="14" font-weight="700" fill="#16150f">Các artboard còn lại</text>
+    <text x="836" y="954" class="t" font-size="12.5" fill="#3a3529">Nguồn hình sao · năm nhánh và tiết diện dây</text>
+    <text x="836" y="974" class="t" font-size="12.5" fill="#3a3529">Chuỗi công suất · rơ le, ACS712, bơm, điốt và tụ đặt đúng chỗ</text>
+    <text x="836" y="994" class="t" font-size="12.5" fill="#3a3529">Ba chia áp · Bảng chân · Điểm đo kiểm</text>
+  </svg>
+</div>
+</x-dc>
+</body>
+</html>

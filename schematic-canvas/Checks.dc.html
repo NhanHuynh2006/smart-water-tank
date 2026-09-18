@@ -1,0 +1,92 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+  <style>
+    body { margin: 0; }
+    a { color: #b45309; } a:hover { color: #7c3f06; }
+  </style>
+</helmet>
+
+<div style="width: 800px; height: 820px; background: #faf9f7; box-sizing: border-box; padding: 36px 32px; font-family: 'IBM Plex Sans', 'Segoe UI', system-ui, sans-serif; color: #16150f; display: flex; flex-direction: column; gap: 16px">
+
+  <div>
+    <div style="font-size: 24px; font-weight: 700; letter-spacing: -0.01em">Điểm đo kiểm và điều cấm</div>
+    <div style="font-size: 13px; color: #6b6558; margin-top: 5px">Đo hết tám điểm trước khi nạp phần sụn chính</div>
+    <div style="height: 2px; background: #16150f; margin-top: 12px"></div>
+  </div>
+
+  <div style="display: grid; grid-template-columns: 54px 1fr 176px; gap: 0">
+    <div style="background:#16150f;color:#fff;font-size:11px;font-weight:600;padding:8px 9px">TP</div>
+    <div style="background:#16150f;color:#fff;font-size:11px;font-weight:600;padding:8px 10px">ĐO Ở ĐÂU</div>
+    <div style="background:#16150f;color:#fff;font-size:11px;font-weight:600;padding:8px 10px">KẾT QUẢ ĐÚNG</div>
+
+    <div style="border-bottom:1px solid #e6e2db;padding:10px 9px;font-family:'IBM Plex Mono',ui-monospace,monospace;font-size:13px;font-weight:600">1</div>
+    <div style="border-bottom:1px solid #e6e2db;padding:10px 10px;font-size:12.5px">GPIO 18, khi HC-SR04 đang phát</div>
+    <div style="border-bottom:1px solid #e6e2db;padding:10px 10px;font-size:12.5px;font-weight:600">không vượt 3,3 V</div>
+
+    <div style="border-bottom:1px solid #e6e2db;padding:10px 9px;font-family:'IBM Plex Mono',ui-monospace,monospace;font-size:13px;font-weight:600">2</div>
+    <div style="border-bottom:1px solid #e6e2db;padding:10px 10px;font-size:12.5px">GPIO 34, khi bơm tắt</div>
+    <div style="border-bottom:1px solid #e6e2db;padding:10px 10px;font-size:12.5px;font-weight:600">khoảng 1,25 V</div>
+
+    <div style="border-bottom:1px solid #e6e2db;padding:10px 9px;font-family:'IBM Plex Mono',ui-monospace,monospace;font-size:13px;font-weight:600">3</div>
+    <div style="border-bottom:1px solid #e6e2db;padding:10px 10px;font-size:12.5px">GPIO 27 xuống GND, phao mức cao đang nổi</div>
+    <div style="border-bottom:1px solid #e6e2db;padding:10px 10px;font-size:12.5px;font-weight:600">thông mạch</div>
+
+    <div style="border-bottom:1px solid #e6e2db;padding:10px 9px;font-family:'IBM Plex Mono',ui-monospace,monospace;font-size:13px;font-weight:600">4</div>
+    <div style="border-bottom:1px solid #e6e2db;padding:10px 10px;font-size:12.5px">GPIO 14 xuống GND, bồn nguồn còn nước</div>
+    <div style="border-bottom:1px solid #e6e2db;padding:10px 10px;font-size:12.5px;font-weight:600">thông mạch</div>
+
+    <div style="border-bottom:1px solid #e6e2db;padding:10px 9px;font-family:'IBM Plex Mono',ui-monospace,monospace;font-size:13px;font-weight:700;color:#a01b1b">5</div>
+    <div style="border-bottom:1px solid #e6e2db;padding:10px 10px;font-size:12.5px;font-weight:600;color:#a01b1b">Chân VIN, TRONG LÚC bơm khởi động</div>
+    <div style="border-bottom:1px solid #e6e2db;padding:10px 10px;font-size:12.5px;font-weight:700;color:#a01b1b">không tụt dưới 4,7 V</div>
+
+    <div style="border-bottom:1px solid #e6e2db;padding:10px 9px;font-family:'IBM Plex Mono',ui-monospace,monospace;font-size:13px;font-weight:600">6</div>
+    <div style="border-bottom:1px solid #e6e2db;padding:10px 10px;font-size:12.5px">GPIO 33, khi bấm SW1</div>
+    <div style="border-bottom:1px solid #e6e2db;padding:10px 10px;font-size:12.5px;font-weight:600">xuống mức thấp</div>
+
+    <div style="border-bottom:1px solid #e6e2db;padding:10px 9px;font-family:'IBM Plex Mono',ui-monospace,monospace;font-size:13px;font-weight:700;color:#a01b1b">7</div>
+    <div style="border-bottom:1px solid #e6e2db;padding:10px 10px;font-size:12.5px;font-weight:600;color:#a01b1b">Dây vàng cảm biến lưu lượng, CHƯA nối ESP32, đã cấp 5 V</div>
+    <div style="border-bottom:1px solid #e6e2db;padding:10px 10px;font-size:12px;font-weight:600;color:#a01b1b">~0 V → nối thẳng<br>~5 V → phải chia áp</div>
+
+    <div style="border-bottom:1px solid #e6e2db;padding:10px 9px;font-family:'IBM Plex Mono',ui-monospace,monospace;font-size:13px;font-weight:700;color:#a01b1b">8</div>
+    <div style="border-bottom:1px solid #e6e2db;padding:10px 10px;font-size:12.5px;font-weight:600;color:#a01b1b">GPIO 4 và GPIO 19 lúc nghỉ, sau khi nối và nạp firmware</div>
+    <div style="border-bottom:1px solid #e6e2db;padding:10px 10px;font-size:12px;font-weight:700;color:#a01b1b">khoảng 3,3 V<br>KHÔNG được ~1 V</div>
+  </div>
+
+  <div style="background:#fdecec;border:2px solid #d92b2b;border-radius:6px;padding:14px 16px">
+    <div style="font-size:13.5px;font-weight:700;color:#a01b1b">TP8 đo ra khoảng 1 V là bạn đang mắc đúng lỗi đã gặp</div>
+    <div style="font-size:12.5px;color:#7d1616;margin-top:7px;line-height:1.55">Vừa bật kéo lên nội bộ vừa có chia áp. Chân sẽ đếm hàng nghìn xung giả mỗi giây, cảm biến đọc ra hơn 500 L/phút khi bơm chưa chạy. Bỏ chia áp đi.</div>
+    <div style="font-size:13.5px;font-weight:700;color:#a01b1b;margin-top:11px">TP5 quan trọng nhất của cấu hình bơm 5 V</div>
+    <div style="font-size:12.5px;color:#7d1616;margin-top:7px;line-height:1.55">Tụt dưới 4,7 V là ESP32 khởi động lại: thiếu tụ C2, dây nhánh bơm quá nhỏ, đấu đất kiểu chuỗi, hoặc buck không đủ dòng.</div>
+  </div>
+
+  <div style="border:1.8px solid #16150f;border-radius:6px;padding:14px 16px">
+    <div style="font-size:13.5px;font-weight:700;margin-bottom:9px">Tuyệt đối không</div>
+    <div style="display:flex;flex-direction:column;gap:6px;font-size:12.5px;color:#3a3529;line-height:1.45">
+      <div>Nối thẳng ECHO của HC-SR04 vào ESP32 khi chưa qua chia áp</div>
+      <div><b>Thêm chia áp cho hai dây vàng cảm biến lưu lượng khi đã bật kéo lên nội bộ</b></div>
+      <div>Cấp 5 V vào chân 3V3, hoặc cấp đồng thời cả VIN và 3V3</div>
+      <div>Lấy nguồn bơm từ chân 5 V trên bo ESP32</div>
+      <div>Dùng tiếp điểm NC của rơ le</div>
+      <div>Mắc ACS712 song song với bơm</div>
+      <div>Bỏ điốt D1, dù bơm nhỏ tới đâu</div>
+      <div>Nối đất kiểu chuỗi, mọi GND phải về thẳng điểm sao</div>
+      <div>Bó chung dây bơm với dây cảm biến siêu âm</div>
+    </div>
+  </div>
+
+  <div style="background:#f4f1ea;border:1.5px solid #cfc8ba;border-radius:6px;padding:13px 16px;margin-top:auto">
+    <div style="font-size:13px;font-weight:700">Thứ tự nạp sau khi lắp xong</div>
+    <div style="font-size:12.5px;color:#3a3529;margin-top:6px;line-height:1.5">Nạp lần lượt năm chương trình kiểm thử theo bảy bước lắp ráp, mỗi bước chạy đúng mới sang bước sau. Xong hết mới nạp phần sụn chính. Đừng lắp cả mạch rồi nạp một lần.</div>
+  </div>
+</div>
+</x-dc>
+</body>
+</html>

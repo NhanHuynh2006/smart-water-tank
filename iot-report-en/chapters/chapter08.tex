@@ -1,0 +1,225 @@
+\chapter{EXPERIMENTS, RESULTS AND CONCLUSION}
+
+\section{Principles and reference instruments}
+
+Three principles apply to the whole experimental programme: every measurement must have a reference standard independent of the system under evaluation; every experiment must be repeated enough times to yield a dispersion figure and not merely a mean; and results must be reported through standardised statistical indicators rather than qualitative remarks \cite{bentley2005, jcgm100}. The reference instruments are a millimetre scale attached to the tank wall, an electronic balance with one gram resolution, a multimeter, and a system clock synchronised over the network. The balance was chosen as the volume reference because at room temperature the density of water is close enough to one kilogram per litre that the conversion error is far smaller than the error of the sensor being evaluated. The indicators used throughout are the per point error $e_i = x_{meas,i} - x_{ref,i}$, the mean absolute error $MAE = \frac{1}{n}\sum |e_i|$ and the root mean square error.
+
+\begin{table}[H]
+\caption{Plan of the eight experiments.}
+\label{tab:expsummary}
+\centering
+\renewcommand{\arraystretch}{1.05}
+\begin{tabular}{|p{0.7cm}|p{4.0cm}|p{1.6cm}|p{6.2cm}|}
+\hline
+\rowcolor[HTML]{B7E1F0}
+\textbf{ID} & \textbf{Subject} & \textbf{Repeats} & \textbf{Reported result} \\
+\hline
+E1 & Level calibration & 10 points & MAE, RMSE, regression coefficients \\
+\hline
+E2 & Flow calibration & 5 runs & Factor $K$, deviation from datasheet \\
+\hline
+E3 & Volume error & 5 runs & Relative error of two estimation methods \\
+\hline
+E4 & Control response & 5 runs & Fill time, overshoot \\
+\hline
+E5 & Dry run detection delay & 10 runs & Mean, standard deviation, false alarms \\
+\hline
+E6 & Sensor faults and leaks & 5 leak rates & Smallest detectable leak rate \\
+\hline
+E7 & Latency and outage & 5 runs & Median, 95th percentile, lost messages \\
+\hline
+E8 & Control policy comparison & 3 runs & Reduction in switching count \\
+\hline
+\end{tabular}
+\end{table}
+
+\textbf{Note.} The result tables below are intentionally left blank. They must be filled with data measured on the physical prototype, never with estimates or with figures taken from simulation.
+
+\section{Sensor calibration}
+
+\textbf{E1.} Fill the tank in steps, stopping at ten levels evenly spread from empty to full. At each level read the reference value from the scale and record three dashboard readings five seconds apart. A linear regression between reference and measured values yields the two coefficients loaded into the firmware; after loading them, three arbitrary points are remeasured to confirm the error has fallen.
+
+\textbf{E2.} Place the collecting vessel on the balance and tare it, run the pump for exactly 60 seconds, then record the collected mass and the pulse count, repeating five times. The real factor is $K_{meas} = N_{pulses}/(60 V_{ref})$ and the deviation from the datasheet is $\delta_K = (K_{meas}-K_{nom})/K_{nom}$.
+
+\begin{table}[H]
+\caption{Calibration results for the two main sensors.}
+\label{tab:calib}
+\centering
+\renewcommand{\arraystretch}{1.05}
+\begin{tabular}{|p{6.6cm}|p{3.0cm}|p{3.2cm}|}
+\hline
+\rowcolor[HTML]{B7E1F0}
+\textbf{Indicator} & \textbf{Before calibration} & \textbf{After calibration} \\
+\hline
+E1: mean absolute error (cm) & & \\ \hline
+E1: root mean square error (cm) & & \\ \hline
+E1: slope $a$ and offset $b$ & & \\ \hline
+E1: coefficient of determination and worst repeatability & & \\ \hline
+E2: measured factor $K$ & \multicolumn{2}{c|}{} \\ \hline
+E2: deviation $\delta_K$ from datasheet (\%) & \multicolumn{2}{c|}{} \\ \hline
+\end{tabular}
+\end{table}
+
+\textbf{Discussion points.} For E1 the report must state whether the error is spread evenly across the span or concentrated in one region, and whether repeatability is small enough relative to the hysteresis width, since if the two are comparable the control design loses its effect. For E2 the essential content is explaining the cause of the deviation: as analysed in Section 3.3 the operating point sits near the lower limit of the measuring span, so a large deviation is a predictable outcome rather than an experimental mistake.
+
+\section{Control response and fault detection}
+
+\textbf{E3.} Record the accumulated volume and the initial level, run the pump for 90 seconds, then record all three figures: the volume integrated by the system, the volume derived from the level rise as $V = A \Delta h / 1000$, and the volume weighed on the balance. Beyond quantifying the error, this experiment validates the very assumption the leak rule depends on: if the two estimation methods agree under normal conditions, an unusual divergence between them is a trustworthy leak indicator.
+
+\textbf{E4.} Open the drain valve until the level falls below the low threshold, then let the system run one full fill cycle and export the data from the time series endpoint. Record the level at pump start and stop, the fill duration, and the overshoot as $h_{max} - h_H$. Overshoot reflects the inertia of the plant, since water remaining in the pipe keeps entering the tank after the stop command; this is why the high threshold sits at 80 percent rather than close to the safety limit.
+
+\textbf{E5.} While the pump is running, lift the suction tube out of the water. For accuracy the group does not use a stopwatch but takes the difference between the timestamp of the fault record and the timestamp of the last telemetry message still showing normal flow. In parallel, run the system normally for 30 minutes and count false alarms; this figure matters as much as the delay, because an over sensitive detector makes operators lose trust and ignore alerts.
+
+\textbf{E6.} Part A creates three sensor fault situations: unplug the ultrasonic signal wire, engage the upper float by hand while the tank is nearly empty, and place an obstacle close to the transducer. Part B slightly opens the drain valve at five different flow rates while the pump is off, holding each for three minutes.
+
+\begin{table}[H]
+\caption{Control response and fault detection results.}
+\label{tab:e345}
+\centering
+\renewcommand{\arraystretch}{1.05}
+\begin{tabular}{|p{7.4cm}|p{5.4cm}|}
+\hline
+\rowcolor[HTML]{B7E1F0}
+\textbf{Quantity} & \textbf{Result} \\
+\hline
+E3: relative error of the flow integration method (\%) & \\ \hline
+E3: relative error of the level based method (\%) & \\ \hline
+E4: actual pump start and stop levels (\%) & \\ \hline
+E4: mean fill time and mean overshoot & \\ \hline
+E5: dry run detection delay, mean and standard deviation (s) & \\ \hline
+E5: false alarms over 30 minutes & \\ \hline
+E6: three sensor fault rules fired correctly & \\ \hline
+E6: smallest detectable leak rate (L/min) & \\ \hline
+E6: precision $P$ and recall $R$ & \\ \hline
+\end{tabular}
+\end{table}
+
+\textbf{Discussion points.} Compare the actual start and stop levels against the configured thresholds, since the gap reflects the delay of the sensing and processing chain, and assess the overshoot against the 15 percent safety margin. For E5, compare the measured delay against the configured 6 second window. For E6, the lower detection limit is almost certainly set by the minimum starting flow of the turbine rather than by the algorithm, and the report should say so explicitly. The E4 result is best presented as a level against time plot with the pump state overlaid and both thresholds marked.
+
+\section{Latency and behaviour during an outage}
+
+\textbf{E7, and why the headline number is the round trip.} The group deliberately reports the command round trip as the primary latency result, not the one way telemetry delay, and the reason is methodological rather than presentational.
+
+A one way delay is computed as $t_{\text{recv}} - t_{\text{send}}$, where the two terms are read from two different clocks: the server clock and the microcontroller clock. The difference therefore carries the offset between those clocks as a systematic error. The device disciplines its clock over the network time protocol, but the accuracy achievable that way on a microcontroller over Wi-Fi is on the order of tens of milliseconds, which is the same order as the quantity being measured. Immediately after a reboot the group observed an apparent offset of about 1100 milliseconds while the round trip at that same moment was only 187 milliseconds, which is a direct demonstration that the one way figure was reporting clock skew rather than transport delay.
+
+The round trip has no such term. The server stamps the moment it publishes the command and the moment the acknowledgement returns, so both readings come from a single clock and the offset cancels exactly. This is the standard argument behind the round trip time in the network time protocol itself, and it is the reason the group treats the value in Table \ref{tab:e78} as the result of record.
+
+\textbf{A measurement defect found and corrected.} The first implementation carried a device timestamp at one second resolution. The quantisation error of that field alone is up to 500 milliseconds, which exceeds the transport delay being measured, so the computed one way latency was dominated by rounding. The measured median of 844.6 milliseconds over 372 samples was an artefact of the field width, not a property of the network. The group added a parallel field at millisecond resolution while keeping the original field for compatibility, and the same measurement then returned a median of 245.0 milliseconds. Reporting the earlier figure would have overstated the true delay by roughly a factor of three.
+
+The lesson generalises beyond this project: the resolution of an instrument must be finer than the effect it is meant to resolve, otherwise the instrument measures itself.
+
+\textbf{The outage procedure.} The outage test demonstrates the mandatory requirement of the assignment. The procedure isolates the device alone, leaving the broker and the backend connected to each other, because that is the failure the requirement describes. Blocking traffic from the device address for a fixed interval reproduces a lost access point without disturbing the rest of the stack.
+
+The group notes that an earlier attempt stopped the broker process instead. That method is not equivalent: it disconnects the device and the backend simultaneously, and because the telemetry topic uses quality of service zero without retention, the replayed batch is published in the interval between the device reconnecting and the backend resubscribing, and the broker discards it with no subscriber present. The broker log showed the device reconnecting one second before the backend, and none of the sixty replayed messages reached storage. This is recorded here because it is a genuine property of the design rather than an experimental accident: an outage that also restarts the broker loses the buffered history, and the limitations section below revisits it.
+
+\begin{table}[H]
+\caption{Latency, outage behaviour and control policy comparison results.}
+\label{tab:e78}
+\centering
+\renewcommand{\arraystretch}{1.05}
+\begin{tabular}{|p{7.4cm}|p{5.4cm}|}
+\hline
+\rowcolor[HTML]{B7E1F0}
+\textbf{Quantity} & \textbf{Result} \\
+\hline
+E7: command round trip, median and 95th percentile (ms) \textbf{(result of record)} & 225.8 and 575.3, $n = 14$, range 54.5 to 703.2 \\ \hline
+E7: telemetry one way at millisecond resolution (ms) & 245.0 and 708.5, $n = 55$, for comparison only \\ \hline
+E7: telemetry one way at the original second resolution (ms) & 844.6 and 1482.6, $n = 372$, quantisation artefact \\ \hline
+E7: did the pump start on its own during the outage & no, the interlock held throughout \\ \hline
+E7: messages buffered and successfully replayed & 32, sequence 598 to 629, against a 240 entry buffer \\ \hline
+E7: messages lost outright and reconnection time (s) & 10 lost, sequence 588 to 597; outage 60.0 s \\ \hline
+E8: switching count of configuration A, single threshold & 472 per hour, simulated \\ \hline
+E8: switching count of configuration B, hysteresis band & 8 per hour, simulated \\ \hline
+E8: reduction $\eta$ (\%) & 98.3, simulated \\ \hline
+E8: time outside the target band for A and for B (s) & 0.0 and 0.0, simulated \\ \hline
+\end{tabular}
+\end{table}
+
+\textbf{Reading the outage result honestly.} Thirty two entries against a buffer of 240 means the buffer was filled to roughly thirteen percent, so a four minute outage remains within capacity and only a longer one would begin to discard the oldest samples.
+
+The ten lost messages deserve more attention than the thirty two that survived. They were not dropped by the network. They were published by the firmware into a socket that the client still believed was open. A transmission control protocol connection severed by a silent packet drop is not detected at the moment of the drop; it is detected when the keep alive interval expires, which is fifteen seconds in this configuration. The firmware buffers only once its client reports a disconnection, so every sample generated inside the detection window is written to a dead socket and lost. The buffer is therefore not a complete guarantee against loss, and the residual gap is bounded by the keep alive interval rather than by the buffer size. Shortening the keep alive would narrow the window at the cost of more frequent traffic.
+
+\textbf{E8.} This experiment demonstrates that the control design is meaningful rather than merely functional. Configuration A uses thresholds of 49 and 51 percent with no timing constraints, approximating a single threshold. Configuration B uses 30 and 80 percent together with both timing constraints. Each configuration runs the same ten minute continuous draw scenario three times, and the reduction is $\eta = (N_A - N_B)/N_A$.
+
+Using one fixed target band from 25 to 85 percent for both configurations is the methodological crux. If the target band were taken to be each configuration own hysteresis band, the wider band would always win for a meaningless reason. Switching counts are obtained from the pump event table by query. Before running on hardware, the group swept ten configurations on the simulator of Section 5.4, because each parameter change on hardware costs roughly fifteen minutes while the model runs in seconds. The values in Table \ref{tab:e78} are the simulated sweep; the hardware repetition is pending the tank assembly.
+
+\section{Reducing transport latency at the radio}
+
+\textbf{E9.} While reading the E7 figures the group noticed that the spread of the round trip was wider than a local wireless network should produce, with a 95th percentile near 900 milliseconds on a link whose signal strength was better than $-20$ dBm. The cause was traced to the radio rather than to the software: the device firmware never disabled the Wi-Fi power saving mode, and the Arduino port for this microcontroller enables modem sleep by default. In that mode the receiver is powered down between beacon intervals, so a packet arriving at the access point waits until the next scheduled wake before it is processed.
+
+The intervention is a single call placed immediately after the network association. The experiment holds everything else fixed, sends the same number of commands by the same route, and compares the distributions.
+
+\begin{table}[H]
+\caption{Command round trip before and after disabling Wi-Fi power saving. Same device, same access point, same procedure.}
+\label{tab:e9}
+\centering
+\renewcommand{\arraystretch}{1.05}
+\begin{tabular}{|p{5.0cm}|p{2.6cm}|p{2.6cm}|p{2.0cm}|}
+\hline
+\rowcolor[HTML]{B7E1F0}
+\textbf{Statistic} & \textbf{Power saving on} & \textbf{Power saving off} & \textbf{Change} \\
+\hline
+Minimum (ms)          & 144 & 29  & $-80$\% \\ \hline
+Median (ms)           & 462 & 187 & $-60$\% \\ \hline
+95th percentile (ms)  & 884 & 315 & $-64$\% \\ \hline
+Maximum (ms)          & 906 & 402 & $-56$\% \\ \hline
+Samples               & 12  & 12  & \\ \hline
+\end{tabular}
+\end{table}
+
+The improvement is largest in the tail, which is the expected signature of a scheduling effect rather than a bandwidth effect: the beacon interval sets an upper bound on how long a packet can wait, so removing it truncates the slow cases without changing the fast ones by much.
+
+\textbf{The cost.} The change is not free. Keeping the receiver awake raises the continuous current draw of the module by roughly a factor of two, which is immaterial for a mains powered tank controller but would be decisive for a battery powered node. The group reports the trade off rather than the improvement alone, because a latency figure quoted without its power cost is not an engineering result.
+
+\textbf{What this does not change.} Disabling modem sleep shortens the transport delay. It does not alter the control period of 200 milliseconds or the telemetry period of one second, and it therefore does not change how quickly the tank reacts to a change in water level. The control period is set by the sampling argument of Section 2.4 and reducing it further would consume power without improving control quality.
+
+\section{Limitations}
+
+The group believes that pointing precisely at where the design falls short carries as much engineering value as presenting what worked.
+
+On hardware, the most serious limitation is that the flow sensor operating point sits near the lower limit of its measuring span, which propagates into the accuracy of the volume computation, the dry run threshold and the lower bound of leak detection; the fix is a sensor whose range matches the present pump. Next, the current measurement is marginal rather than merely coarse, and the arithmetic is worth stating because it decides whether the rule works at all. The fitted pump draws at most 200 milliamperes. A Hall sensor of the 5 ampere variant produces 185 millivolts per ampere, so the full signal is 37 millivolts, and the two to one divider that centres the quiescent point inside the converter range halves it again to 18.5 millivolts. The threshold that declares the pump energised sits at 15 millivolts, which leaves a margin of under a quarter. The 20 and 30 ampere variants of the same part yield 10.0 and 6.6 millivolts respectively, both below the threshold, so with either of those the rule could never fire however correctly the circuit was wired. The load is simply too small for the part: it uses four percent of the sensor span. A shunt resistor of one ohm on the low side would develop 200 millivolts for the same current, an order of magnitude more signal, at the cost of four percent of the supply voltage. Finally, the blind zone of the ultrasonic sensor forces the bracket 30 centimetres above the tank rim, making the structure bulky and prone to vibration.
+
+On measurement, the group no longer relies on a one way difference of two clocks for its headline latency figure, and Section 8.4 explains why; the residual limitation is that the clock synchronisation error was characterised only by observation, never measured against a reference, so the one way column is reported for comparison and not as a result. Two further limitations surfaced during the outage experiment. The buffer protects only the samples generated after the client detects the broken connection, so a window bounded by the fifteen second keep alive interval is lost at the start of every outage regardless of buffer size. And because the telemetry topic uses quality of service zero with a clean session on the subscriber, an outage that also restarts the broker discards the entire replayed batch, since the device reconnects and flushes before the backend has resubscribed; a persistent session with quality of service one on that topic would close the gap at the cost of broker side storage. Repeat counts of three to ten suffice for a mean and a standard deviation but not for rigorous hypothesis testing. The baseline algorithm needs several days of data to converge, so only its startup phase could be evaluated here. On architecture, the system has a single node so distributed systems concerns never arise, the choice of polling over a persistent channel is right at the present scale but will not remain so, and there is no remote firmware update mechanism.
+
+On the interface, a defect that survived three separate inspections is worth recording because of how it hid rather than because of its size. The query that feeds the history charts applied its row limit after ordering the window in ascending time, so it returned the oldest rows of the window rather than the newest. At the specified rate of one message per second a ten minute window holds six hundred rows and never reaches the two thousand row limit, so the fault was invisible in every ordinary session. Running the simulator at ten times real time raises the rate to roughly five messages per second, the window then holds close to three thousand rows, and the charts silently froze in the past while the live status panel beside them continued to update. Nothing failed and nothing was logged; the two halves of the same screen simply disagreed.
+
+The general lesson is that a pagination limit at the query layer must truncate from the end that is being discarded, not from the end being displayed. Ordering ascending and then limiting is correct only while the result set is known to fit, which makes it a latent fault that waits for the data rate to rise. The corrected query selects the newest rows first and reorders them for plotting. The group notes that the defect was found only because the acceleration factor of the simulator pushed the system past a threshold the specified rate never approaches, which is an argument for exercising a system deliberately outside its nominal operating point rather than only at it.
+
+Future directions include model based diagnosis by running the tank model in parallel with the real device \cite{isermann2006}, sensor fusion with a Kalman filter, continuous speed control through pulse width modulation instead of on off switching, multi node expansion, and migration to a dedicated time series store. The group considers the first of these the most valuable academically, since the hydraulic model already exists for the parameter sweep, so turning it into a parallel observer is a natural extension that needs no additional hardware.
+
+\section{Conclusion}
+
+The project has delivered a complete closed loop water management system spanning all five architectural layers from physical sensing to a real time monitoring interface, with every line of source code written by the group.
+
+The main technical contribution rests on three points. First, the architectural decision to place the entire control law and all diagnostic logic inside the edge microcontroller, derived from the rule that any operation requiring an immediate safe stop must be computed at the edge. That decision turns the outage requirement from a feature to be added into a natural consequence of the design. Second, the treatment of safety constraints: instead of scattering checks across the code, the group funnels every pump starting path through one guard function, so the requirement that manual mode cannot override safety is guaranteed by program structure rather than by the diligence of whoever writes the code; alongside this, four independent overflow protection layers exist, of which the last two remain effective even when the sensor has failed or the microcontroller has lost power. Third, the treatment of data: both main sensors were calibrated against physical references instead of trusting datasheet figures, the control parameters were selected from a sweep on the hydraulic model, and the value of the control policy was demonstrated by a direct comparison experiment on a common scenario under a common quality criterion.
+
+In terms of learning outcomes, building this system tied together material that the first six weeks of the course present separately, from sensor physics and analog to digital conversion, through power stage design, to application layer messaging and time series data infrastructure. Making those pieces work together on a real prototype was the part from which the group learned the most.
+
+\section{Member contributions}
+
+\begin{table}[H]
+\caption{Distribution of work among group members.}
+\label{tab:phancong}
+\centering
+\renewcommand{\arraystretch}{1.15}
+\begin{tabular}{|p{4.2cm}|p{8.8cm}|}
+\hline
+\rowcolor[HTML]{B7E1F0}
+\textbf{Member} & \textbf{Area of responsibility} \\
+\hline
+[Full name of member 1], [ID] & [Fill in area of responsibility] \\
+\hline
+[Full name of member 2], [ID] & [Fill in area of responsibility] \\
+\hline
+[Full name of member 3], [ID] & [Fill in area of responsibility] \\
+\hline
+[Full name of member 4], [ID] & [Fill in area of responsibility] \\
+\hline
+[Full name of member 5], [ID] & [Fill in area of responsibility] \\
+\hline
+\end{tabular}
+\end{table}
+
+Suggested grouping for the five members: hardware and circuitry; firmware and control; calibration and experiments; backend and database; interface and report. The assignment requires every member to present and answer technical questions, so the table records who led each area rather than limiting anyone scope of understanding.
+
+The schedule spans six weeks: week one freezes the protocol specification, sets up the repository, runs the parameter sweep and orders components; week two assembles the circuit in seven steps and reaches the broker; week three runs E1 and E2, loads the calibration coefficients and completes the backend and interface; week four implements and tunes the fault detection rules; week five runs E3 through E8, collects the data and records a backup video; week six writes the report, prepares the slides and rehearses. Deliverables are a working physical prototype, the firmware with four unit test programs, the backend and dashboard source, the simulator, the protocol specification document, the raw data set and the backup demonstration video.

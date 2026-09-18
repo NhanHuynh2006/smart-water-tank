@@ -1,0 +1,19 @@
+\chapter{INTRODUCTION}
+
+\section{Motivation and problem statement}
+
+Household water management in Vietnam still relies largely on a mechanical float placed inside the storage tank. The device is cheap and durable, but it solves exactly one problem: cutting the pump when the tank is full. The owner has no idea how much water was consumed, cannot notice a pipe leak until the bill rises unexpectedly, and has no way of knowing that the pump is running dry until it has already failed.
+
+The problem carries every characteristic of a cyber physical system, meaning a system in which computation, communication and a physical process are tied together through feedback loops \cite{slide01}. A physical quantity is measured, digitised, transported to a data infrastructure, turned into a decision, and finally acted back upon the same physical process through an actuator.
+
+From an engineering point of view the tank is a nonlinear plant carrying a hard safety constraint. Discharge flow depends on the square root of the water column height, so the plant response changes with the current level. At the same time there is one constraint that may never be violated under any circumstance, including a manual command issued by an operator: the tank must not overflow. Having to guarantee control quality and an absolute safety constraint at the same time is what lifts this project above a simple exercise in wiring a sensor to a display.
+
+The system must therefore address four groups of problems: measuring level and flow with an error budget established experimentally rather than copied from a datasheet; holding the level inside a desired band without letting the pump chatter around the switching threshold; detecting abnormal hydraulic operating modes; and providing remote supervision through a time series store and a real time interface. Overarching all of them is a single requirement that shapes the whole architecture: essential level control must keep working when the network link is lost.
+
+\section{Scope and working method}
+
+The system is built at laboratory prototype scale with one sensing node, a tank of roughly ten litres and a low voltage direct current pump. The entire electrical side operates at safe extra low voltage. Distributed multi node deployment, machine learning based consumption forecasting and integration with a commercial cloud platform are outside the scope of this work.
+
+The group organised the work along the V model introduced in the project management part of the course \cite{slide01}, in which every decomposition step on the descending branch has a matching verification step on the ascending branch: requirement analysis pairs with full system acceptance, architectural design pairs with integration testing, protocol specification pairs with protocol level testing, and circuit design pairs with unit testing of each individual sensor.
+
+One methodological decision deserves emphasis. The group specified the complete MQTT topic tree, the message payloads, the set of API endpoints and the database schema before writing a single line of code. That specification acted as an internal contract, which allowed the firmware branch, the backend branch and the interface branch to advance in parallel instead of waiting on one another. While components had not yet arrived, a simulator publishing messages that conform to the agreed specification let the other two branches be developed and tested in full.

@@ -1,0 +1,14 @@
+# Nguyen tac dac quyen toi thieu.
+# Thiet bi bien chi duoc ghi nhanh cua chinh no, chi duoc doc chu de lenh cua chinh no.
+user device1
+topic write wt/lab1/esp32-01/telemetry
+topic write wt/lab1/esp32-01/state/pump
+topic write wt/lab1/esp32-01/event/fault
+topic write wt/lab1/esp32-01/status
+topic write wt/lab1/esp32-01/cmd/ack
+topic read  wt/lab1/esp32-01/cmd
+
+# Dich vu nen duoc ghi chu de lenh va doc toan bo nhanh huong bac.
+user backend
+topic write wt/lab1/esp32-01/cmd
+topic read  wt/lab1/#

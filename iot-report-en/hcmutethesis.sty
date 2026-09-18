@@ -1,0 +1,187 @@
+\ProvidesPackage{hmcutethesis}
+\RequirePackage{graphicx}
+\RequirePackage{geometry}
+\RequirePackage{setspace}
+\RequirePackage{hyperref}
+
+% \usepackage{geometry}
+\def\thesislayout{	% A4: 210 × 297
+	\geometry{
+		a4paper,
+		left=30mm,
+        right=20mm,
+		top=25mm,
+        bottom=25mm,
+	}
+}
+
+\newcommand{\@sdeptname}{DEPARTMENT OF COMPUTER AND COMMUNICATION ENGINEERING}
+\newcommand{\csdeptname}[1]{\renewcommand{\@sdeptname}{#1}}
+
+\newcommand{\@tname}{THESIS TITLE}
+\newcommand{\ctname}[1]{\renewcommand{\@tname}{#1}}
+
+\newcommand{\@stuname}{SVTH: Nguyễn Văn An \\[1.5cm]  MSSV: XXXXXXXXX \\ Nguyễn Văn An \\[1.5cm]  MSSV: XXXXXXXXX }
+\newcommand{\cstuname}[1]{\renewcommand{\@stuname}{#1}}
+
+\newcommand{\@sCouncil}{Khoa học máy tính 1}
+\newcommand{\csCouncil}[1]{\renewcommand{\@sCouncil}{#1}}
+
+\newcommand{\@sReviewer}{TS. A}
+\newcommand{\csReviewer}[1]{\renewcommand{\@sReviewer}{#1}}
+	
+\newcommand{\@sSupervise}{TS. Nguyễn Văn A}
+\newcommand{\csSupervise}[1]{\renewcommand{\@sSupervise}{#1}}
+
+\newcommand{\@ttime}{\today}
+\newcommand{\cttime}[1]{\renewcommand{\@ttime}{#1}}
+
+\newcommand{\@rname}{\textbf{FINAL COURSE PROJECT}} 
+\newcommand{\crname}[1]{\renewcommand{\@rname}{#1}}
+
+\newcommand{\@mjname}{\textbf{MAJOR IN EMBEDDED SYSTEMS AND IOT}} 
+\newcommand{\cmjname}[1]{\renewcommand{\@mjname}{#1}}
+
+\newsavebox\thesmashminipage
+\newenvironment{smashminipage}
+  {\begin{lrbox}{\thesmashminipage}\begin{minipage}[t]{\textwidth}}
+  {\end{minipage}\end{lrbox}\smash{\usebox{\thesmashminipage}}\clearpage}
+  
+\def\coverpage{
+\pagestyle{empty}
+
+%% trang bìa
+\begin{smashminipage} 
+\begin{tikzpicture}[remember picture, overlay]
+\draw [line width=1pt]
+     ($ (current page.north west) + (3.0cm,-2.0cm) $)
+     rectangle
+     ($ (current page.south east) + (-1.5cm,1.5cm) $);
+ \draw [line width=3pt]
+     ($ (current page.north west) + (3.15cm,-2.15cm) $)
+     rectangle
+     ($ (current page.south east) + (-1.65cm,1.65cm) $); 
+\end{tikzpicture}
+
+\begin{center}
+\begin{large}
+\textbf{HO CHI MINH CITY UNIVERSITY OF TECHNOLOGY AND EDUCATION}\\
+\textbf{FACULTY OF ELECTRICAL AND ELECTRONICS ENGINEERING}\\
+\textbf{\@sdeptname}
+\end{large} \\
+\textbf{}\\[1cm]
+ \includegraphics[scale=0.8]{fig/hcmutelogo.png}\\[0.5cm]
+    {\fontsize{16}{1}\selectfont \@rname }\\[1cm]
+    {\parbox{0.86\linewidth}{\centering \fontsize{18}{24}\selectfont \@tname}}\\[0.8cm]
+    {\fontsize{14}{1}\selectfont \@mjname }\\[0.6cm]
+\end{center}
+
+    % {\fontsize{20}{1}\selectfont \textbf{\parbox[c][3cm]{0.9\linewidth}{ \centering \@tname }}} \\[1cm]
+
+{\fontsize{13}{1}\selectfont 
+\hspace{4cm}\parbox[t]{11cm}{
+    \textbf{Students: } \parbox[t]{9.2cm}{\@stuname}\\[0.9cm]
+    \textbf{Supervisor: }  \parbox[t]{9.2cm}{\@sSupervise} 
+	\hspace{2.2cm}	
+}
+}
+\vspace{0.25cm}
+\begin{center}
+ {\fontsize{14}{1}\selectfont HO CHI MINH CITY, \@ttime }\\
+\end{center}
+\end{smashminipage}
+
+%% trang bìa lót
+\begin{smashminipage} 
+\begin{tikzpicture}[remember picture, overlay]
+\end{tikzpicture}
+
+\begin{center}
+\begin{large}
+\textbf{HO CHI MINH CITY UNIVERSITY OF TECHNOLOGY AND EDUCATION}\\
+\textbf{FACULTY OF ELECTRICAL AND ELECTRONICS ENGINEERING}\\
+\textbf{\@sdeptname}
+\end{large} \\
+\textbf{}\\[1cm]
+ \includegraphics[scale=0.8]{fig/hcmutelogo.png}\\[0.5cm]
+    {\fontsize{16}{1}\selectfont \@rname }\\[1cm]
+    {\parbox{0.86\linewidth}{\centering \fontsize{18}{24}\selectfont \@tname}}\\[0.8cm]
+    {\fontsize{14}{1}\selectfont \@mjname }\\[0.6cm]
+\end{center}
+
+{\fontsize{13}{1}\selectfont 
+\hspace{4cm}\parbox[t]{11cm}{
+   \textbf{Students: } \parbox[t]{9.2cm}{\@stuname}\\[0.9cm]
+   \textbf{Supervisor: } \parbox[t]{9.2cm}{\@sSupervise} 
+	\hspace{1.2cm}	
+
+}
+}
+\vspace{0.25cm}
+\begin{center}
+ {\fontsize{14}{1}\selectfont HO CHI MINH CITY, \@ttime }\\
+
+\end{center}
+
+\end{smashminipage}
+}
+
+
+
+
+
+
+
+
+
+\def\makeprintversion{}
+
+\makeatletter
+\newenvironment{abstract}{
+  \titlepage 
+  \null
+  \@beginparpenalty\@lowpenalty
+  \begin{center}
+	\bfseries ABSTRACT
+	\@endparpenalty\@M
+  \end{center}}
+ {\par\vfil\null\endtitlepage}
+\makeatother
+
+\makeatletter
+\newenvironment{acknowledgments}{
+	\titlepage \null
+	\normalsize
+	\begin{center}
+	  {\bfseries ACKNOWLEDGMENTS\vspace{-.5em}\vspace{\z@}}
+	\end{center}
+	\quotation
+  }
+\makeatother
+
+% Declaration
+\makeatletter
+\newenvironment{declaration}{
+    \titlepage \null
+	\normalsize
+	\begin{center}
+	  {\bfseries DECLARATION OF AUTHORSHIP \vspace{-.5em}\vspace{\z@}}
+	\end{center}
+	\quotation
+  }
+\makeatother	
+
+% Declaration
+\makeatletter
+\newenvironment{abbreviation}{
+  \titlepage 
+  \null
+  \@beginparpenalty\@lowpenalty
+  \begin{center}
+	\fontsize{24}{1}\selectfont \bfseries List of Abbreviations
+	\@endparpenalty\@M
+  \end{center}}
+ {\par\vfil\null\endtitlepage}
+\makeatother	
+
+

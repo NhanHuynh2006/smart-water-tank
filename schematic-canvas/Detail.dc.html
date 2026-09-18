@@ -1,0 +1,131 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+  <style>
+    body { margin: 0; }
+    a { color: #b45309; } a:hover { color: #7c3f06; }
+    .t { font-family: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif; }
+    .m { font-family: "IBM Plex Mono", ui-monospace, "Courier New", monospace; }
+  </style>
+</helmet>
+
+<div style="width: 1180px; height: 820px; background: #faf9f7; overflow: hidden">
+  <svg width="1180" height="820" viewBox="0 0 1180 820" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <marker id="ar3" markerWidth="9" markerHeight="9" refX="8" refY="4.5" orient="auto">
+        <path d="M0,0 L9,4.5 L0,9 z" fill="context-stroke"></path>
+      </marker>
+    </defs>
+
+    <text x="36" y="44" class="t" font-size="24" font-weight="700" fill="#16150f">Chuỗi công suất và ba linh kiện bảo vệ</text>
+    <text x="36" y="67" class="t" font-size="13" fill="#6b6558">Vị trí đặt quan trọng ngang giá trị linh kiện. Đừng gom về một góc cho gọn.</text>
+    <line x1="36" y1="84" x2="1144" y2="84" stroke="#16150f" stroke-width="2"></line>
+
+    <!-- ===== chuoi ngang ===== -->
+    <text x="36" y="122" class="t" font-size="15" font-weight="700" fill="#16150f">Đường đi của dòng, từ cọc buck tới đất</text>
+
+    <!-- 5V -->
+    <rect x="36" y="146" width="118" height="70" rx="6" fill="#fff3e8" stroke="#e8730c" stroke-width="2"></rect>
+    <text x="95" y="176" class="m" font-size="15" font-weight="700" fill="#b8560a" text-anchor="middle">5 V</text>
+    <text x="95" y="196" class="t" font-size="11" fill="#b8560a" text-anchor="middle">nhánh E</text>
+    <line x1="154" y1="181" x2="212" y2="181" stroke="#e8730c" stroke-width="5" marker-end="url(#ar3)"></line>
+
+    <!-- K1 -->
+    <rect x="218" y="140" width="200" height="82" rx="6" fill="#ffffff" stroke="#16150f" stroke-width="2"></rect>
+    <text x="318" y="166" class="t" font-size="14.5" font-weight="600" fill="#16150f" text-anchor="middle">K1 tiếp điểm</text>
+    <text x="318" y="188" class="m" font-size="13" font-weight="600" fill="#16150f" text-anchor="middle">COM → NO</text>
+    <text x="318" y="209" class="m" font-size="11.5" font-weight="600" fill="#a01b1b" text-anchor="middle">KHÔNG dùng NC</text>
+    <line x1="418" y1="181" x2="476" y2="181" stroke="#e8730c" stroke-width="5" marker-end="url(#ar3)"></line>
+
+    <!-- ACS712 -->
+    <rect x="482" y="140" width="200" height="82" rx="6" fill="#ffffff" stroke="#16150f" stroke-width="2"></rect>
+    <text x="582" y="166" class="t" font-size="14.5" font-weight="600" fill="#16150f" text-anchor="middle">S3 · ACS712</text>
+    <text x="582" y="188" class="m" font-size="13" font-weight="600" fill="#16150f" text-anchor="middle">IP+ → IP−</text>
+    <text x="582" y="209" class="t" font-size="11.5" fill="#6b6558" text-anchor="middle">dòng chảy XUYÊN QUA</text>
+    <line x1="682" y1="181" x2="740" y2="181" stroke="#e8730c" stroke-width="5" marker-end="url(#ar3)"></line>
+
+    <!-- M1 -->
+    <rect x="746" y="140" width="180" height="82" rx="6" fill="#ffffff" stroke="#16150f" stroke-width="2"></rect>
+    <text x="836" y="166" class="t" font-size="14.5" font-weight="600" fill="#16150f" text-anchor="middle">M1 · Bơm 5 V</text>
+    <text x="836" y="188" class="m" font-size="13" fill="#16150f" text-anchor="middle">+ &#8594; &#8722;</text>
+    <text x="836" y="209" class="t" font-size="11.5" fill="#6b6558" text-anchor="middle">tải cảm</text>
+    <line x1="926" y1="181" x2="984" y2="181" stroke="#16150f" stroke-width="5" marker-end="url(#ar3)"></line>
+
+    <!-- GND -->
+    <rect x="990" y="146" width="118" height="70" rx="6" fill="#ffffff" stroke="#16150f" stroke-width="2"></rect>
+    <text x="1049" y="176" class="m" font-size="15" font-weight="700" fill="#16150f" text-anchor="middle">GND</text>
+    <text x="1049" y="196" class="t" font-size="11" fill="#6b6558" text-anchor="middle">về điểm sao</text>
+
+    <!-- D1 va C1 song song M1 -->
+    <line x1="746" y1="222" x2="746" y2="274" stroke="#16150f" stroke-width="2"></line>
+    <line x1="926" y1="222" x2="926" y2="274" stroke="#16150f" stroke-width="2"></line>
+    <line x1="746" y1="274" x2="926" y2="274" stroke="#16150f" stroke-width="2"></line>
+
+    <rect x="700" y="288" width="272" height="118" rx="6" fill="#fdecec" stroke="#d92b2b" stroke-width="2"></rect>
+    <text x="836" y="312" class="t" font-size="13.5" font-weight="700" fill="#a01b1b" text-anchor="middle">Song song NGƯỢC hai cực bơm</text>
+    <text x="716" y="338" class="m" font-size="13" font-weight="700" fill="#7d1616">D1</text>
+    <text x="752" y="338" class="t" font-size="12.5" fill="#7d1616">điốt 1N4007</text>
+    <text x="716" y="358" class="t" font-size="11.5" fill="#7d1616">vạch trắng quay về phía CỰC DƯƠNG</text>
+    <text x="716" y="382" class="m" font-size="13" font-weight="700" fill="#7d1616">C1</text>
+    <text x="752" y="382" class="t" font-size="12.5" fill="#7d1616">tụ gốm 100 nF</text>
+    <text x="716" y="399" class="t" font-size="11.5" fill="#7d1616">hàn thẳng lên chân bơm, càng sát càng tốt</text>
+
+    <!-- C3 -->
+    <line x1="318" y1="222" x2="318" y2="292" stroke="#e8730c" stroke-width="2.5"></line>
+    <rect x="218" y="296" width="200" height="86" rx="6" fill="#fff3e8" stroke="#e8730c" stroke-width="1.8"></rect>
+    <text x="318" y="320" class="m" font-size="13" font-weight="700" fill="#b8560a" text-anchor="middle">C3 · 470 µF ⁄ 16 V</text>
+    <text x="318" y="341" class="t" font-size="11.5" fill="#b8560a" text-anchor="middle">giữa 5 V và GND, đặt gần rơ le</text>
+    <text x="318" y="360" class="t" font-size="11.5" fill="#b8560a" text-anchor="middle">cấp phần lớn dòng khởi động</text>
+    <text x="318" y="376" class="t" font-size="11.5" fill="#b8560a" text-anchor="middle">ngay tại chỗ, cực âm về GND</text>
+
+    <!-- ===== chi tiet mo dun ro le ===== -->
+    <line x1="36" y1="430" x2="1144" y2="430" stroke="#cfc8ba" stroke-width="1.5"></line>
+    <text x="36" y="462" class="t" font-size="15" font-weight="700" fill="#16150f">Mô đun rơ le · phía tín hiệu và mẹo cách ly</text>
+
+    <rect x="36" y="480" width="520" height="180" rx="8" fill="#ffffff" stroke="#16150f" stroke-width="1.8"></rect>
+    <text x="56" y="508" class="t" font-size="13.5" font-weight="600" fill="#16150f">Ba dây tín hiệu</text>
+    <text x="56" y="532" class="m" font-size="12.5" fill="#2563c9">IN   ← GPIO 26</text>
+    <text x="56" y="552" class="m" font-size="12.5" fill="#d92b2b">VCC  → 5 V nhánh sạch</text>
+    <text x="56" y="572" class="m" font-size="12.5" fill="#16150f">GND  → GND điểm sao</text>
+    <rect x="56" y="588" width="480" height="54" rx="5" fill="#fdecec" stroke="#e8b4b4" stroke-width="1.2"></rect>
+    <text x="72" y="609" class="m" font-size="12.5" font-weight="700" fill="#a01b1b">RELAY_ACTIVE_LOW = 1</text>
+    <text x="72" y="629" class="t" font-size="12" fill="#7d1616">GPIO 26 xuống MỨC THẤP thì bơm chạy. Mô đun kích mức cao thì sửa hằng số này thành 0, đừng đổi dây.</text>
+
+    <rect x="580" y="480" width="564" height="180" rx="8" fill="#f4f1ea" stroke="#cfc8ba" stroke-width="1.5"></rect>
+    <text x="600" y="508" class="t" font-size="13.5" font-weight="700" fill="#16150f">Nâng cấp đáng làm · rút jumper JD-VCC</text>
+    <text x="600" y="532" class="t" font-size="12" fill="#3a3529">Nhiều mô đun có một jumper nối VCC với JD-VCC. Để nguyên thì cuộn hút và</text>
+    <text x="600" y="551" class="t" font-size="12" fill="#3a3529">opto dùng chung nguồn, và opto MẤT tác dụng cách ly.</text>
+
+    <line x1="600" y1="572" x2="1124" y2="572" stroke="#cfc8ba" stroke-width="1"></line>
+    <text x="600" y="596" class="t" font-size="12" fill="#3a3529">Rút jumper ra, rồi cấp</text>
+    <text x="754" y="596" class="m" font-size="12" font-weight="600" fill="#b8560a">JD-VCC</text>
+    <text x="812" y="596" class="t" font-size="12" fill="#3a3529">bằng một cặp dây RIÊNG đi thẳng</text>
+    <text x="600" y="616" class="t" font-size="12" fill="#3a3529">từ cọc buck, còn</text>
+    <text x="718" y="616" class="m" font-size="12" font-weight="600" fill="#d92b2b">VCC</text>
+    <text x="752" y="616" class="t" font-size="12" fill="#3a3529">vẫn lấy từ nhánh sạch.</text>
+    <text x="600" y="642" class="t" font-size="12" font-weight="600" fill="#16150f">Khi đó dòng đóng cuộn hút không còn chạy qua đường nguồn của ESP32.</text>
+
+    <!-- ===== C2 ===== -->
+    <rect x="36" y="684" width="520" height="104" rx="8" fill="#fdecec" stroke="#d92b2b" stroke-width="2"></rect>
+    <text x="56" y="712" class="m" font-size="14" font-weight="700" fill="#a01b1b">C2 · 1000 µF ⁄ 16 V</text>
+    <text x="56" y="734" class="t" font-size="12.5" fill="#7d1616">Giữa 5 V và GND, đặt SÁT CHÂN VIN của ESP32. Cực âm về GND.</text>
+    <text x="56" y="754" class="t" font-size="12.5" fill="#7d1616">Đây là kho điện dự trữ cục bộ cho vi điều khiển khi động cơ khởi</text>
+    <text x="56" y="774" class="t" font-size="12.5" fill="#7d1616">động kéo sụt đường chung. Thiếu nó là ESP32 reset mỗi lần bơm bật.</text>
+
+    <rect x="580" y="684" width="564" height="104" rx="8" fill="#ffffff" stroke="#16150f" stroke-width="1.8"></rect>
+    <text x="600" y="712" class="t" font-size="14" font-weight="700" fill="#16150f">Hai điều cấm ở khối này</text>
+    <text x="600" y="736" class="t" font-size="12.5" fill="#3a3529">Không mắc ACS712 song song với bơm. Mắc song song là ngắn mạch qua</text>
+    <text x="600" y="755" class="t" font-size="12.5" fill="#3a3529">điện trở shunt bên trong cảm biến.</text>
+    <text x="600" y="778" class="t" font-size="12.5" fill="#3a3529">Không lấy nguồn bơm từ chân 5 V trên bo ESP32.</text>
+  </svg>
+</div>
+</x-dc>
+</body>
+</html>

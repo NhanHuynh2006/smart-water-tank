@@ -1,0 +1,119 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+  <style>
+    body { margin: 0; }
+    a { color: #b45309; } a:hover { color: #7c3f06; }
+  </style>
+</helmet>
+
+<div style="width: 780px; height: 1040px; background: #faf9f7; box-sizing: border-box; padding: 36px 32px; font-family: 'IBM Plex Sans', 'Segoe UI', system-ui, sans-serif; color: #16150f; display: flex; flex-direction: column; gap: 18px">
+
+  <div>
+    <div style="font-size: 24px; font-weight: 700; letter-spacing: -0.01em">Bảng chân đầy đủ</div>
+    <div style="font-size: 13px; color: #6b6558; margin-top: 5px">Mười một chân GPIO. Không chân nào được đổi, tất cả cố định trong include/config.h</div>
+    <div style="height: 2px; background: #16150f; margin-top: 12px"></div>
+  </div>
+
+  <div style="display: grid; grid-template-columns: 86px 1fr; gap: 0">
+    <div style="background: #16150f; color: #fff; font-size: 11.5px; font-weight: 600; padding: 9px 10px; letter-spacing: 0.04em">CHÂN</div>
+    <div style="background: #16150f; color: #fff; font-size: 11.5px; font-weight: 600; padding: 9px 12px; letter-spacing: 0.04em">NỐI TỚI · MẠCH TRUNG GIAN</div>
+
+    <div style="border-bottom: 1px solid #e6e2db; padding: 11px 10px; font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 14px; font-weight: 600; color: #2563c9">GPIO 5</div>
+    <div style="border-bottom: 1px solid #e6e2db; padding: 11px 12px">
+      <div style="font-size: 13.5px; font-weight: 600">S1 HC-SR04 · chân TRIG</div>
+      <div style="font-size: 11.5px; color: #6b6558; margin-top: 2px">PIN_TRIG · ra · nối thẳng · chân trạng thái khởi động</div>
+    </div>
+
+    <div style="border-bottom: 1px solid #e6e2db; padding: 11px 10px; font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 14px; font-weight: 600; color: #2e8b3d">GPIO 18</div>
+    <div style="border-bottom: 1px solid #e6e2db; padding: 11px 12px">
+      <div style="font-size: 13.5px; font-weight: 600">S1 HC-SR04 · chân ECHO</div>
+      <div style="font-size: 11.5px; color: #a01b1b; margin-top: 2px; font-weight: 600">PIN_ECHO · vào · BẮT BUỘC chia áp 10 k ⁄ 20 k</div>
+    </div>
+
+    <div style="border-bottom: 1px solid #e6e2db; padding: 11px 10px; font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 14px; font-weight: 600; color: #2e8b3d">GPIO 4</div>
+    <div style="border-bottom: 1px solid #e6e2db; padding: 11px 12px">
+      <div style="font-size: 13.5px; font-weight: 600">S2 cảm biến lưu lượng ĐẦU VÀO · dây vàng</div>
+      <div style="font-size: 11.5px; color: #1f6b2e; margin-top: 2px; font-weight: 600">PIN_FLOW · ngắt cạnh xuống · NỐI THẲNG, kéo lên nội bộ · K = 98</div>
+    </div>
+
+    <div style="border-bottom:1px solid #e6e2db;padding:11px 10px;font-family:'IBM Plex Mono',ui-monospace,monospace;font-size:14px;font-weight:600;color:#2e8b3d">GPIO 19</div>
+    <div style="border-bottom:1px solid #e6e2db;padding:11px 12px">
+      <div style="font-size: 13.5px; font-weight: 600">S6 cảm biến lưu lượng ĐẦU RA · dây vàng</div>
+      <div style="font-size: 11.5px; color: #1f6b2e; margin-top: 2px; font-weight: 600">PIN_FLOW_OUT · ngắt cạnh xuống · NỐI THẲNG, kéo lên nội bộ · K riêng</div>
+    </div>
+
+    <div style="border-bottom: 1px solid #e6e2db; padding: 11px 10px; font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 14px; font-weight: 600; color: #2563c9">GPIO 26</div>
+    <div style="border-bottom: 1px solid #e6e2db; padding: 11px 12px">
+      <div style="font-size: 13.5px; font-weight: 600">K1 mô đun rơ le · chân IN</div>
+      <div style="font-size: 11.5px; color: #6b6558; margin-top: 2px">PIN_RELAY · ra · nối thẳng · <span style="color:#a01b1b;font-weight:600">LOW = bơm chạy</span></div>
+    </div>
+
+    <div style="border-bottom: 1px solid #e6e2db; padding: 11px 10px; font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 14px; font-weight: 600; color: #2e8b3d">GPIO 34</div>
+    <div style="border-bottom: 1px solid #e6e2db; padding: 11px 12px">
+      <div style="font-size: 13.5px; font-weight: 600">S3 ACS712 · chân OUT</div>
+      <div style="font-size: 11.5px; color: #a01b1b; margin-top: 2px; font-weight: 600">PIN_CURRENT · vào tương tự · chia áp 10 k ⁄ 10 k · CHỈ VÀO</div>
+    </div>
+
+    <div style="border-bottom: 1px solid #e6e2db; padding: 11px 10px; font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 14px; font-weight: 600; color: #2e8b3d">GPIO 27</div>
+    <div style="border-bottom: 1px solid #e6e2db; padding: 11px 12px">
+      <div style="font-size: 13.5px; font-weight: 600">S4 phao mức cao</div>
+      <div style="font-size: 11.5px; color: #6b6558; margin-top: 2px">PIN_FLOAT_MAX · kéo lên trong · chân còn lại xuống GND</div>
+    </div>
+
+    <div style="border-bottom: 1px solid #e6e2db; padding: 11px 10px; font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 14px; font-weight: 600; color: #2e8b3d">GPIO 14</div>
+    <div style="border-bottom: 1px solid #e6e2db; padding: 11px 12px">
+      <div style="font-size: 13.5px; font-weight: 600">S5 phao bồn nguồn</div>
+      <div style="font-size: 11.5px; color: #6b6558; margin-top: 2px">PIN_FLOAT_SRC · kéo lên trong · chân còn lại xuống GND</div>
+    </div>
+
+    <div style="border-bottom: 1px solid #e6e2db; padding: 11px 10px; font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 14px; font-weight: 600; color: #2e8b3d">GPIO 33</div>
+    <div style="border-bottom: 1px solid #e6e2db; padding: 11px 12px">
+      <div style="font-size: 13.5px; font-weight: 600">SW1 nút xoá lỗi</div>
+      <div style="font-size: 11.5px; color: #6b6558; margin-top: 2px">PIN_BTN_RESET · kéo lên trong · chân còn lại xuống GND</div>
+    </div>
+
+    <div style="border-bottom: 1px solid #e6e2db; padding: 11px 10px; font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 14px; font-weight: 600; color: #8a8375">GPIO 2</div>
+    <div style="border-bottom: 1px solid #e6e2db; padding: 11px 12px">
+      <div style="font-size: 13.5px; font-weight: 600; color: #6b6558">LED xanh có sẵn trên bo</div>
+      <div style="font-size: 11.5px; color: #6b6558; margin-top: 2px">PIN_LED_OK · đèn báo trực tuyến · KHÔNG đi dây · chân trạng thái khởi động</div>
+    </div>
+
+    <div style="border-bottom: 1px solid #e6e2db; padding: 11px 10px; font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 14px; font-weight: 600; color: #2563c9">GPIO 25</div>
+    <div style="border-bottom: 1px solid #e6e2db; padding: 11px 12px">
+      <div style="font-size: 13.5px; font-weight: 600">LED1 đèn báo sự cố</div>
+      <div style="font-size: 11.5px; color: #6b6558; margin-top: 2px">PIN_LED_FAULT · ra · qua R7 220 Ω · anode về phía GPIO</div>
+    </div>
+  </div>
+
+  <div style="display: flex; flex-direction: column; gap: 12px">
+    <div style="background: #fdecec; border: 2px solid #d92b2b; border-radius: 6px; padding: 14px 16px">
+      <div style="font-size: 13.5px; font-weight: 700; color: #a01b1b">Chia áp: có chỗ bắt buộc, có chỗ cấm</div>
+      <div style="font-size: 12.5px; color: #7d1616; margin-top: 6px; line-height: 1.5">GPIO 18 <b>bắt buộc</b> chia áp 10k/20k vì ECHO là tầng đẩy kéo 5 V thật. GPIO 4 và GPIO 19 thì <b>ngược lại</b>: ngõ ra hall là cực thu hở, thêm chia áp sẽ cho điện áp nghỉ 1,02 V, rơi vào vùng không xác định và sinh hàng nghìn xung giả mỗi giây.</div>
+      <div style="font-size: 12.5px; color: #7d1616; margin-top: 8px; line-height: 1.5">GPIO 2 và GPIO 5 là chân trạng thái khởi động, không treo tải kéo mạnh lên chúng.</div>
+    </div>
+
+    <div style="background: #f4f1ea; border: 1.5px solid #cfc8ba; border-radius: 6px; padding: 14px 16px">
+      <div style="font-size: 13.5px; font-weight: 700">Hai phao mang ý nghĩa ngược nhau</div>
+      <div style="font-size: 12.5px; color: #3a3529; margin-top: 6px; line-height: 1.55">
+        S4 phải ĐÓNG mạch khi nước dâng cao.<br>
+        S5 phải ĐÓNG mạch khi bồn nguồn CÒN nước.
+      </div>
+      <div style="font-size: 12.5px; color: #a01b1b; margin-top: 8px; font-weight: 600; line-height: 1.5">Đấu ngược S5 sẽ khiến hệ chạy bơm khô đúng lúc bồn nguồn cạn. Đo thông mạch bằng đồng hồ trước khi lắp cố định.</div>
+    </div>
+  </div>
+
+  <div style="margin-top: auto; font-size: 11px; color: #8a8375; border-top: 1px solid #e6e2db; padding-top: 10px">
+    Nguồn số liệu: water-tank-iot/include/config.h · mọi giá trị đối chiếu trực tiếp, không suy đoán
+  </div>
+</div>
+</x-dc>
+</body>
+</html>

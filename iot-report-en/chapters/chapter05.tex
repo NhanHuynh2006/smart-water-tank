@@ -1,0 +1,63 @@
+\chapter{BACKEND, DATA MANAGEMENT AND INTERFACE}
+
+\section{Backend architecture}
+
+The backend is a single Python process containing three concurrent components. The ingestion component holds a persistent broker session and subscribes to the six specified topics. The API server exposes endpoints for the dashboard and for extracting experimental data. The rolling baseline leak detector is invoked on every incoming telemetry message and is described in Section 6.6. In addition the process keeps an in memory copy of the latest state, so that the current state endpoint can answer without touching the database, since the dashboard calls it once per second.
+
+For every telemetry message the ingestion component records the device timestamp alongside \texttt{recv\_ts}, written by the backend on arrival, so that a one way delay $\tau = t_{recv} - t_{sample}$ is available from a single query without external instrumentation. The device timestamp is stored twice: \texttt{ts} at one second resolution, kept so that existing consumers of the payload continue to parse, and \texttt{ts\_ms} at millisecond resolution, which is the field the latency query prefers. The coarser field alone carries a quantisation error of up to 500 milliseconds, larger than the transport delay it is meant to measure, and Section 8.4 records the corrected figures side by side. The measurement assumes both clocks are synchronised; messages emitted before synchronisation completes carry a zero timestamp and are excluded from the statistics. Because that assumption cannot be discharged on a microcontroller disciplined only by the network time protocol, the one way figure is treated as a comparison quantity and the command round trip, timed entirely by the server clock, is the reported result.
+
+\section{Data schema and API}
+
+The schema has six tables, split according to data behaviour: \texttt{telemetry} is written continuously at one row per second, while \texttt{faults}, \texttt{pump\_events}, \texttt{commands}, \texttt{availability} and \texttt{config} are written sparsely and discretely. The telemetry table is indexed on the timestamp column, the only column ever used as a filter predicate. The group applies the tag and field separation principle of Section 2.5: the device identifier acts as an indexed tag while the measured quantities are unindexed fields. In particular the sequence number column, although it changes on every row, is deliberately left unindexed to avoid exactly the cardinality explosion the lectures warn about \cite{slide04}. The command table stores both the send time and the acknowledgement time, whose difference is the command round trip latency.
+
+On database choice, the group is aware that the theory in Section 2.5 identifies real limits of relational engines for high rate time series data \cite{slide04}. Those limits, however, appear at thousands of writes per second, whereas this system writes one row per second from one node, three to four orders of magnitude below the problematic regime. Deploying a dedicated time series engine would add operational complexity without any measurable benefit, so the group chose SQLite while still respecting the schema design principles above \cite{sqlite}.
+
+\begin{table}[H]
+\caption{Main API endpoints.}
+\label{tab:api}
+\centering
+\renewcommand{\arraystretch}{1.1}
+\begin{tabular}{|p{1.5cm}|p{4.6cm}|p{6.9cm}|}
+\hline
+\rowcolor[HTML]{B7E1F0}
+\textbf{Method} & \textbf{Path} & \textbf{Purpose} \\
+\hline
+GET & \texttt{/api/latest} & Latest state, data freshness, pending commands \\
+\hline
+GET & \texttt{/api/telemetry} & Time series over a requested interval \\
+\hline
+GET & \texttt{/api/volume/daily} & Consumed volume per day \\
+\hline
+GET & \texttt{/api/faults}, \texttt{/api/events}, \texttt{/api/commands} & Fault log, pump switching log, command log with acknowledgement latency \\
+\hline
+POST & \texttt{/api/command} & Issue a command, returns its identifier \\
+\hline
+GET, PUT & \texttt{/api/config} & Read and update threshold configuration \\
+\hline
+GET & \texttt{/api/stats/latency} & Latency statistics used in Section 8.4 \\
+\hline
+\end{tabular}
+\end{table}
+
+Method selection follows the two properties introduced in Section 2.5. Read endpoints use GET because they are safe and change no state. The configuration endpoint uses PUT because replacing the full threshold set is idempotent. The command endpoint uses POST because each call creates a new command record with its own identifier and is therefore not idempotent \cite{slide05}.
+
+\section{Monitoring interface}
+
+\begin{figure}[H]
+    \centering
+    \chohinh{Dashboard screenshot while the pump is running}{dashboard.png}
+    \caption{Monitoring dashboard in automatic mode.}
+    \label{fig:dashboard}
+\end{figure}
+
+The interface is designed for the situation in which an operator glances at the screen for a few seconds to answer three questions: what is the level, is the pump running, and is anything wrong. The left column is the state block, holding a tank drawing with two horizontal lines marking the low and high thresholds drawn at their true positions for the active configuration, the numeric readouts and the control block. The right column is the history block with two time series charts and two log tables. Drawing the thresholds directly on the tank lets a viewer see immediately where the level sits relative to the hysteresis band and understand why the pump turned on or off at that instant.
+
+On the update mechanism, the lectures recommend REST for low frequency administrative tasks and WebSocket for live streams \cite{slide06, rfc6455}. The group chose polling at 1 Hz, which runs against that general recommendation and therefore needs justification. The device publishes at 1 Hz, so the polling rate equals the data production rate and no request is wasted. With one client and one node the resulting traffic is a few kilobytes per second, negligible on a local network. A WebSocket, by contrast, introduces a stateful channel with its own lifecycle to manage, including heartbeats and reconnection \cite{slide06}, that is a new set of failure states in exchange for a benefit that is not measurable at this scale. The group states the point at which the conclusion reverses: beyond roughly ten nodes, or beyond a required update rate of 5 Hz, moving to a WebSocket becomes worthwhile.
+
+The feedback sync principle is implemented in how command state is displayed. When the user presses the pump on button the interface does not change the icon; it posts the request, receives an identifier and shows a pending acknowledgement line. The icon changes only on the next update cycle, once the pump state field in the telemetry has genuinely changed. The command log shows the action, the outcome, the rejection reason and the acknowledgement latency in milliseconds, which is useful operationally and also the direct data source for Section 8.4.
+
+The interface adapts its presentation to the state reported by the device, following the conditional rendering principle \cite{slide06}: data older than 5 seconds or an arriving last will message turns the connection indicator red; a fault or overflow lock state switches the status label to an alarm style; and a false \texttt{level\_ok} flag marks the level value as untrusted. Control buttons are disabled contextually, but this is only a convenience layer, since the real interlock lives in the microcontroller and is described in Section 6.5.
+
+\section{Device simulator}
+
+The simulator implements the hydraulic model introduced in Section 2.6 together with a sensor noise model, and publishes messages that conform to the specification of Chapter 4. It serves two purposes: while components had not arrived it allowed the backend and interface branches to be developed fully, and it allows control parameters to be swept across dozens of configurations in a few minutes, which is not feasible on real hardware. The sweep results are reported in Section 8.4. The simulator can also inject three failure modes, namely a pump that runs without delivering water, a sensor stuck at a fixed value, and a leak at a prescribed flow rate.

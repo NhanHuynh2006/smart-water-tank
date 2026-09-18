@@ -1,0 +1,116 @@
+\chapter{CONTROL AND SYSTEM INTELLIGENCE}
+
+\section{Overview}
+
+This chapter presents the main technical contribution of the project. All of it runs in the microcontroller firmware, with the single exception of the statistical baseline leak detector of Section 6.6, which sits on the backend for the reason given in Section 3.2. The control loop runs on a fixed 200 millisecond cycle consisting of four sequential steps: read and filter sensors, evaluate the fault detection rules, run the state machine, and update the outputs. The loop does not depend on network state.
+
+\section{Computed quantities}
+
+Water column height is derived from the measured distance and then corrected as $h_{corr} = a \cdot h_{meas} + b$, where the two coefficients come from the linear regression performed in the calibration experiment of Section 8.2.
+
+Flow sensor pulses are counted by a hardware interrupt on the falling edge. The handler does exactly one thing, incrementing a counter declared \texttt{volatile} so the compiler does not optimise away repeated reads. When the control loop reads it, interrupts are briefly masked for the duration of the copy to avoid a race on a multi byte variable, in line with the thread safety warning in the lectures \cite{slide01}. Accumulated volume is the numerical integral of flow:
+
+\begin{equation}
+V(t) = \sum_{i} Q_i \cdot \frac{\Delta t}{60}
+\label{eq:volume}
+\end{equation}
+
+The accumulation runs on the microcontroller rather than the server, because if it ran on the server every message lost during an outage would become water permanently unaccounted for. The value is written to non volatile storage every 60 seconds, sparse enough not to wear the flash yet dense enough that a sudden power loss costs at most one minute of operation.
+
+\textbf{Noise filtering.} The water surface ripples strongly while the pump is filling the tank, so the raw reading sequence contains isolated large amplitude outliers. The group applies a five sample median filter, choosing the median over the arithmetic mean because a single outlier drags the mean but leaves the median untouched. In addition the firmware rejects a sample at source if the reading falls outside the physical range of the tank or changes faster than 12 centimetres per second, a threshold roughly twenty times the real rise rate so genuine data is never discarded.
+
+\section{State machine and hysteresis}
+
+\begin{table}[H]
+\caption{Controller state set.}
+\label{tab:fsm}
+\centering
+\renewcommand{\arraystretch}{1.1}
+\begin{tabular}{|p{3.1cm}|p{4.6cm}|p{5.2cm}|}
+\hline
+\rowcolor[HTML]{B7E1F0}
+\textbf{State} & \textbf{Entry condition} & \textbf{Exit condition} \\
+\hline
+\texttt{BOOT} & Power up & A valid level reading is available \\
+\hline
+\texttt{IDLE} & Sufficient water, pump off & Level below the low threshold and minimum off time elapsed \\
+\hline
+\texttt{FILLING} & Pump started & Level above the high threshold and minimum on time elapsed \\
+\hline
+\texttt{MANUAL\_ON} & Manual command accepted & Return to automatic or an interlock violation \\
+\hline
+\texttt{FAULT\_DRYRUN} & Dry run rule triggered & Operator clears the fault \\
+\hline
+\texttt{FAULT\_SENSOR} & Sensor rule triggered & Valid signal for 5 continuous seconds \\
+\hline
+\texttt{OVERFLOW\_LOCK} & Level past the safety limit or float engaged & Fault cleared and level has dropped \\
+\hline
+\end{tabular}
+\end{table}
+
+The reason for a state machine rather than a plain conditional expression is that fault states need to be sticky. A conditional rule would immediately allow the pump to restart the moment a transient fault condition disappears, for instance when the suction tube accidentally touches the water again; the state machine holds the system in the fault state until an explicit intervention occurs.
+
+The transition between \texttt{IDLE} and \texttt{FILLING} implements equation \eqref{eq:hysteresis} with two separated thresholds plus two timing constraints. The low threshold of 30 percent and the high threshold of 80 percent come from the parameter sweep of Section 8.4, and additionally leave a 15 percent margin up to the 95 percent safety limit to absorb overshoot. The minimum on time of 10 seconds protects the pump from repeated start cycles, the minimum off time of 20 seconds lets the supply voltage settle, and the maximum run time of 180 seconds, roughly three times the measured fill duration, serves as an abnormality threshold.
+
+A hysteresis width of 50 percent may look wide for a conventional control system. The choice follows from the nature of the application: the tank is a buffer, and the goal is not to hold the level at a precise value but to guarantee water availability while limiting the number of pump starts. The two timing constraints complement the band: hysteresis rejects measurement noise near the threshold, while the timing constraints reject genuine short period oscillations such as surface waves.
+
+\section{Fault detection rules}
+
+The system implements seven rules where the assignment asks for at least one. They are evaluated in priority order and the first rule that fires ends the chain.
+
+\begin{table}[H]
+\caption{Fault detection rules and trigger conditions.}
+\label{tab:luatloi}
+\centering
+\renewcommand{\arraystretch}{1.1}
+\begin{tabular}{|p{3.1cm}|p{6.6cm}|p{3.0cm}|}
+\hline
+\rowcolor[HTML]{B7E1F0}
+\textbf{Code} & \textbf{Trigger condition} & \textbf{Action} \\
+\hline
+\texttt{SENSOR\_TIMEOUT} & No valid level reading for 4 seconds & Stop pump, enter sensor fault \\
+\hline
+\texttt{SENSOR\_CONFLICT} & Upper float engaged while ultrasonic reports below 70 percent & Stop pump, enter sensor fault \\
+\hline
+\texttt{OVERFLOW} & Level above 95 percent or upper float engaged & Stop pump, lock \\
+\hline
+\texttt{DRY\_RUN} & Pump on for 6 continuous seconds with flow below 0.25 litres per minute & Stop pump, lock \\
+\hline
+\texttt{NO\_CURRENT} & Pump on for over 2 seconds with no current detected & Stop pump, lock \\
+\hline
+\texttt{LEAK\_SUSPECTED} & Pump off yet flow above 0.20 litres per minute for 60 seconds & Warning \\
+\hline
+\texttt{FILL\_TIMEOUT} & Pump running over 180 seconds without reaching the high threshold & Stop pump, lock \\
+\hline
+\end{tabular}
+\end{table}
+
+Three rules deserve comment. \texttt{SENSOR\_CONFLICT} is a direct application of the independent source consistency principle of Section 2.6 \cite{isermann2006}. With only an ultrasonic sensor the system has no way to tell whether a reading is right or wrong as long as the value stays inside the physically plausible range; the presence of a mechanical float turns a wrong reading into a detectable contradiction. This is the real engineering reason for fitting the floats, beyond their overflow role.
+
+\texttt{DRY\_RUN} is the rule explicitly demanded by the assignment. Its 6 second window is long enough to ignore the transient while the pump starts and the pipe has not yet filled, but short enough that the pump never runs dry for long.
+
+\texttt{NO\_CURRENT} uses the current signal in the binary form justified in Section 3.3 and separates two distinct causes of the same symptom: current with no flow means the pump is running dry or the line is blocked, whereas neither current nor flow means an electrical fault such as a failed relay or a broken wire, telling the operator which side to inspect.
+
+\section{Manual mode and safety interlocks}
+
+The assignment requires that manual mode must not override safety constraints. The group meets this with an architectural decision inside the firmware: \textbf{every code path capable of starting the pump is forced through one single guard function.} The function returns empty when starting is permitted and a reason code when it is blocked, evaluating six blocking conditions: an unresolved fault, the upper float engaged, level past the safety limit, an untrusted level measurement, an empty source tank, and the minimum off time not yet elapsed.
+
+The significance is that no bypass can be created by accident. Whether the request originates from the automatic state machine or from a user command, both are stopped by the same condition set, so verifying that the interlock is correct means reviewing one function rather than auditing the whole codebase. When a command is refused the device does not stay silent but returns an acknowledgement carrying the specific reason code. Moreover, even while in \texttt{MANUAL\_ON}, the state machine continues to evaluate the safety conditions on every cycle and stops the pump on its own if the level passes the limit or a float engages.
+
+\section{Leak detection}
+
+This is the advanced component required by the assignment, built as two complementary mechanisms at two different places in the system.
+
+The edge mechanism is the \texttt{LEAK\_SUSPECTED} rule, based on a simple physical observation: once the pump is off, the supply line should carry no flow at all. Its advantage is that it runs locally and therefore survives an outage, with a bounded detection delay; its limitation is that it only sees leaks on the pipe section carrying the sensor and needs enough flow to turn the turbine.
+
+The second mechanism tackles the harder problem of detecting a sustained abnormal consumption level, that is the small slow shift discussed in Section 2.6 \cite{page1954}. The algorithm divides the day into 48 slots of 30 minutes, and each slot maintains a baseline mean and variance updated by an exponentially weighted moving average:
+
+\begin{equation}
+\mu_k \leftarrow \mu_k + \alpha (V_k - \mu_k), \qquad
+\sigma^2_k \leftarrow (1-\alpha)\left[\sigma^2_k + \alpha (V_k - \mu_k)^2\right]
+\label{eq:ewma}
+\end{equation}
+
+with $\alpha$ set to 0.2. An alert is raised when $V_k > \mu_k + 3\sigma_k$ holds for at least two consecutive slots.
+
+Slicing the day rather than keeping one global baseline has a practical reason: domestic water consumption varies strongly with the hour, so a fixed threshold would be either too sensitive at night or too insensitive at peak time. Requiring two consecutive slots is an accumulation mechanism in the spirit of the cumulative sum method \cite{page1954}, intended to suppress false alarms caused by a single unusual draw such as washing a vehicle.

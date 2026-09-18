@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Bồn nước thông minh</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<style>
+  :root{ --bg:#0f1720; --card:#18232f; --line:#2a3a4a; --tx:#e6edf3;
+         --mut:#8fa3b8; --ok:#3fb950; --warn:#d29922; --bad:#f85149; --acc:#58a6ff; }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--tx);
+       font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+  header{padding:14px 20px;border-bottom:1px solid var(--line);
+         display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+  h1{font-size:18px;margin:0;font-weight:600}
+  .pill{padding:3px 10px;border-radius:99px;font-size:12px;border:1px solid var(--line)}
+  .on{background:rgba(63,185,80,.15);color:var(--ok);border-color:var(--ok)}
+  .off{background:rgba(248,81,73,.15);color:var(--bad);border-color:var(--bad)}
+  main{display:grid;grid-template-columns:340px 1fr;gap:16px;padding:16px}
+  @media(max-width:900px){main{grid-template-columns:1fr}}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:14px}
+  .card h2{font-size:13px;margin:0 0 10px;color:var(--mut);
+           text-transform:uppercase;letter-spacing:.06em;font-weight:600}
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .kv{background:#111b25;border:1px solid var(--line);border-radius:8px;padding:9px 11px}
+  .kv .k{font-size:11px;color:var(--mut)}
+  .kv .v{font-size:19px;font-weight:600;margin-top:2px}
+  button{background:#22303f;color:var(--tx);border:1px solid var(--line);
+         border-radius:7px;padding:8px 12px;cursor:pointer;font-size:13px}
+  button:hover:not(:disabled){border-color:var(--acc)}
+  button:disabled{opacity:.4;cursor:not-allowed}
+  table{width:100%;border-collapse:collapse;font-size:12px}
+  th,td{text-align:left;padding:5px 7px;border-bottom:1px solid var(--line)}
+  th{color:var(--mut);font-weight:600}
+  .muted{color:var(--mut);font-size:12px}
+  /* Khung cao co dinh cho bieu do. Bat buoc phai co: Chart.js chay o che do
+     responsive va maintainAspectRatio:false se do chieu cao THE CHA de chinh
+     canvas. Neu the cha khong co chieu cao rieng thi canvas va the cha nuoi
+     nhau lon dan sau moi lan cap nhat, trang cao vo han va thanh cuon nhay. */
+  .chartbox{position:relative;height:200px}
+  .chartbox.sm{height:150px}
+  .chartbox canvas{position:absolute;inset:0}
+  .alarm{color:var(--bad);font-weight:600}
+  .pending{color:var(--warn)}
+  .untrusted{text-decoration:line-through;opacity:.55}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Bồn nước thông minh</h1>
+  <span id="conn" class="pill off">đang kết nối</span>
+  <span id="stateLbl" class="pill">—</span>
+  <span id="modeLbl" class="pill">—</span>
+  <span class="muted">tuổi dữ liệu: <b id="age">—</b></span>
+  <span id="pendingLbl" class="muted pending"></span>
+</header>
+
+<main>
+  <!-- ============ CỘT TRẠNG THÁI ============ -->
+  <div>
+    <div class="card">
+      <h2>Mức nước</h2>
+      <svg viewBox="0 0 200 260" width="100%" height="250">
+        <rect x="45" y="20" width="110" height="215" rx="6"
+              fill="#0b1219" stroke="#3a4c5e" stroke-width="2"/>
+        <rect id="water" x="47" y="120" width="106" height="113"
+              fill="#1f6feb" opacity=".65"/>
+        <line id="lineHi" x1="45" y1="63" x2="155" y2="63"
+              stroke="#d29922" stroke-width="1.5" stroke-dasharray="5 3"/>
+        <line id="lineLo" x1="45" y1="170" x2="155" y2="170"
+              stroke="#58a6ff" stroke-width="1.5" stroke-dasharray="5 3"/>
+        <text id="txtHi" x="160" y="66" fill="#d29922" font-size="10">cao</text>
+        <text id="txtLo" x="160" y="173" fill="#58a6ff" font-size="10">thấp</text>
+        <text id="pctTxt" x="100" y="132" fill="#fff" font-size="26"
+              font-weight="700" text-anchor="middle">--</text>
+      </svg>
+      <div class="grid">
+        <div class="kv"><div class="k">Mức</div><div class="v" id="lvl">--</div></div>
+        <div class="kv"><div class="k">Vào (bơm)</div><div class="v" id="flow">--</div></div>
+        <div class="kv"><div class="k">Ra (tiêu thụ)</div><div class="v" id="flowOut">--</div></div>
+        <div class="kv"><div class="k">Tích lũy vào</div><div class="v" id="vol">--</div></div>
+        <div class="kv"><div class="k">Tích lũy ra</div><div class="v" id="volOut">--</div></div>
+        <div class="kv"><div class="k">Bơm</div><div class="v" id="pump">--</div></div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:16px">
+      <h2>Điều khiển</h2>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button id="bAuto">Chế độ tự động</button>
+        <button id="bManual">Chế độ thủ công</button>
+        <button id="bOn">Bật bơm</button>
+        <button id="bOff">Tắt bơm</button>
+        <button id="bClear">Xóa lỗi</button>
+        <button id="bReset">Đặt lại thể tích ngày</button>
+      </div>
+      <p class="muted" style="margin:10px 0 0">
+        Nút bấm chỉ gửi lệnh. Biểu tượng bơm chỉ đổi sau khi thiết bị gửi xác nhận về.
+      </p>
+    </div>
+  </div>
+
+  <!-- ============ CỘT LỊCH SỬ ============ -->
+  <div>
+    <div class="card"><h2>Mức nước và trạng thái bơm</h2>
+      <div class="chartbox"><canvas id="chLevel"></canvas></div></div>
+    <div class="card" style="margin-top:16px"><h2>Lưu lượng vào và ra</h2>
+      <div class="chartbox sm"><canvas id="chFlow"></canvas></div></div>
+    <div class="card" style="margin-top:16px"><h2>Nhật ký sự cố</h2>
+      <table><thead><tr><th>Thời điểm</th><th>Mã</th><th>Mức</th><th>Lưu lượng</th></tr></thead>
+      <tbody id="tFault"><tr><td colspan="4" class="muted">chưa có</td></tr></tbody></table></div>
+    <div class="card" style="margin-top:16px"><h2>Nhật ký lệnh</h2>
+      <table><thead><tr><th>Hành động</th><th>Kết quả</th><th>Lý do</th><th>Độ trễ</th></tr></thead>
+      <tbody id="tCmd"><tr><td colspan="4" class="muted">chưa có</td></tr></tbody></table></div>
+  </div>
+</main>
+
+<script>
+const API = "";
+let CFG = { low: 30, high: 80 };
+
+async function jget(u){ const r = await fetch(API+u); return r.json(); }
+async function send(action, value){
+  const r = await fetch(API+"/api/command", {
+    method:"POST", headers:{"Content-Type":"application/json"},
+    body: JSON.stringify({action, value})});
+  const d = await r.json();
+  document.getElementById("pendingLbl").textContent =
+    "đang chờ thiết bị xác nhận lệnh " + d.cmd_id;
+  return d;
+}
+
+document.getElementById("bAuto").onclick   = () => send("mode", true);
+document.getElementById("bManual").onclick = () => send("mode", false);
+document.getElementById("bOn").onclick     = () => send("pump", true);
+document.getElementById("bOff").onclick    = () => send("pump", false);
+document.getElementById("bClear").onclick  = () => send("clear_fault", null);
+document.getElementById("bReset").onclick  = () => send("reset_volume", null);
+
+const mkChart = (id, sets, opts={}) => new Chart(document.getElementById(id), {
+  type:"line",
+  data:{ labels:[], datasets:sets },
+  options:Object.assign({
+    animation:false, responsive:true, maintainAspectRatio:false,
+    plugins:{legend:{labels:{color:"#8fa3b8",boxWidth:12}}},
+    elements:{point:{radius:0}},
+    scales:{ x:{ticks:{color:"#8fa3b8",maxTicksLimit:8},grid:{color:"#22303f"}},
+             y:{ticks:{color:"#8fa3b8"},grid:{color:"#22303f"}} }
+  }, opts)
+});
+
+const chLevel = mkChart("chLevel", [
+  {label:"Mức nước (%)", data:[], borderColor:"#58a6ff", borderWidth:2, tension:.25},
+  {label:"Bơm (bật = 100)", data:[], borderColor:"#3fb950", borderWidth:1.5,
+   stepped:true, borderDash:[4,3]}
+], {scales:{ x:{ticks:{color:"#8fa3b8",maxTicksLimit:8},grid:{color:"#22303f"}},
+             y:{min:0,max:105,ticks:{color:"#8fa3b8"},grid:{color:"#22303f"}}}});
+
+const chFlow = mkChart("chFlow", [
+  {label:"Vào · bơm (L/phút)", data:[], borderColor:"#d29922",
+   borderWidth:2, tension:.25},
+  {label:"Ra · tiêu thụ (L/phút)", data:[], borderColor:"#a371f7",
+   borderWidth:2, tension:.25, borderDash:[5,3]}
+]);
+
+function setPill(el, txt, cls){
+  el.textContent = txt;
+  el.className = "pill" + (cls ? " " + cls : "");
+}
+
+async function tickState(){
+  let s;
+  try { s = await jget("/api/latest"); }
+  catch(e){ setPill(document.getElementById("conn"), "không gọi được API", "off"); return; }
+
+  const d = s.data, conn = document.getElementById("conn");
+  document.getElementById("age").textContent =
+    s.age_s == null ? "—" : s.age_s.toFixed(1) + " s";
+
+  // Kết xuất có điều kiện theo trạng thái thiết bị báo về
+  if (s.stale || !s.online) setPill(conn, "mất kết nối thiết bị", "off");
+  else setPill(conn, "trực tuyến", "on");
+
+  if (s.pending_commands && s.pending_commands.length === 0)
+    document.getElementById("pendingLbl").textContent = "";
+
+  if (!d) return;
+
+  const st = document.getElementById("stateLbl");
+  const isAlarm = /FAULT|OVERFLOW/.test(d.state || "");
+  setPill(st, d.state || "—", isAlarm ? "off" : "");
+  setPill(document.getElementById("modeLbl"), d.mode || "—");
+
+  const pct = d.level_pct ?? 0;
+  const lvlEl = document.getElementById("lvl");
+  lvlEl.textContent = pct.toFixed(1) + " %";
+  lvlEl.className = "v" + (d.level_ok === false ? " untrusted" : "");
+  document.getElementById("pctTxt").textContent = pct.toFixed(0) + "%";
+  document.getElementById("flow").textContent    = (d.flow_lpm ?? 0).toFixed(2) + " L/ph";
+  document.getElementById("flowOut").textContent = (d.flow_out_lpm ?? 0).toFixed(2) + " L/ph";
+  document.getElementById("volOut").textContent  = (d.volume_out_l ?? 0).toFixed(1) + " L";
+  document.getElementById("vol").textContent  = (d.volume_l ?? 0).toFixed(1) + " L";
+  document.getElementById("pump").textContent = d.pump ? "ĐANG CHẠY" : "tắt";
+  document.getElementById("pump").style.color = d.pump ? "var(--ok)" : "var(--mut)";
+
+  // Vẽ mức nước: đáy y=233, đỉnh y=20
+  const top = 233 - (Math.max(0, Math.min(100, pct)) / 100) * 213;
+  const w = document.getElementById("water");
+  w.setAttribute("y", top);
+  w.setAttribute("height", Math.max(0, 233 - top));
+  w.setAttribute("fill", isAlarm ? "#f85149" : "#1f6feb");
+
+  // Hai đường ngưỡng vẽ đúng vị trí theo cấu hình hiện hành
+  const yOf = p => 233 - (p / 100) * 213;
+  document.getElementById("lineHi").setAttribute("y1", yOf(CFG.high));
+  document.getElementById("lineHi").setAttribute("y2", yOf(CFG.high));
+  document.getElementById("lineLo").setAttribute("y1", yOf(CFG.low));
+  document.getElementById("lineLo").setAttribute("y2", yOf(CFG.low));
+  document.getElementById("txtHi").setAttribute("y", yOf(CFG.high) + 3);
+  document.getElementById("txtLo").setAttribute("y", yOf(CFG.low) + 3);
+  document.getElementById("txtHi").textContent = "cao " + CFG.high + "%";
+  document.getElementById("txtLo").textContent = "thấp " + CFG.low + "%";
+
+  // Nút bấm theo ngữ cảnh, chỉ là lớp tiện dụng
+  const manual = d.mode === "MANUAL";
+  document.getElementById("bOn").disabled = !manual;
+  document.getElementById("bOff").disabled = !manual;
+  document.getElementById("bClear").disabled = !(d.fault && d.fault.length);
+}
+
+async function tickHistory(){
+  try{
+    const rows = await jget("/api/telemetry?minutes=10");
+    const lab = rows.map(r => new Date(r.recv_ts*1000).toLocaleTimeString());
+    chLevel.data.labels = lab;
+    chLevel.data.datasets[0].data = rows.map(r => r.level_pct);
+    chLevel.data.datasets[1].data = rows.map(r => r.pump ? 100 : 0);
+    chLevel.update();
+    chFlow.data.labels = lab;
+    chFlow.data.datasets[0].data = rows.map(r => r.flow_lpm);
+    chFlow.data.datasets[1].data = rows.map(r => r.flow_out_lpm ?? 0);
+    chFlow.update();
+
+    const f = await jget("/api/faults?limit=8");
+    document.getElementById("tFault").innerHTML = f.length ? f.map(r =>
+      `<tr><td>${new Date(r.recv_ts*1000).toLocaleTimeString()}</td>
+       <td class="alarm">${r.code}</td><td>${(r.level_pct??0).toFixed(1)}%</td>
+       <td>${(r.flow_lpm??0).toFixed(2)}</td></tr>`).join("")
+      : '<tr><td colspan="4" class="muted">chưa có</td></tr>';
+
+    const c = await jget("/api/commands?limit=8");
+    document.getElementById("tCmd").innerHTML = c.length ? c.map(r =>
+      `<tr><td>${r.action}</td>
+       <td class="${r.status==='rejected'?'alarm':''}">${r.status||''}</td>
+       <td>${r.reason||''}</td>
+       <td>${r.latency_ms!=null?r.latency_ms.toFixed(0)+' ms':''}</td></tr>`).join("")
+      : '<tr><td colspan="4" class="muted">chưa có</td></tr>';
+  }catch(e){}
+}
+
+(async function(){
+  try{
+    const cfg = await jget("/api/config");
+    CFG.low  = parseFloat(cfg.level_low_pct)  || 30;
+    CFG.high = parseFloat(cfg.level_high_pct) || 80;
+  }catch(e){}
+  tickState(); tickHistory();
+  setInterval(tickState, 1000);     // khối trạng thái 1 Hz
+  setInterval(tickHistory, 5000);   // khối lịch sử 0,2 Hz
+})();
+</script>
+</body>
+</html>

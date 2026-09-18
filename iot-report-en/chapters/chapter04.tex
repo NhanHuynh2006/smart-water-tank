@@ -1,0 +1,70 @@
+\chapter{PROTOCOL AND COMMUNICATION}
+
+\section{Design principles and topic tree}
+
+Three principles govern the protocol specification. First, every message carries a device generated timestamp, because although TCP preserves ordering on a single socket, brokers process multiple threads concurrently so final arrival order may differ, and deterministic ordering must therefore be imposed at application level inside the payload itself \cite{slide03}. Second, the quality of service level is chosen per topic according to the consequence of losing a message. Third, every downward command must be answered by an upward acknowledgement carrying the same identifier.
+
+The topic root is built from broad scope down to the individual device as \texttt{wt/lab1/esp32-01}, following the hierarchical naming rule given in the lectures \cite{slide03}.
+
+\begin{table}[H]
+\caption{MQTT topic tree and the reasoning behind each setting.}
+\label{tab:topic}
+\centering
+\renewcommand{\arraystretch}{1.1}
+\begin{tabular}{|p{2.8cm}|p{0.8cm}|p{1.3cm}|p{7.5cm}|}
+\hline
+\rowcolor[HTML]{B7E1F0}
+\textbf{Topic} & \textbf{QoS} & \textbf{Retain} & \textbf{Reasoning} \\
+\hline
+\texttt{.../telemetry} & 0 & No & One lost sample in a continuous 1 Hz stream changes no conclusion about the trend, and in exchange latency is lowest with no device buffer \\
+\hline
+\texttt{.../state/pump} & 1 & Yes & Published only on change, so a loss leaves the dashboard wrong until the next transition \\
+\hline
+\texttt{.../event/fault} & 1 & No & Losing an alarm is incorrect behaviour for a safety function \\
+\hline
+\texttt{.../status} & 1 & Yes & The last will payload is published once, with no retransmission \\
+\hline
+\texttt{.../cmd} and \texttt{.../cmd/ack} & 1 & No & A lost command or acknowledgement is a direct functional failure \\
+\hline
+\end{tabular}
+\end{table}
+
+The design respects all three naming pitfalls listed in the lectures \cite{slide03}: no leading separator, no whitespace inside the path, and six explicit subscriptions rather than a root wildcard. No topic uses the highest quality of service level, because it requires a four step handshake and packet identifier tracking on the edge device, while the duplicate delivery problem it solves is already handled at application level: each command carries a unique identifier, so a duplicate simply causes the device to resend the same acknowledgement without acting twice. This is the idempotency property of Section 2.5.
+
+\section{Message structure and fault codes}
+
+Payloads use JSON built with a statically allocated document, following the rule that forbids dynamic allocation inside the loop \cite{slide05, arduinojson}.
+
+\begin{lstlisting}[caption={Telemetry message payload.},label={lst:telemetry}]
+{ "dev":"esp32-01", "ts":1735689600, "ts_ms":1735689600123, "seq":10421,
+  "level_pct":62.4, "level_cm":15.6, "level_ok":true,
+  "flow_lpm":1.28, "volume_l":143.62, "volume_today_l":12.40,
+  "pump":true, "state":"FILLING", "mode":"AUTO",
+  "current_mv":38.2, "float_max":false, "float_src":true, "rssi":-55 }
+\end{lstlisting}
+
+The \texttt{seq} field is a monotonically increasing counter allowing lost messages to be counted exactly in Section 8.4. The \texttt{ts} field is produced by the device after time synchronisation and supports latency measurement. The \texttt{level\_ok} field states whether the reading can be trusted, letting the interface distinguish a genuinely low tank from a broken sensor. Messages replayed after reconnection carry a \texttt{replay} flag and are excluded from latency statistics.
+
+Eight fault codes are defined and fall into two groups. The non self clearing group, made of \texttt{DRY\_RUN}, \texttt{NO\_CURRENT}, \texttt{FILL\_TIMEOUT} and \texttt{OVERFLOW}, requires the operator to confirm that the physical cause has been dealt with before the fault can be cleared. The self clearing group, made of \texttt{SENSOR\_TIMEOUT} and \texttt{SENSOR\_CONFLICT}, concerns signal quality and resolves on its own once the signal has been valid for long enough. The remaining two, \texttt{LEAK\_SUSPECTED} and \texttt{LEAK\_BASELINE}, raise a warning without locking the pump. Trigger conditions for each code are given in Section 6.4.
+
+\section{Command and acknowledgement mechanism}
+
+This section implements the feedback sync principle of Section 2.5 and satisfies the requirement that commands be acknowledged with a verified state.
+
+\begin{lstlisting}[caption={Command message and matching acknowledgement.},label={lst:cmd}]
+// .../cmd
+{"cmd_id":"a7f3c2e1","action":"pump","value":true,"ts":1735689600}
+// .../cmd/ack
+{"dev":"esp32-01","cmd_id":"a7f3c2e1","status":"rejected",
+ "reason":"overflow_guard","state":"OVERFLOW_LOCK","pump":false}
+\end{lstlisting}
+
+The acknowledgement reports not only the outcome but also the actual device state after processing, so the dashboard always displays a state the device has confirmed rather than one the user has just requested. Four actions are supported: change mode, switch the pump, clear a fault and reset the daily volume counter. Ten rejection reasons are defined, including \texttt{auto\_mode\_active}, \texttt{fault\_active}, \texttt{overflow\_guard}, \texttt{float\_max\_triggered}, \texttt{level\_sensor\_invalid} and \texttt{min\_off\_time}.
+
+The rejection table is worth more than a debugging aid: during the demonstration, pressing the pump on button while a fault is active and seeing an explicit rejection with a named reason is visible proof that manual mode cannot override the interlocks.
+
+\section{Connection lifecycle and availability monitoring}
+
+The firmware implements the four state connection machine described in the lectures. The critical point is the accompanying design note: connection logic must never sit inside a blocking wait loop, because that stalls the processor and suspends both analog sampling and safety checks for the whole outage \cite{slide03}. Our reconnection routine therefore never blocks, retries only once its interval has elapsed, and the control loop runs independently of network state. The retry interval grows exponentially with an upper bound, $T_{retry} = \min(T_{max}, T_{base} \cdot 2^{n})$ with $T_{base}$ of 1 second and $T_{max}$ of 30 seconds \cite{slide06}.
+
+On connecting, the device pre registers a last will message announcing that it is offline, then overwrites it with an online message once the session is established. Should the node suffer an abrupt loss of power, the broker keep alive supervisor publishes the stored will by itself \cite{slide03}, so the interface switches to a disconnected state with no polling logic on the application side. A second backend check treats the device as offline when the newest telemetry message is older than 5 seconds. The two complement each other, since the will reacts quickly to a total power loss while the freshness check also catches a live session whose data stream has stopped.

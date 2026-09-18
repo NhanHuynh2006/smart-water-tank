@@ -1,0 +1,77 @@
+{
+  "artboards": [
+    {
+      "file": "Main.dc.html",
+      "x": 0,
+      "y": 0,
+      "w": 1600,
+      "h": 1040,
+      "title": "Sơ đồ đấu dây tổng thể",
+      "print": "fixed"
+    },
+    {
+      "file": "Pinmap.dc.html",
+      "x": 1720,
+      "y": 0,
+      "w": 780,
+      "h": 1040,
+      "title": "Bảng chân",
+      "print": "fixed"
+    },
+    {
+      "file": "Power.dc.html",
+      "x": 0,
+      "y": 1180,
+      "w": 900,
+      "h": 820,
+      "title": "Nguồn hình sao",
+      "print": "fixed"
+    },
+    {
+      "file": "Dividers.dc.html",
+      "x": 980,
+      "y": 1180,
+      "w": 900,
+      "h": 820,
+      "title": "Chia áp và cảm biến lưu lượng",
+      "print": "fixed"
+    },
+    {
+      "file": "Detail.dc.html",
+      "x": 0,
+      "y": 2120,
+      "w": 1180,
+      "h": 820,
+      "title": "Chuỗi công suất",
+      "print": "fixed"
+    },
+    {
+      "file": "Checks.dc.html",
+      "x": 1260,
+      "y": 2120,
+      "w": 800,
+      "h": 820,
+      "title": "Tám điểm đo kiểm",
+      "print": "fixed"
+    }
+  ],
+  "annotations": [
+    {
+      "id": "start-here",
+      "x": 0,
+      "y": -150,
+      "w": 520,
+      "text": "Bắt đầu ở Sơ đồ đấu dây tổng thể, rồi xem Nguồn hình sao trước khi cắm dây nào.\n11 chân GPIO, mọi số lấy trực tiếp từ include/config.h."
+    },
+    {
+      "id": "pump-5v",
+      "x": 1720,
+      "y": -150,
+      "w": 420,
+      "text": "Cấu hình đã chốt: bơm 5 V, nguồn 12 V, buck 12→5 V 5 A, HAI cảm biến lưu lượng.\nThay đổi lớn: hai cảm biến lưu lượng nối THẲNG, không chia áp. Xem artboard Ba chia áp."
+    }
+  ],
+  "launch": {
+    "view": "canvas"
+  }
+}
