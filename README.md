@@ -6,6 +6,18 @@ Mã nguồn đầy đủ cho đồ án cuối kỳ môn IoT Foundations and Appl
 
 ---
 
+## 0. Vừa tải repo về
+
+`config.h` **không nằm trong repo** vì nó chứa mật khẩu Wi-Fi. Tạo nó từ bản mẫu:
+
+```bash
+cp IOT/include/config.example.h IOT/include/config.h
+```
+
+Rồi mở `IOT/include/config.h`, điền tên Wi-Fi, mật khẩu và IP máy chạy Mosquitto. Nếu dùng Arduino IDE thì chép tiếp bản đó vào từng thư mục sketch, xem mục 3.
+
+---
+
 ## 1. Bạn cần chuẩn bị gì
 
 | Thứ | Ghi chú |
@@ -422,6 +434,20 @@ Trong báo cáo, đừng chỉ công bố giá trị K. Hãy công bố **độ 
 ---
 
 ## 7. Cấu trúc thư mục
+
+```
+├── IOT/                    dự án PlatformIO
+│   ├── platformio.ini      cấu hình build, 6 môi trường nạp
+│   └── include/
+│       ├── config.example.h  BẢN MẪU, chép ra config.h rồi sửa
+│       └── config.h          FILE DUY NHẤT BẠN CẦN SỬA (đã .gitignore)
+├── water-tank-arduino/     cùng firmware, dựng cho Arduino IDE
+├── iot-report-en/          báo cáo LaTeX
+├── schematic-canvas/       nguồn sáu bản vẽ đấu dây
+└── start.sh, stop.sh       bật tắt broker, backend và ESP32 ảo
+```
+
+Bên trong `IOT/`:
 
 ```
 ├── platformio.ini          cấu hình build, 6 môi trường nạp
