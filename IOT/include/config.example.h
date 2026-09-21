@@ -49,9 +49,18 @@
 #define FLOAT_SRC_ACTIVE_LOW  1
 
 // ---------- Hinh hoc bon ----------
-#define TANK_SENSOR_TO_BOTTOM_CM   55.0f
-#define TANK_MAX_LEVEL_CM          25.0f
-#define TANK_AREA_CM2             400.0f
+// DO THAT NGAY 21/09: mat cam bien cach day thung 15,5 cm, day 10 x 10 cm.
+//
+// Muc nuoc cao nhat KHONG duoc lay bang 15,5. HC-SR04 co vung mu 2 cm va so
+// doc duoi 4 cm da khong con dang tin. Chua 5,5 cm cho vung mu va sai so,
+// con lai 10 cm la muc lam viec.
+//
+// The tich lam viec = 100 cm2 x 10 cm = 1 000 cm3 = 1 LIT.
+// Bon 1 lit, khong phai 10 lit. Moi nguong thoi gian va the tich ben duoi
+// deu duoc tinh lai theo con so nay.
+#define TANK_SENSOR_TO_BOTTOM_CM   15.5f
+#define TANK_MAX_LEVEL_CM          10.0f
+#define TANK_AREA_CM2             100.0f
 
 // ---------- Hieu chuan (lay tu thi nghiem E1 va E2) ----------
 #define LEVEL_CAL_A     1.0f
@@ -113,35 +122,48 @@
 // Chan an toan doc thang tu khoang cach tho, KHONG qua bo loc nao.
 // Cam bien doc gan hon so nay la nuoc da len qua cao: NGAT BOM NGAY.
 // Doc lap hoan toan voi levelOk, voi trung vi va voi phao.
-#define LEVEL_MIN_DISTANCE_CM  32.0f
-#define MIN_ON_MS           10000UL
+// Muc cao nhat 10 cm thi khoang cach con 15,5 - 10 = 5,5 cm.
+// Dat chan cung o 4,5 cm: gan hon the la nuoc da vuot muc lam viec 1 cm,
+// va cung da cham nguong so doc khong con dang tin cua HC-SR04.
+#define LEVEL_MIN_DISTANCE_CM   4.5f
+// Bon chi 1 lit. Bom JT-DC3L day 1,67 L/phut, tuc 0,028 L moi giay.
+// Giu bom chay toi thieu 10 giay la bom them 0,28 lit, bang 28 phan tram
+// bon — du de vot tu nguong dung 70 phan tram len gan tran. Ha xuong 3 giay:
+// chi con 8 phan tram, van du dai de tranh ro le dong cat lien hoi.
+#define MIN_ON_MS            3000UL
 #define MIN_OFF_MS          20000UL
 // Thoi gian bom toi da truoc khi ket luan bat thuong.
 // TINH LAI THEO BOM THAT (JT-DC3L, 100 L/gio = 1,67 L/phut o cot nuoc bang 0):
-//    the tich bon      = 400 cm2 x 25 cm = 10 L
+//    the tich bon      = 100 cm2 x 10 cm = 1 L
 //    bom tu 30% len 80% = 5 L
 //    o luu luong TOI DA  : 5 / 1,67 x 60 = 180 s  <- dung bang gia tri cu
 //    o luu luong thuc te : bom co cot nuoc nen cham hon, khoang 300 s
 // Gia tri cu 180 s se bao FILL_TIMEOUT ngay trong lan bom binh thuong.
 // Dat 600 s = khoang hai lan thoi gian day thuc te. PHAI do lai bang thi
 // nghiem E3 roi chinh cho khop bom cua ban.
-#define MAX_FILL_MS         240000UL
+// TINH LAI THEO BON THAT (1 lit) VA BOM THAT (JT-DC3L, 1,67 L/phut):
+//    day tu 30% len 70% = 0,4 lit -> 14 giay o luu luong toi da
+//    day tu can len day  = 1,0 lit -> 36 giay o luu luong toi da
+// Co cot nuoc thi cham hon, cu cho la cham gap doi: 72 giay.
+// Dat 90 giay. Gia tri cu 240 giay rong gap hon ba lan thuc te, tuc la
+// bom co the chay them hon hai phut sau khi bon da day.
+#define MAX_FILL_MS          90000UL
 
 // ---------- Ba chan an toan KHONG phu thuoc cam bien sieu am ----------
 // Bon 10 lit. Bom them qua so nay trong MOT lan bom la chac chan co van de:
 // hoac cam bien muc sai, hoac nuoc dang chay di dau do.
-#define MAX_FILL_VOLUME_L   12.0f
+#define MAX_FILL_VOLUME_L    2.0f
 
 // Bom chay ma muc nuoc khong nhich len duoc NO_PROGRESS_CM trong
 // NO_PROGRESS_MS thi ngat. Bom that day 1,67 L/phut vao tiet dien 400 cm2
 // tuc 0,069 cm/s, nen trong 60 s phai len it nhat 4,1 cm. Lay 1,5 cm la
 // rong gap gan ba lan, du cho bom yeu hay cot nuoc cao.
-#define NO_PROGRESS_MS      60000UL
-#define NO_PROGRESS_CM      1.5f
+#define NO_PROGRESS_MS      20000UL
+#define NO_PROGRESS_CM      1.0f
 
 // Tran cuoi cung. Khong dieu kien, khong ngoai le, khong tu phuc hoi.
 // Bom khong duoc phep chay lien tuc lau hon so nay du bat ky ly do gi.
-#define PUMP_HARD_LIMIT_MS  300000UL
+#define PUMP_HARD_LIMIT_MS  120000UL
 
 // ---------- Nguong phat hien su co ----------
 #define DRYRUN_MS           6000UL
@@ -173,12 +195,11 @@
 #define SENSOR_RECOVER_MS   5000UL
 #define CONFLICT_LEVEL_PCT  70.0f
 // Toc do doi muc nuoc toi da coi la co the ve mat vat ly, cm moi giay.
-// TINH THEO BOM THAT: 1,67 L/phut / 400 cm2 = 0,069 cm/s khi bom.
+// TINH THEO BOM THAT: 1,67 L/phut / 100 cm2 = 0,278 cm/s khi bom.
 // Xa nhanh qua voi mo cung chi khoang 0,2 cm/s.
-// Gia tri cu 12 cm/s rong gap 170 lan thuc te nen gan nhu khong loc duoc gi.
-// Dat 2 cm/s: van rong gap 10 lan truong hop nhanh nhat, nhung chan duoc
-// phan lon xung nhieu cua cam bien sieu am.
-#define MAX_LEVEL_RATE_CMS  2.0f
+// Dat 1 cm/s: rong gap 3,6 lan truong hop bom nhanh nhat, du cho ca luc xa
+// nuoc, nhung chan duoc phan lon xung nhieu cua cam bien sieu am.
+#define MAX_LEVEL_RATE_CMS  1.0f
 
 // ---------- Chu ky ----------
 #define CONTROL_PERIOD_MS   200UL
@@ -188,8 +209,8 @@
 // Nay moi chu ky dieu khien chi phat MOT lan, va lay trung vi truot 5 mau.
 #define LEVEL_MEDIAN_WINDOW 5
 // Bien ngoai dai hinh hoc con chap nhan, tinh bang cm. So doc nam ngoai
-// [55-25-8 , 55+8] = [22 , 63] cm bi loai truoc khi vao cua so trung vi.
-#define LEVEL_GATE_MARGIN_CM   8.0f
+// [15,5-10-6 , 15,5+6] = [-0,5 , 21,5] cm bi loai truoc khi vao cua so trung vi.
+#define LEVEL_GATE_MARGIN_CM   6.0f
 // Bao nhieu lan phat hong LIEN TIEP thi coi la mat cam bien va xoa cua so.
 // 5 lan x chu ky 200 ms = 1 giay, van con thua truoc SENSOR_TIMEOUT_MS = 4 s.
 #define LEVEL_FAIL_STREAK_MAX  5

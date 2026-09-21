@@ -184,7 +184,13 @@ static float   progressMarkCm   = -1;
 // do cong them bien LEVEL_GATE_MARGIN_CM la nhieu, loai truoc khi vao cua so
 // chu khong de no lam ban trung vi.
 float medianOf5() {
-  const float dMin = TANK_SENSOR_TO_BOTTOM_CM - TANK_MAX_LEVEL_CM - LEVEL_GATE_MARGIN_CM;
+  // Khong bao gio nhan so doc duoi 3 cm vao cua so trung vi: HC-SR04 co vung
+  // mu 2 cm, gan hon the la rac chu khong phai phep do. Chan an toan
+  // waterTooClose doc thang khoang cach tho nen van bat duoc truong hop nuoc
+  // that su len qua cao, khong phu thuoc cua so nay.
+  const float dFloor = 3.0f;
+  float dMin = TANK_SENSOR_TO_BOTTOM_CM - TANK_MAX_LEVEL_CM - LEVEL_GATE_MARGIN_CM;
+  if (dMin < dFloor) dMin = dFloor;
   const float dMax = TANK_SENSOR_TO_BOTTOM_CM + LEVEL_GATE_MARGIN_CM;
 
   float d = readDistanceOnce();
@@ -225,7 +231,22 @@ void readLevel() {
   h = LEVEL_CAL_A * h + LEVEL_CAL_B;
 
   // Loc so doc phi vat ly ngay tai nguon
-  if (h < -2.0f || h > TANK_MAX_LEVEL_CM + 5.0f) { levelOk = false; return; }
+  if (h < -LEVEL_GATE_MARGIN_CM || h > TANK_MAX_LEVEL_CM + 2.0f) { levelOk = false; return; }
+
+  // Tieng doi tro ve tu DAY bon hoac xa hon nghia la KHONG CO NUOC, chu khong
+  // phai la phep do hong. Thung 10 x 10 cm hep hon chum song 15 do cua
+  // HC-SR04 o khoang 15,5 cm, nen luc can nuoc tia song danh vao THANH thung
+  // roi moi doi ve, thanh ra xa hon day that — do duoc 21 cm thay vi 15,5 cm.
+  //
+  // Neu coi do la loi thi bon can se khong bao gio do duoc, bom khong bao gio
+  // duoc phep chay, va he thong thanh vo dung. Vay coi la muc 0.
+  // An toan khong mat gi: neu cam bien that su hong theo kieu tra so qua lon,
+  // luat NO_PROGRESS ngat bom sau 20 giay vi muc khong nhich len.
+  //
+  // Phai ep ve 0 TRUOC khi kiem tra toc do doi muc, neu khong so am se bi
+  // hieu la muc nhay 6 cm trong mot chu ky va bi loai oan.
+  if (h < 0) h = 0;
+
   if (lastGoodLevelCm >= 0) {
     float dt = (millis() - lastValidLevelMs) / 1000.0f;
     if (dt > 0.05f && fabs(h - lastGoodLevelCm) / dt > MAX_LEVEL_RATE_CMS) {
@@ -233,7 +254,6 @@ void readLevel() {
     }
   }
 
-  if (h < 0) h = 0;
   levelCm  = h;
   levelPct = (h / TANK_MAX_LEVEL_CM) * 100.0f;
   if (levelPct > 100) levelPct = 100;
