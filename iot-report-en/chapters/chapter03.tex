@@ -37,15 +37,15 @@ This split makes the system degrade in a controlled way when connectivity is los
 \hline
 ESP32 DevKit V1 & Edge microcontroller \\
 \hline
-JSN-SR04T ultrasonic, Hall turbine flow, ACS712 & Level, flow rate and current presence sensing \\
+HC-SR04 ultrasonic, Hall turbine flow, ACS712 & Level, flow rate and current presence sensing \\
 \hline
-Two mechanical float switches & Overflow guard and source tank empty guard \\
+Two mechanical float switches, both on the storage tank & Upper level overflow guard and lower level fill permission \\
 \hline
 Single channel opto isolated relay, 5 V submersible pump & Switching stage and actuator \\
 \hline
 1N4007 diode, 100 nF ceramic, 1000 $\mu$F electrolytic & Inductive protection, brush noise filtering, inrush buffering \\
 \hline
-10 k$\Omega$ and 20 k$\Omega$ resistors, 5 V 3 A supply & Three divider networks and system power \\
+10 k$\Omega$ and 20 k$\Omega$ resistors, 4.7 k$\Omega$ pull ups, 5 V 3 A supply & Two divider networks, open collector pull ups and system power \\
 \hline
 \end{tabular}
 \end{table}

@@ -54,6 +54,10 @@ Không có lệnh. Mở file rồi bấm nút **Upload**:
 | Rơ le | `water-tank-arduino/test_relay/test_relay.ino` |
 | Cảm biến lưu lượng | `water-tank-arduino/test_flow/test_flow.ino` |
 | Cảm biến dòng | `water-tank-arduino/test_current/test_current.ino` |
+| Cực tính rơ le | `water-tank-arduino/test_relaytruth/test_relaytruth.ino` |
+| Nhiễu dây lưu lượng | `water-tank-arduino/test_flownoise/test_flownoise.ino` |
+| Lưu lượng có đấu ngược | `water-tank-arduino/test_flowmap/test_flowmap.ino` |
+| Bơm phá siêu âm | `water-tank-arduino/test_pumpecho/test_pumpecho.ino` |
 | Hai phao | `water-tank-arduino/test_floats/test_floats.ino` |
 | Đo hình học bồn | `water-tank-arduino/test_calib/test_calib.ino` |
 
@@ -66,12 +70,22 @@ Ba chương trình dưới đây **không bao giờ bật bơm**, rơ le bị gi
 | Việc cần biết | Chạy lệnh | Sửa gì trong `include/config.h` |
 |---|---|---|
 | Cảm biến siêu âm cách đáy bồn bao nhiêu | `pio run -e test_calib -t upload -t monitor` | `TANK_SENSOR_TO_BOTTOM_CM` |
-| Phao mức cao đóng hay mở khi nước đầy | `pio run -e test_floats -t upload -t monitor` | `FLOAT_MAX_ACTIVE_LOW` |
+| Hai phao đóng hay mở khi kích hoạt | `pio run -e test_floats -t upload -t monitor` | `FLOAT_MAX_ACTIVE_LOW`, `FLOAT_MIN_ACTIVE_LOW` |
+| **Rơ le kích mức cao hay mức thấp** | `pio run -e test_relaytruth -t upload -t monitor` | `RELAY_ACTIVE_LOW` |
+| **Dây lưu lượng có sạch chưa** | `pio run -e test_flownoise -t upload -t monitor` | `FLOW_SENSOR_ENABLED` |
+| **Hai cảm biến lưu lượng có bị đấu ngược** | `pio run -e test_flowmap -t upload -t monitor` | `PIN_FLOW`, `PIN_FLOW_OUT` |
+| **Bơm làm hỏng siêu âm bằng điện hay bằng nước** | `pio run -e test_pumpecho -t upload -t monitor` | cầu chia áp ECHO |
 | Hệ số K của cảm biến lưu lượng | `pio run -e test_flow -t upload -t monitor` | `FLOW_K_FACTOR`, `FLOW_OUT_K_FACTOR` |
 
 **Cách đọc `test_calib`**: đo bằng thước chiều cao mặt nước hiện tại, rồi lấy con số *khoảng cách trung bình* chương trình in ra cộng với chiều cao vừa đo. Tổng đó chính là `TANK_SENSOR_TO_BOTTOM_CM`. Nếu mọi dòng đều hiện `NGOÀI DẢI!` thì cảm biến đang gắn sai chỗ so với con số trong `config.h`.
 
-**Cách đọc `test_floats`**: nhấc tay phao mức cao lên hết cỡ. Dòng chữ phải đổi thành `DA KICH HOAT`. Nếu nó đổi ngược lại, đảo `FLOAT_MAX_ACTIVE_LOW` giữa `0` và `1` rồi nạp lại.
+**Cách đọc `test_floats`**: nhấc tay từng phao lên hết cỡ. Dòng chữ phải đổi thành `DA KICH HOAT`. Nếu nó đổi ngược lại, đảo `FLOAT_MAX_ACTIVE_LOW` hoặc `FLOAT_MIN_ACTIVE_LOW` giữa `0` và `1` rồi nạp lại.
+
+**Cách đọc `test_relaytruth`**: đọc cột **độ gợn**, đừng đọc mức trung bình. ACS712 là cảm biến hai chiều nên mV cao hơn không có nghĩa là dòng lớn hơn. Động cơ chổi than chạy thì dòng gợn mạnh; tỉ số gợn trên 2 lần là tách được hai trạng thái.
+
+**Cách đọc `test_flownoise`**: cột **kéo lên 3,3 V** phải cho **0 Hz** ở cả hai chân, giống chân đối chiếu GPIO 23. Còn thấy 50 Hz là điện lưới cảm ứng — thiếu điện trở 4,7 kΩ lên 3,3 V.
+
+**Cách đọc `test_pumpecho`**: nhìn 12 lần phát đầu của đoạn rơ le đóng. Bơm chỉ đẩy 0,06 cm/s nên trong 0,4 giây nước chỉ kịp lên 0,024 cm. Hỏng ngay từ lần phát thứ 1–2 là **nhiễu điện**; hỏng dần sau vài giây là **nước**.
 
 ---
 

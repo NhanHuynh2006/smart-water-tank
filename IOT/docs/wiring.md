@@ -83,6 +83,39 @@ Cả hai đều cho **đúng 3,33 V**, vì chỉ tỉ số mới quyết định
 - Đi dây ECHO **tách khỏi dây bơm và dây rơ le**, đừng bó chung.
 - Nếu làm hai điều trên mà vẫn nhiễu, hạ xuống **1k/2k** hoặc **2,2k/4,7k**. Đổi lại là ECHO phải gánh 1,7 mA — vẫn nhẹ nhàng với tầng đẩy kéo của HC-SR04.
 
+## Bơm không phải nguyên nhân duy nhất — số đo đã loạn từ trước khi bơm chạy
+
+Phép thử `test_pumpecho` phát siêu âm 200 ms một lần và đóng cắt rơ le giữa chừng, để tách nhiễu điện khỏi gợn nước. Kết quả bác bỏ **cả hai** giả thuyết trước đó:
+
+| Vòng | Rơ le NGẮT · bơm không chạy | Rơ le ĐÓNG · bơm chạy |
+|---|---|---|
+| 1 | dải dao động **5,04 cm** | 26,89 cm |
+| 2 | dải dao động **3,36 cm** | 17,75 cm |
+
+**Số đo đã loạn 3–5 cm trong khi bơm chưa hề chạy.** Nếu nguyên nhân là nhiễu điện do bơm, đoạn rơ le ngắt phải sạch. Nó không sạch. Vì vậy hạ cầu chia áp ECHO xuống 1k/2k sẽ **không** chữa được chuyện này — đừng đổi vội.
+
+Nhưng bơm vẫn làm nặng thêm khoảng **năm lần**, nên điốt 1N4007 song song ngược hai cực bơm vẫn đáng gắn.
+
+### Biến thật sự là mực nước, không phải cái bơm
+
+Đối chiếu với phép đo cùng ngày, cũng bơm tắt, nhưng bồn có **3,88 cm nước**:
+
+| Điều kiện | Dải dao động |
+|---|---|
+| Bơm tắt, nước 3,88 cm | **0,02 cm** |
+| Bơm tắt, bồn cạn | **3,36 – 5,04 cm** |
+| Bơm chạy, bồn cạn | 17,75 – 26,89 cm |
+
+Chênh nhau **hơn 200 lần** giữa hai dòng đầu, mà cả hai đều bơm tắt. Biến duy nhất là có nước hay không.
+
+Lý do vật lý: mặt nước phẳng là **gương phản xạ âm gần như hoàn hảo** — gần hết năng lượng dội thẳng về. Đáy bồn khô thì không: sóng tán ra, chạm thành ống lặng, dội qua dội lại rồi mới về, nên thời gian bay dài hơn thực tế. Nhìn lại số liệu thấy đúng vậy: lúc bồn cạn cảm biến đọc **16 đến 21 cm**, tức **xa hơn cả đáy bồn ở 15,5 cm** — một khoảng cách không tồn tại về mặt hình học.
+
+### Hệ quả với thiết kế
+
+Cảm biến chính xác nhất đúng lúc ta cần nó nhất là lúc **gần đầy**, và tệ nhất lúc **gần cạn**. Với bài toán chống tràn thì đó là chiều thuận lợi. Việc còn lại — biết khi nào bồn đã cạn để bật bơm — nên giao cho **phao mức thấp**, là tiếp điểm cơ khí không phụ thuộc quang học chút nào. Firmware đã làm vậy: `floatMin` là một trong hai điều kiện cho phép bật bơm, song song với ngưỡng phần trăm.
+
+Nếu muốn cải thiện thêm, hãy kiểm tra **đường kính ống lặng**. Chùm sóng 15° ở khoảng cách 15,5 cm đã rộng hơn 8 cm. Ống hẹp hơn con số đó thì chính thành ống trở thành nguồn phản xạ giả khi chưa có nước che đáy.
+
 ## HC-SR04 không nhìn thấy lớp nước mỏng ở đáy bồn
 
 Cảm biến cách đáy 15,5 cm, sai số đo ±1 cm. Vì vậy **lớp nước dưới 1 cm nằm lọt trong nhiễu** — phần mềm không phân biệt được "cạn hẳn" với "còn một chút".

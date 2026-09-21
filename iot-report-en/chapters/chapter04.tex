@@ -40,7 +40,7 @@ Payloads use JSON built with a statically allocated document, following the rule
   "level_pct":62.4, "level_cm":15.6, "level_ok":true,
   "flow_lpm":1.28, "volume_l":143.62, "volume_today_l":12.40,
   "pump":true, "state":"FILLING", "mode":"AUTO",
-  "current_mv":38.2, "float_max":false, "float_src":true, "rssi":-55 }
+  "current_mv":38.2, "float_max":false, "float_min":true, "rssi":-55 }
 \end{lstlisting}
 
 The \texttt{seq} field is a monotonically increasing counter allowing lost messages to be counted exactly in Section 8.4. The \texttt{ts} field is produced by the device after time synchronisation and supports latency measurement. The \texttt{level\_ok} field states whether the reading can be trusted, letting the interface distinguish a genuinely low tank from a broken sensor. Messages replayed after reconnection carry a \texttt{replay} flag and are excluded from latency statistics.

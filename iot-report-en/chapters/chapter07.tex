@@ -61,7 +61,13 @@ Fourth, inside the initialisation routine and before any sensor is read, the rel
 \hline
 High threshold of the hysteresis band & State machine & Sensor is healthy \\
 \hline
-Safety limit at 95 percent & Fault detection rule & Sensor is healthy \\
+Safety limit at 85 percent & Fault detection rule & Sensor is healthy \\
+\hline
+Raw echo closer than 4.5 cm & Fault detection rule & Median filter is producing nonsense \\
+\hline
+No level progress in 45 seconds & Fault detection rule & Level sensor reports a frozen or false value \\
+\hline
+Unconditional 240 second run limit & Fault detection rule & Every sensor has failed \\
 \hline
 Upper mechanical float & Digital input of the microcontroller & Ultrasonic sensor has failed \\
 \hline

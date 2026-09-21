@@ -50,7 +50,9 @@ The accumulation runs on the microcontroller rather than the server, because if 
 
 The reason for a state machine rather than a plain conditional expression is that fault states need to be sticky. A conditional rule would immediately allow the pump to restart the moment a transient fault condition disappears, for instance when the suction tube accidentally touches the water again; the state machine holds the system in the fault state until an explicit intervention occurs.
 
-The transition between \texttt{IDLE} and \texttt{FILLING} implements equation \eqref{eq:hysteresis} with two separated thresholds plus two timing constraints. The low threshold of 30 percent and the high threshold of 80 percent come from the parameter sweep of Section 8.4, and additionally leave a 15 percent margin up to the 95 percent safety limit to absorb overshoot. The minimum on time of 10 seconds protects the pump from repeated start cycles, the minimum off time of 20 seconds lets the supply voltage settle, and the maximum run time of 180 seconds, roughly three times the measured fill duration, serves as an abnormality threshold.
+The transition between \texttt{IDLE} and \texttt{FILLING} implements equation \eqref{eq:hysteresis} with two separated thresholds plus two timing constraints. The low threshold of 30 percent and the high threshold of 70 percent come from the parameter sweep of Section 8.4, and additionally leave a 15 percent margin up to the 85 percent safety limit to absorb overshoot. The minimum on time of 3 seconds protects the pump from repeated start cycles, the minimum off time of 20 seconds lets the supply voltage settle, and the maximum run time of 200 seconds, roughly twice the measured fill duration, serves as an abnormality threshold.
+
+The minimum on time deserves a note, because the first draft set it to 10 seconds and that value was unsafe. The working volume of this tank is 1 litre, and at the measured 0.36 litres per minute a forced 10 second run adds 0.06 litres, 6 percent of the tank. Holding the pump on for that long while the state machine has no authority to stop it is a guarantee of overshoot past the high threshold. Three seconds is long enough to stop the relay chattering and short enough that the band still governs.
 
 A hysteresis width of 50 percent may look wide for a conventional control system. The choice follows from the nature of the application: the tank is a buffer, and the goal is not to hold the level at a precise value but to guarantee water availability while limiting the number of pump starts. The two timing constraints complement the band: hysteresis rejects measurement noise near the threshold, while the timing constraints reject genuine short period oscillations such as surface waves.
 
@@ -72,7 +74,7 @@ The system implements seven rules where the assignment asks for at least one. Th
 \hline
 \texttt{SENSOR\_CONFLICT} & Upper float engaged while ultrasonic reports below 70 percent & Stop pump, enter sensor fault \\
 \hline
-\texttt{OVERFLOW} & Level above 95 percent or upper float engaged & Stop pump, lock \\
+\texttt{OVERFLOW} & Level above 85 percent, raw echo closer than 4.5 cm, or upper float engaged & Stop pump, lock \\
 \hline
 \texttt{DRY\_RUN} & Pump on for 6 continuous seconds with flow below 0.25 litres per minute & Stop pump, lock \\
 \hline
@@ -80,7 +82,7 @@ The system implements seven rules where the assignment asks for at least one. Th
 \hline
 \texttt{LEAK\_SUSPECTED} & Pump off yet flow above 0.20 litres per minute for 60 seconds & Warning \\
 \hline
-\texttt{FILL\_TIMEOUT} & Pump running over 180 seconds without reaching the high threshold & Stop pump, lock \\
+\texttt{FILL\_TIMEOUT} & Pump running over 200 seconds without reaching the high threshold & Stop pump, lock \\
 \hline
 \end{tabular}
 \end{table}
@@ -93,7 +95,9 @@ Three rules deserve comment. \texttt{SENSOR\_CONFLICT} is a direct application o
 
 \section{Manual mode and safety interlocks}
 
-The assignment requires that manual mode must not override safety constraints. The group meets this with an architectural decision inside the firmware: \textbf{every code path capable of starting the pump is forced through one single guard function.} The function returns empty when starting is permitted and a reason code when it is blocked, evaluating six blocking conditions: an unresolved fault, the upper float engaged, level past the safety limit, an untrusted level measurement, an empty source tank, and the minimum off time not yet elapsed.
+The assignment requires that manual mode must not override safety constraints. The group meets this with an architectural decision inside the firmware: \textbf{every code path capable of starting the pump is forced through one single guard function.} The function returns empty when starting is permitted and a reason code when it is blocked, evaluating six blocking conditions: an unresolved fault, the upper float engaged, a raw echo returning from closer than the safety distance, level past the safety limit, an untrusted level measurement, and the minimum off time not yet elapsed.
+
+An earlier revision listed an empty source tank as a seventh condition. That condition was removed, and the removal is worth recording. The source vessel carries no instrument of any kind, so the firmware has no means of knowing whether it holds water; the condition was in fact reading the lower float of the \emph{storage} tank, which had been mislabelled. Blocking the pump on a quantity the system cannot observe is not a safety measure but a permanent refusal to operate, and dry running is already covered by three rules that rest on quantities the system does observe: absent flow, absent current, and absent progress in the level.
 
 The significance is that no bypass can be created by accident. Whether the request originates from the automatic state machine or from a user command, both are stopped by the same condition set, so verifying that the interlock is correct means reviewing one function rather than auditing the whole codebase. When a command is refused the device does not stay silent but returns an acknowledgement carrying the specific reason code. Moreover, even while in \texttt{MANUAL\_ON}, the state machine continues to evaluate the safety conditions on every cycle and stops the pump on its own if the level passes the limit or a float engages.
 
