@@ -36,6 +36,24 @@ Ngưỡng vào của ESP32 là 0,825 V và 2,475 V, nên 1,02 V rơi đúng **v�
 
 Cách phân biệt nhanh: rút hẳn dây tín hiệu ra khỏi GPIO. Nếu số xung vẫn đếm thì lỗi ở cấu hình chân, không phải ở cảm biến.
 
+## Hai phao: cực tính phải đo, không được đoán
+
+Cả hai chân phao đều bật kéo lên nội bộ, nên **chân hở đọc ra mức cao**. Câu hỏi duy nhất là: khi nước đầy, tiếp điểm phao **đóng** hay **mở**?
+
+Hai kiểu phao đều bán đầy ngoài chợ và nhìn bên ngoài giống hệt nhau. Đoán sai là phần mềm tưởng bồn còn rỗng trong khi nước đã lên tới miệng — **đây đúng là kiểu lỗi làm bơm không chịu dừng**.
+
+Đo bằng lệnh `pio run -e test_floats -t upload -t monitor`, nhấc tay phao lên hết cỡ, rồi đặt `FLOAT_MAX_ACTIVE_LOW` trong `config.h` cho khớp.
+
+Nếu chọn được, hãy dùng kiểu **mở khi đầy** và đặt `FLOAT_MAX_ACTIVE_LOW 0`. Kiểu đó hỏng theo hướng an toàn: đứt dây thì chân lên mức cao, phần mềm hiểu là "bồn đầy" và chặn bơm. Kiểu ngược lại thì đứt dây thành "bồn rỗng" và bơm chạy mãi.
+
+## Chân điều khiển rơ le cần điện trở kéo lên 10 kΩ
+
+Mô đun rơ le kích mức thấp hiểu **mức thấp là lệnh bật**. Từ lúc cấp điện tới lúc `setup()` chạy được dòng đầu tiên, chân GPIO 26 vẫn **thả nổi**, và mô đun có thể hiểu nhầm thành lệnh bật. Khoảng đó dài chừng 300 ms của bootloader ROM, lặp lại **mỗi lần khởi động, mỗi lần nhấn nút reset, và mỗi lần nạp chương trình**.
+
+Phần mềm đã đưa rơ le về ngắt ngay dòng đầu của `setup()`, nhưng không rút ngắn được phần bootloader. Cách bịt hẳn là **một điện trở 10 kΩ từ chân IN của rơ le lên 3,3 V**: khi ESP32 chưa điều khiển, điện trở giữ chân ở mức cao, tức lệnh ngắt.
+
+Nếu mô đun của bạn kích mức cao thì điện trở này nối **xuống GND** thay vì lên 3,3 V.
+
 ## Ba mạch chia áp
 
 Công thức: `Vout = Vin × R2 / (R1 + R2)`, trong đó R1 nối từ tín hiệu, R2 nối xuống đất, điểm giữa đi vào ESP32.

@@ -42,22 +42,37 @@ float readMv() {
   return (acc / 200.0f) * 3300.0f / 4095.0f;
 }
 
+#define CYCLES 4          // so chu ky roi DUNG HAN
+
 void setup() {
+  // Dua ro le ve NGAT truoc moi thu khac.
+  pinMode(PIN_RELAY, OUTPUT);
+  setRelayOff();
+
   Serial.begin(115200);
   delay(400);
   analogReadResolution(12);
-  pinMode(PIN_RELAY, OUTPUT);
-  setRelayOff();
   Serial.println();
   Serial.println("=== KIEM THU CAM BIEN DONG ACS712 ===");
   Serial.printf("Do nhay dang khai bao : %.0f mV/A\n", (double)ACS_SENS_MV_PER_A);
   Serial.printf("He so chia ap         : %.0f\n", (double)DIVIDER_RATIO);
   Serial.printf("Nguong trong config   : %.1f mV\n", (double)CURRENT_ON_MV);
-  Serial.println("Chu ky: 4 giay TAT bom, 4 giay CHAY bom. Ctrl+C de dung.");
+  Serial.printf("Se chay %d chu ky roi DUNG HAN, moi chu ky bom chay 3 giay.\n", CYCLES);
+  Serial.println("NEU BOM DANG NOI, NO SE CHAY VA BOM NUOC VAO BON.");
+  for (int i = 5; i > 0; i--) { Serial.printf("  bat dau sau %d giay...\n", i); delay(1000); }
   Serial.println();
 }
 
+int cycle = 0;
+
 void loop() {
+  if (cycle >= CYCLES) {          // da du so chu ky
+    setRelayOff();
+    delay(1000);
+    return;
+  }
+  cycle++;
+
   setRelayOff();
   delay(3000);
   float off = readMv();
@@ -99,4 +114,11 @@ void loop() {
     Serial.println("     Lech nhieu thi hoac thieu chia ap, hoac ACS712 chua duoc cap nguon.");
   }
   Serial.println("---");
+  if (cycle >= CYCLES) {
+    setRelayOff();
+    Serial.println();
+    Serial.println("XONG. Ro le da NGAT va chuong trinh dung han.");
+    Serial.println("Lay HIEU cua chu ky cuoi lam so tin cay nhat: hai chu ky");
+    Serial.println("dau con bi diem nghi cua ACS712 troi sau khi cap nguon.");
+  }
 }

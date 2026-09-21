@@ -1,17 +1,6 @@
 // ============================================================
-//  config.example.h  -  BAN MAU, KHONG CHUA BI MAT
-//
-//  Truoc khi build lan dau:
-//      cp include/config.example.h include/config.h
-//  roi sua config.h cho dung mang cua ban.
-//
-//  config.h da duoc .gitignore bo qua nen mat khau Wi-Fi cua ban
-//  khong bao gio bi day len GitHub.
-//
-//  Ban Arduino IDE can mot ban sao config.h trong MOI thu muc sketch:
-//      for d in water_tank test_level test_relay test_flow test_current test_floats; do
-//          cp ../IOT/include/config.h $d/config.h
-//      done
+//  config.h  -  DAY LA FILE DUY NHAT BAN CAN SUA
+//  Sua wifi, dia chi broker va cac nguong o day roi nap lai.
 // ============================================================
 #pragma once
 
@@ -20,7 +9,7 @@
 #define WIFI_PASSWORD   "MAT_KHAU_WIFI"
 
 // ---------- MQTT broker ----------
-#define MQTT_HOST       "192.168.1.10"       // IP may chay mosquitto
+#define MQTT_HOST       "192.168.1.10"   // IP may chay mosquitto
 #define MQTT_PORT       1883
 #define MQTT_USER       "device1"
 #define MQTT_PASS       "device_pass"
@@ -43,6 +32,21 @@
 #define PIN_BTN_RESET   33    // nut xoa loi, INPUT_PULLUP
 
 #define RELAY_ACTIVE_LOW  1   // dat 0 neu module relay kich muc cao
+
+// ---------- Cuc tinh hai phao ----------
+// Ca hai chan deu bat keo len noi bo, nen chan HO doc ra muc CAO.
+// Dat 1 = tiep diem DONG (chan bi keo xuong dat) co nghia la DA KICH HOAT.
+// Dat 0 = tiep diem HO (chan o muc cao) co nghia la DA KICH HOAT.
+//
+// DO THAT TREN MACH NGAY 21/09: ca hai chan doc ra MUC THAP khi bon CHUA day.
+// Vay muc thap la trang thai NGHI, va phao muc cao phai dat 0.
+// Cach nay con an toan hon: dut day thi chan len muc cao, thanh "bon day",
+// va bom bi chan — hong theo huong an toan.
+//
+// KIEM CHUNG LAI bang: pio run -e test_floats -t upload -t monitor
+// Nhan tay phao muc cao len, dong chu phai doi thanh "DA KICH HOAT".
+#define FLOAT_MAX_ACTIVE_LOW  0
+#define FLOAT_SRC_ACTIVE_LOW  1
 
 // ---------- Hinh hoc bon ----------
 #define TANK_SENSOR_TO_BOTTOM_CM   55.0f
@@ -75,10 +79,26 @@
 #define FLOW_PIN_PULLUP       1   // cho chan PIN_FLOW
 #define FLOW_OUT_PIN_PULLUP   1   // cho chan PIN_FLOW_OUT
 
+// Khoang cach toi thieu giua hai xung duoc dem, tinh bang micro giay.
+// YF-S401 toi da 6 L/phut x 98 = 588 Hz -> moi xung cach nhau >= 1700 us.
+// Dat 1200 us cho tran 833 Hz: con du 40 phan tram bien so voi cam bien
+// that, nhung cat bot phan lon nhieu do Wi-Fi da do duoc o 1600-2700 Hz.
+#define FLOW_MIN_PULSE_US   1200UL
+
 // ---------- Tham so dieu khien ----------
 #define LEVEL_LOW_PCT       30.0f
-#define LEVEL_HIGH_PCT      80.0f
-#define LEVEL_OVERFLOW_PCT  95.0f
+// Ha tu 80 xuong 70 va tu 95 xuong 85 de mat nuoc dung xa mat cam bien hon.
+// Bon cao 25 cm: dung o 70% la nuoc cao 17,5 cm, con cach cam bien 37,5 cm;
+// khoa chong tran o 85% la nuoc cao 21,3 cm, con cach cam bien 33,7 cm.
+// Truoc day dung o 80% va khoa o 95% thi chi con cach 32,5 va 26,3 cm,
+// qua sat vung mu 2 cm cua HC-SR04 va qua sat mieng bon.
+#define LEVEL_HIGH_PCT      70.0f
+#define LEVEL_OVERFLOW_PCT  85.0f
+
+// Chan an toan doc thang tu khoang cach tho, KHONG qua bo loc nao.
+// Cam bien doc gan hon so nay la nuoc da len qua cao: NGAT BOM NGAY.
+// Doc lap hoan toan voi levelOk, voi trung vi va voi phao.
+#define LEVEL_MIN_DISTANCE_CM  32.0f
 #define MIN_ON_MS           10000UL
 #define MIN_OFF_MS          20000UL
 // Thoi gian bom toi da truoc khi ket luan bat thuong.
@@ -90,7 +110,23 @@
 // Gia tri cu 180 s se bao FILL_TIMEOUT ngay trong lan bom binh thuong.
 // Dat 600 s = khoang hai lan thoi gian day thuc te. PHAI do lai bang thi
 // nghiem E3 roi chinh cho khop bom cua ban.
-#define MAX_FILL_MS         600000UL
+#define MAX_FILL_MS         240000UL
+
+// ---------- Ba chan an toan KHONG phu thuoc cam bien sieu am ----------
+// Bon 10 lit. Bom them qua so nay trong MOT lan bom la chac chan co van de:
+// hoac cam bien muc sai, hoac nuoc dang chay di dau do.
+#define MAX_FILL_VOLUME_L   12.0f
+
+// Bom chay ma muc nuoc khong nhich len duoc NO_PROGRESS_CM trong
+// NO_PROGRESS_MS thi ngat. Bom that day 1,67 L/phut vao tiet dien 400 cm2
+// tuc 0,069 cm/s, nen trong 60 s phai len it nhat 4,1 cm. Lay 1,5 cm la
+// rong gap gan ba lan, du cho bom yeu hay cot nuoc cao.
+#define NO_PROGRESS_MS      60000UL
+#define NO_PROGRESS_CM      1.5f
+
+// Tran cuoi cung. Khong dieu kien, khong ngoai le, khong tu phuc hoi.
+// Bom khong duoc phep chay lien tuc lau hon so nay du bat ky ly do gi.
+#define PUMP_HARD_LIMIT_MS  300000UL
 
 // ---------- Nguong phat hien su co ----------
 #define DRYRUN_MS           6000UL
@@ -105,7 +141,17 @@
 // Dung loai 20A hay 30A thi luat NO_CURRENT khong bao gio phat hien duoc.
 // Chay test_current de do so that roi dat nguong bang khoang MOT NUA
 // hieu giua luc bom chay va luc bom tat.
-#define CURRENT_ON_MV       15.0f
+// Do tren mach that: bom chay cho hieu 19,6 den 22,6 mV so voi diem nghi.
+// Dat 10 mV la khoang mot nua, du xa nhieu nen ma van bat duoc bom chay.
+#define CURRENT_ON_MV       10.0f
+
+// Toc do bam theo diem nghi khi bom dang tat. 0,02 voi chu ky 200 ms cho
+// hang so thoi gian khoang 10 giay: du nhanh de theo kip troi nhiet, du
+// cham de khong bi mot xung nhieu keo di.
+#define CURRENT_OFFSET_ALPHA  0.02f
+
+// Cho bao lau sau khi cap nguon moi do diem nghi lan dau, tinh bang ms.
+#define CURRENT_SETTLE_MS     1500UL
 #define LEAK_MS             60000UL
 #define LEAK_FLOW_LPM       0.20f
 #define SENSOR_TIMEOUT_MS   4000UL

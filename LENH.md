@@ -17,6 +17,7 @@ cd ~/Documents/IOT/IOT
 Đừng lắp cả mạch rồi nạp một phát. Mỗi bước chạy đúng mới sang bước sau.
 
 ```bash
+pio run -e test_calib   -t upload -t monitor   # bước 1 · ĐO hình học bồn, bơm luôn ngắt
 pio run -e test_level   -t upload -t monitor   # bước 2 · cảm biến siêu âm
 pio run -e test_relay   -t upload -t monitor   # bước 3 · rơ le, CHƯA nối bơm
 pio run -e test_flow    -t upload -t monitor   # bước 5 · cảm biến lưu lượng
@@ -54,8 +55,23 @@ Không có lệnh. Mở file rồi bấm nút **Upload**:
 | Cảm biến lưu lượng | `water-tank-arduino/test_flow/test_flow.ino` |
 | Cảm biến dòng | `water-tank-arduino/test_current/test_current.ino` |
 | Hai phao | `water-tank-arduino/test_floats/test_floats.ino` |
+| Đo hình học bồn | `water-tank-arduino/test_calib/test_calib.ino` |
 
 `water_tank.ino` **rỗng là đúng**, code nằm ở `water_tank_firmware.cpp` cùng thư mục.
+
+### Đặt lại ngưỡng cho đúng bồn của bạn
+
+Ba chương trình dưới đây **không bao giờ bật bơm**, rơ le bị giữ ngắt suốt, và đều **tự dừng hẳn** sau khi chạy xong. Chạy chúng trước khi nạp phần sụn chính.
+
+| Việc cần biết | Chạy lệnh | Sửa gì trong `include/config.h` |
+|---|---|---|
+| Cảm biến siêu âm cách đáy bồn bao nhiêu | `pio run -e test_calib -t upload -t monitor` | `TANK_SENSOR_TO_BOTTOM_CM` |
+| Phao mức cao đóng hay mở khi nước đầy | `pio run -e test_floats -t upload -t monitor` | `FLOAT_MAX_ACTIVE_LOW` |
+| Hệ số K của cảm biến lưu lượng | `pio run -e test_flow -t upload -t monitor` | `FLOW_K_FACTOR`, `FLOW_OUT_K_FACTOR` |
+
+**Cách đọc `test_calib`**: đo bằng thước chiều cao mặt nước hiện tại, rồi lấy con số *khoảng cách trung bình* chương trình in ra cộng với chiều cao vừa đo. Tổng đó chính là `TANK_SENSOR_TO_BOTTOM_CM`. Nếu mọi dòng đều hiện `NGOÀI DẢI!` thì cảm biến đang gắn sai chỗ so với con số trong `config.h`.
+
+**Cách đọc `test_floats`**: nhấc tay phao mức cao lên hết cỡ. Dòng chữ phải đổi thành `DA KICH HOAT`. Nếu nó đổi ngược lại, đảo `FLOAT_MAX_ACTIVE_LOW` giữa `0` và `1` rồi nạp lại.
 
 ---
 

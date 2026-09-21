@@ -158,6 +158,16 @@ float readDistanceOnce() {
 static float   levelWin[LEVEL_MEDIAN_WINDOW];
 static uint8_t levelWinCount = 0, levelWinHead = 0, levelFailStreak = 0;
 
+// So doc THO cua lan phat gan nhat, chua qua bo loc nao. Chan an toan
+// LEVEL_MIN_DISTANCE_CM dung thang so nay, de mot bo loc hong khong the
+// lam mat luon lop bao ve cuoi cung. Am nghia la lan phat do khong co tieng doi.
+static float   lastRawDistCm = -1.0f;
+
+// Moc dau moi lan bom, de do tien do va tong luong da bom trong lan do.
+static float   fillStartVolumeL = 0, fillStartLevelCm = -1;
+static uint32_t progressMarkMs  = 0;
+static float   progressMarkCm   = -1;
+
 // Cua so truot chi nhan nhung so doc NAM TRONG DAI VAT LY CO THE.
 // Mat cam bien cach day bon TANK_SENSOR_TO_BOTTOM_CM, nuoc day nhat thi
 // khoang cach con TANK_SENSOR_TO_BOTTOM_CM - TANK_MAX_LEVEL_CM. Ngoai dai
@@ -168,6 +178,7 @@ float medianOf5() {
   const float dMax = TANK_SENSOR_TO_BOTTOM_CM + LEVEL_GATE_MARGIN_CM;
 
   float d = readDistanceOnce();
+  lastRawDistCm = d;
   bool good = (d > 0) && (d >= dMin) && (d <= dMax);
 
   if (good) {
@@ -266,8 +277,27 @@ void readCurrent() {
 }
 
 void readFloats() {
-  floatMax = (digitalRead(PIN_FLOAT_MAX) == LOW);   // LOW = kich hoat
-  floatSrc = (digitalRead(PIN_FLOAT_SRC) == LOW);   // LOW = con nuoc
+#if FLOAT_MAX_ACTIVE_LOW
+  floatMax = (digitalRead(PIN_FLOAT_MAX) == LOW);
+#else
+  floatMax = (digitalRead(PIN_FLOAT_MAX) == HIGH);
+#endif
+#if FLOAT_SRC_ACTIVE_LOW
+  floatSrc = (digitalRead(PIN_FLOAT_SRC) == LOW);   // kich hoat = con nuoc
+#else
+  floatSrc = (digitalRead(PIN_FLOAT_SRC) == HIGH);
+#endif
+}
+
+// ------------------------------------------------------------
+//  CHAN AN TOAN CUNG
+//  Chay MOI chu ky, truoc may trang thai, va khong dua vao levelOk,
+//  vao trung vi hay vao phao. Chi can MOT trong cac dieu kien nay dung
+//  la bom bi ngat ngay trong chu ky do.
+// ------------------------------------------------------------
+bool waterTooClose() {
+  // So doc am nghia la khong co tieng doi, khong ket luan duoc gi, bo qua.
+  return (lastRawDistCm > 0) && (lastRawDistCm < LEVEL_MIN_DISTANCE_CM);
 }
 
 // ------------------------------------------------------------
@@ -278,6 +308,7 @@ void readFloats() {
 const char* pumpBlockReason() {
   if (faultCode[0] != '\0')                 return "fault_active";
   if (floatMax)                             return "float_max_triggered";
+  if (waterTooClose())                      return "water_too_close";
   if (levelOk && levelPct >= LEVEL_OVERFLOW_PCT) return "overflow_guard";
   if (!levelOk)                             return "level_sensor_invalid";
   if (!floatSrc)                            return "source_tank_empty";
@@ -294,6 +325,10 @@ bool startPump() {
     pumpOn = true; setRelay(true);
     pumpOnSince = millis();
     dryRunSince = noCurrentSince = 0;
+    fillStartVolumeL = volumeL;
+    fillStartLevelCm = levelOk ? levelCm : -1;
+    progressMarkMs   = pumpOnSince;
+    progressMarkCm   = levelOk ? levelCm : -1;
     publishPumpState();
   }
   return true;
@@ -343,8 +378,9 @@ void checkFaults() {
   if (floatMax && levelOk && levelPct < CONFLICT_LEVEL_PCT) {
     raiseFault("SENSOR_CONFLICT"); state = ST_FAULT_SENSOR; return;
   }
-  // 3. Chong tran
-  if (floatMax || (levelOk && levelPct >= LEVEL_OVERFLOW_PCT)) {
+  // 3. Chong tran. Ba duong doc lap: phao, phan tram da loc, va khoang cach
+  //    tho. Chi can mot duong bao la khoa, khong doi hai duong dong y.
+  if (floatMax || waterTooClose() || (levelOk && levelPct >= LEVEL_OVERFLOW_PCT)) {
     raiseFault("OVERFLOW"); state = ST_OVERFLOW_LOCK; return;
   }
   // 4. Bom chay kho
@@ -380,6 +416,29 @@ void checkFaults() {
   if (pumpOn && pumpOnSince && now - pumpOnSince > MAX_FILL_MS) {
     raiseFault("FILL_TIMEOUT"); state = ST_FAULT_DRYRUN; return;
   }
+
+  // 8. Tran cuoi cung theo thoi gian. Khong dieu kien, khong ngoai le.
+  //    Luat 7 co the bi vo hieu neu pumpOnSince bi dat lai, luat nay thi khong.
+  if (pumpOn && pumpOnSince && now - pumpOnSince > PUMP_HARD_LIMIT_MS) {
+    raiseFault("HARD_LIMIT"); state = ST_OVERFLOW_LOCK; return;
+  }
+
+  // 9. Da bom qua nhieu nuoc trong MOT lan. Dem bang cam bien luu luong
+  //    dau vao, hoan toan doc lap voi cam bien sieu am va voi phao.
+  if (pumpOn && (volumeL - fillStartVolumeL) > MAX_FILL_VOLUME_L) {
+    raiseFault("VOLUME_LIMIT"); state = ST_OVERFLOW_LOCK; return;
+  }
+
+  // 10. Bom chay ma muc nuoc khong len. Hoac cam bien muc hong, hoac nuoc
+  //     dang di dau mat. Ca hai deu la ly do phai dung.
+  if (pumpOn && levelOk) {
+    if (progressMarkCm < 0) { progressMarkCm = levelCm; progressMarkMs = now; }
+    else if (levelCm > progressMarkCm + NO_PROGRESS_CM) {
+      progressMarkCm = levelCm; progressMarkMs = now;       // co tien do, dat moc moi
+    } else if (now - progressMarkMs > NO_PROGRESS_MS) {
+      raiseFault("NO_PROGRESS"); state = ST_FAULT_DRYRUN; return;
+    }
+  }
 }
 
 // ------------------------------------------------------------
@@ -401,13 +460,18 @@ void runStateMachine() {
 
     case ST_FILLING:
       if (!autoMode) { stopPump(); state = ST_IDLE; break; }
+      // Mat tin hieu muc thi NGAT NGAY, khong cho het SENSOR_TIMEOUT_MS.
+      // Ban cu doi 4 giay, va trong 4 giay do bom van chay voi so phan tram
+      // dong bang tu lan doc hop le cuoi cung. Do la duong dan gay tran.
+      if (!levelOk) { stopPump(); state = ST_IDLE; break; }
       if (levelPct > LEVEL_HIGH_PCT && now - pumpOnSince >= MIN_ON_MS) {
         stopPump(); state = ST_IDLE;
       }
       break;
 
     case ST_MANUAL_ON:
-      // Rao an toan van duoc kiem tra moi chu ky ngay ca o che do thu cong
+      // Rao an toan van duoc kiem tra moi chu ky ngay ca o che do thu cong.
+      // MIN_ON_MS khong ap dung o day: rao chan luon thang.
       if (autoMode || pumpBlockReason() != nullptr) {
         stopPump();
         state = autoMode ? ST_IDLE : ST_IDLE;
@@ -415,6 +479,7 @@ void runStateMachine() {
       break;
 
     case ST_FAULT_SENSOR:
+      stopPump();   // giu ngat moi chu ky, khong chi mot lan luc phat loi
       // Nhom tu phuc hoi: tin hieu hop le lien tuc du lau thi tu het
       if (levelOk && !(floatMax && levelPct < CONFLICT_LEVEL_PCT)) {
         if (sensorGoodSince == 0) sensorGoodSince = now;
@@ -616,12 +681,18 @@ void mqttTryConnect() {
 
 // ------------------------------------------------------------
 void setup() {
-  Serial.begin(115200);
-  delay(200);
-
-  // Trang thai an toan mac dinh, dat truoc khi doc bat ky cam bien nao
+  // Dua ro le ve NGAT NGAY DONG DAU TIEN, truoc ca Serial.begin.
+  // Tu luc cap dien toi luc dong nay chay, chan GPIO 26 van tha noi, va
+  // mo dun ro le kich muc thap se hieu muc tha noi la LENH BAT. Moi mili
+  // giay tri hoan o day la mot mili giay bom chay ngoai y muon.
+  // Phan con lai, khoang 300 ms cua bootloader ROM, phan mem khong the
+  // rut ngan duoc: chi dien tro keo len NGOAI 10 kOhm tu chan IN len 3,3 V
+  // moi bit han duoc, xem docs/wiring.md.
   pinMode(PIN_RELAY, OUTPUT);
   setRelay(false);
+
+  Serial.begin(115200);
+  delay(200);
 
   pinMode(PIN_TRIG, OUTPUT);
   pinMode(PIN_ECHO, INPUT);
