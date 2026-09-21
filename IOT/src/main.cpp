@@ -180,6 +180,8 @@ static uint8_t tooCloseStreak = 0;
 // Moc dau moi lan bom, de do tien do va tong luong da bom trong lan do.
 static float   fillStartVolumeL = 0, fillStartLevelCm = -1;
 static uint32_t progressMarkMs  = 0;
+// Thoi diem levelOk bat dau false trong khi dang bom. 0 = dang co tin hieu.
+static uint32_t fillBlindSince  = 0;
 static float   progressMarkCm   = -1;
 
 // Cua so truot chi nhan nhung so doc NAM TRONG DAI VAT LY CO THE.
@@ -236,7 +238,9 @@ float medianOf5() {
   // Cua so trai ra qua rong thi cac mau khong noi ve cung mot mat nuoc.
   // Tra ve -1 de bao KHONG DOC DUOC, chu khong dam lay trung vi cua hai nhom
   // xap xi bang nhau — trung vi luc do chi la mot lan tung dong xu.
+#if !LEVEL_TRUST_ALWAYS
   if (v[levelWinCount - 1] - v[0] > LEVEL_SPREAD_MAX_CM) return -1;
+#endif
 
   return v[levelWinCount / 2];
 }
@@ -272,6 +276,7 @@ void readLevel() {
   // hieu la muc nhay 6 cm trong mot chu ky va bi loai oan.
   if (h < 0) h = 0;
 
+#if !LEVEL_TRUST_ALWAYS
   if (lastGoodLevelCm >= 0) {
     float dt = (millis() - lastValidLevelMs) / 1000.0f;
     // Gioi han = phan do nuoc that su co the troi trong khoang dt, CONG
@@ -282,6 +287,7 @@ void readLevel() {
       markLevelStale(); return;
     }
   }
+#endif
 
   levelCm  = h;
   levelPct = (h / TANK_MAX_LEVEL_CM) * 100.0f;
@@ -401,6 +407,7 @@ bool startPump() {
     pumpOnSince = millis();
     dryRunSince = noCurrentSince = 0;
     fillStartVolumeL = volumeL;
+    fillBlindSince   = 0;
     fillStartLevelCm = levelOk ? levelCm : -1;
     progressMarkMs   = pumpOnSince;
     progressMarkCm   = levelOk ? levelCm : -1;
@@ -543,10 +550,22 @@ void runStateMachine() {
 
     case ST_FILLING:
       if (!autoMode) { stopPump(); state = ST_IDLE; break; }
-      // Mat tin hieu muc thi NGAT NGAY, khong cho het SENSOR_TIMEOUT_MS.
-      // Ban cu doi 4 giay, va trong 4 giay do bom van chay voi so phan tram
-      // dong bang tu lan doc hop le cuoi cung. Do la duong dan gay tran.
-      if (!levelOk) { stopPump(); state = ST_IDLE; break; }
+      // Mat tin hieu muc: cho them FILL_LEVEL_GRACE_MS roi moi ngat.
+      //
+      // Khong ngat ngay, vi chinh viec bom chay lam mat nuoc gon va lam
+      // levelOk chop tat — ngat ngay thi lan bom nao cung dung som.
+      // Khong cho vo han, vi so phan tram luc do dong bang o lan doc cuoi.
+      //
+      // Trong suot khoang an han nay, waterTooClose van doc thang khoang
+      // cach tho tung lan phat nen chan chong tran khong he bi tat.
+      if (!levelOk) {
+        if (fillBlindSince == 0) fillBlindSince = now;
+        else if (now - fillBlindSince > FILL_LEVEL_GRACE_MS) {
+          raiseFault("LEVEL_LOST"); state = ST_FAULT_SENSOR; break;
+        }
+        break;            // van bom, cho tin hieu quay lai
+      }
+      fillBlindSince = 0;
       if (levelPct > LEVEL_HIGH_PCT && now - pumpOnSince >= MIN_ON_MS) {
         stopPump(); state = ST_IDLE;
       }
@@ -628,6 +647,7 @@ size_t buildTelemetry(char* buf, size_t cap, const Sample* s) {
     doc["flow_out_lpm"]       = flowOutLpm;
     doc["flow_ok"]            = flowOk;
     doc["flow_out_ok"]        = flowOutOk;
+    doc["level_trust_always"] = (bool)LEVEL_TRUST_ALWAYS;
     doc["volume_out_l"]       = volumeOutL;
     doc["volume_out_today_l"] = volumeOutTodayL;
     doc["pump"]      = pumpOn;

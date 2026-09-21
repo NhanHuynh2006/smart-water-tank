@@ -197,6 +197,17 @@ async function tickState(){
   const lvlEl = document.getElementById("lvl");
   lvlEl.textContent = pct.toFixed(1) + " %";
   lvlEl.className = "v" + (d.level_ok === false ? " untrusted" : "");
+  // Nhac cho nguoi xem biet dang o che do chan doan, de khong ai tuong so
+  // doc da dang tin tro lai trong khi thuc ra la cong xac thuc bi bo.
+  const badge = document.getElementById("stateBadge");
+  if (d.level_trust_always === true && badge && !badge.dataset.diag) {
+    badge.dataset.diag = "1";
+    const w = document.createElement("span");
+    w.textContent = "BỎ CỔNG XÁC THỰC MỨC";
+    w.style.cssText = "margin-left:8px;padding:2px 8px;border-radius:4px;"
+                    + "background:#7d1616;color:#fff;font-size:11px;font-weight:600";
+    badge.parentNode.insertBefore(w, badge.nextSibling);
+  }
   // HC-SR04 khong nhin thay lop nuoc mong o day bon: cam bien cach day 15,5 cm
   // va sai so do la +-1 cm, nen duoi 1 cm la nam trong nhieu. Hien "0%" o do
   // la noi doi — nguoi dung nhin vao bon van thay nuoc va van thay nuoc chay.

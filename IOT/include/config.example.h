@@ -289,6 +289,23 @@
 // Nay giu lai so doc hop le cuoi trong 2 giay. Rot le di qua duoc, mat that
 // van bi bat sau 2 giay, va ST_FILLING van ngat bom ngay khi levelOk false.
 #define LEVEL_STALE_MS      3000UL
+
+// Bom duoc phep chay tiep bao lau khi DANG BOM ma mat tin hieu muc.
+//
+// Vi sao can: do that cho thay HC-SR04 rat on dinh khi nuoc dung yen — 20 mau
+// lien tiep, do lech chuan 0,010 cm. Nhung luc bom chay thi mat nuoc gon,
+// tieng doi tan di, cua so trung vi trai rong qua LEVEL_SPREAD_MAX_CM va
+// levelOk ha xuong. Ban cu ngat bom NGAY luc do, nen lan bom nao cung dung
+// somn o khoang 50 phan tram thay vi len toi nguong 70 phan tram.
+//
+// Vi sao an toan: chan cuoi cung waterTooClose doc THANG khoang cach tho tu
+// tung lan phat, khong qua cua so trung vi, nen no VAN lam viec trong suot
+// khoang an han nay. Phao muc cao, PUMP_HARD_LIMIT_MS, MAX_FILL_MS va
+// NO_PROGRESS cung deu khong phu thuoc levelOk.
+//
+// 10 giay o luu luong do duoc 0,36 L/phut la them 0,06 lit, tuc 6 phan tram
+// cua bon 1 lit. Cong voi LEVEL_STALE_MS thi toi da 13 giay khong co so doc.
+#define FILL_LEVEL_GRACE_MS 10000UL
 #define SENSOR_RECOVER_MS   5000UL
 #define CONFLICT_LEVEL_PCT  70.0f
 // Phao muc thap bao "da tut duoi vach thap" ma sieu am lai bao day hon so
@@ -341,6 +358,35 @@
 // trung vi chi la mot lan tung dong xu. Thay vi doan bua, hay noi thang la
 // KHONG BIET — cac chan an toan theo thoi gian van lam viec binh thuong.
 #define LEVEL_SPREAD_MAX_CM    3.0f
+
+// ---------- CHE DO CHAN DOAN: TIN CAM BIEN MUC VO DIEU KIEN ----------
+// Dat 1 de BO cong xac thuc: bo kiem tra do phan tan cua so, bo cong chan
+// toc do doi muc. levelOk chi con false khi that su KHONG co mot tieng doi
+// nao trong LEVEL_STALE_MS.
+//
+// DUNG DE XEM HE CHAY RA SAO, KHONG PHAI DE CHAY LAU DAI.
+// Bo hai cong nay la nhan luon ca cac so doc sai tho — da tung do duoc cam
+// bien nhay qua lai giua 4,8 cm va 0,00 cm trong khi bom chay.
+//
+// Nhung chan an toan sau VAN LAM VIEC day du, vi khong cai nao dua vao levelOk:
+//    waterTooClose   doc thang khoang cach tho tung lan phat
+//    phao muc cao    tiep diem co khi, doc lap hoan toan
+//    NO_PROGRESS     bom chay ma muc khong len
+//    MAX_FILL_MS     va PUMP_HARD_LIMIT_MS, thuan tuy theo thoi gian
+// KET QUA THU NGAY 21/09 voi gia tri 1, che do tu dong, van xa khoa:
+//    20:25:29  FILLING  muc 0,17 cm
+//    20:25:37  FILLING  muc 2,55 cm   <- dang len binh thuong
+//    20:25:41  FILLING  muc 0,00 cm   <- SUP, trong khi bom VAN DANG CHAY
+//    20:25:57  NO_PROGRESS, ngat bom
+//
+// Bo hai cong xac thuc KHONG giup gi. So doc tho that su sup ve 0,00 trong
+// luc bom chay — cam bien khong con thay mat nuoc nua ma thay thu gi do o
+// 15,5 cm tro ra. Hai cong do khong phai nguyen nhan; chung chi bao dung
+// rang du lieu dang hong.
+//
+// Dieu dang mung: NO_PROGRESS van ngat bom du levelOk bi ep thanh true suot.
+// Lop an toan khong dua vao levelOk da lam dung viec cua no.
+#define LEVEL_TRUST_ALWAYS     0
 // Bao nhieu lan phat hong LIEN TIEP thi coi la mat cam bien va xoa cua so.
 // 5 lan x chu ky 200 ms = 1 giay, van con thua truoc SENSOR_TIMEOUT_MS = 4 s.
 // Do that: rot khoang 30 phan tram, nen chuoi 5 lan rot lien tiep xay ra
