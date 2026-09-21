@@ -68,6 +68,51 @@ Cả hai đều cho **đúng 3,33 V**, vì chỉ tỉ số mới quyết định
 - Đi dây ECHO **tách khỏi dây bơm và dây rơ le**, đừng bó chung.
 - Nếu làm hai điều trên mà vẫn nhiễu, hạ xuống **1k/2k** hoặc **2,2k/4,7k**. Đổi lại là ECHO phải gánh 1,7 mA — vẫn nhẹ nhàng với tầng đẩy kéo của HC-SR04.
 
+## YF-S401 qua TXS0108E: cũng hỏng, và theo một kiểu khác
+
+TXS0108E **danh nghĩa là hợp** với ngõ ra cực thu hở như YF-S401 — nó vốn sinh ra cho bus kiểu I²C. Nhưng trên bo mạch này nó vẫn hỏng, vì ba lý do chồng lên nhau.
+
+**Thứ nhất, nó đã có sẵn điện trở kéo lên khoảng 10 kΩ ở cả hai phía.** TI ghi rõ trong datasheet: điện trở kéo lên gắn thêm từ bên ngoài phải **trên 50 kΩ**, nếu không sẽ phá mạch dò chiều. Điện trở kéo lên nội bộ của ESP32 chỉ khoảng **45 kΩ** — nằm ngay dưới ngưỡng đó. `FLOW_PIN_PULLUP = 1` trong `config.h` chính là đang bật nó.
+
+**Thứ hai, mạch *one-shot* tăng tốc sườn.** Mỗi lần thấy sườn, nó đạp một dòng lớn trong chốc lát rồi nhả ra. Nếu lúc nhả mà mức tín hiệu trôi về ngưỡng cũ, nó lại thấy một sườn nữa và lại đạp. Đó là **tự dao động**, và tần số của nó nằm đúng dải vài kHz.
+
+**Thứ ba, tín hiệu lưu lượng lúc không có nước là tín hiệu đứng yên.** TXS0108E được thiết kế cho tín hiệu có nhịp, không cho mức tĩnh kéo dài. Đứng yên là lúc nó dễ trôi và dễ chattering nhất.
+
+### Số đo khớp với chẩn đoán này
+
+Bơm đã rút, không một giọt nước chảy:
+
+| | Kéo lên 3,3 V | Không kéo | Kéo xuống đất |
+|---|---|---|---|
+| GPIO 4 (vào) | 3 445 Hz | 13 403 Hz | 3 150 Hz |
+| GPIO 19 (ra) | 3 282 Hz | 12 123 Hz | 2 938 Hz |
+| **GPIO 23** (không nối gì) | **0 Hz** | 51 Hz | **0 Hz** |
+
+Ba điều trong bảng này chỉ thẳng vào TXS0108E:
+
+- **Hai kênh cho tần số gần bằng nhau.** Hai cảm biến rời nhau không có lý do gì trùng nhau tới 5%. Cùng một con chip thì có.
+- **Tắt Wi-Fi không làm thay đổi gì.** Vậy không phải nhiễu sóng vô tuyến — là chính con chip đang dao động.
+- **Tần số đổi theo cách cấu hình chân.** Chân thả nổi thật thì im (GPIO 23 cho 0 Hz). Chân bị một nguồn thật điều khiển thì không đổi theo cách kéo. Chỉ có mạch dò chiều đang bị điện trở kéo của ESP32 quấy nhiễu mới cho kiểu này.
+
+### Cách làm đúng: bỏ hẳn bộ chuyển mức
+
+Ngõ ra hall của YF-S401 là **cực thu hở** — nó chỉ kéo XUỐNG đất, không bao giờ đẩy 5 V ra. Nối thẳng dây tín hiệu vào GPIO, rồi gắn **điện trở 4,7 kΩ lên 3,3 V**. Mức cao khi đó do điện trở quyết định, tức đúng 3,3 V. Cảm biến vẫn cấp nguồn 5 V bình thường. Không cần, và không nên, có bộ chuyển mức ở đây.
+
+**Kiểm tra trước khi nối thẳng.** Một số mô đun có sẵn điện trở kéo lên 5 V; loại đó nối thẳng là đưa 5 V vào chân ESP32. Cấp nguồn cho cảm biến, **chưa nối vào ESP32**, đo điện áp chân tín hiệu bằng đồng hồ:
+
+| Đo được | Nghĩa là | Đấu thế nào |
+|---|---|---|
+| khoảng 0 V hoặc trôi nổi | không có điện trở kéo lên sẵn | nối thẳng + 4,7 kΩ lên 3,3 V, đặt `FLOW_PIN_PULLUP = 1` |
+| khoảng 5 V | có điện trở kéo lên sẵn | qua chia áp 10k/20k, đặt `FLOW_PIN_PULLUP = 0` |
+
+Xong rồi chạy `pio run -e test_flownoise -t upload -t monitor`. Đấu đúng thì cả hai chân phải cho **0 Hz** ở cả ba kiểu kéo, giống hệt chân đối chiếu GPIO 23.
+
+### Hai phao và chân rơ le cũng vậy
+
+Hai phao chỉ là công tắc nối xuống đất — **nối thẳng**, không có gì để chuyển mức. Chân điều khiển rơ le là ngõ ra của ESP32; nếu nó cũng đang đi qua TXS0108E thì mạch one-shot có thể sinh xung giả ngay trên đường bật tắt bơm. Cho nó đi thẳng.
+
+Nói gọn: trong toàn bộ mạch này, **chỗ duy nhất cần hạ áp là chân ECHO của HC-SR04 và ngõ ra ACS712**, và cả hai đều dùng cầu chia áp điện trở chứ không dùng chip.
+
 ## Mặt nước gợn khi bơm cũng làm sai số
 
 Đo thật khi bơm chạy: cảm biến nhảy qua lại giữa 4,8 cm và 0,00 cm — lúc thấy mặt nước, lúc nhìn xuyên xuống đáy thùng. Dòng nước đổ vào làm mặt nước gợn, tiếng dội tán đi hướng khác, chỉ còn tiếng dội từ đáy quay về.
