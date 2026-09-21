@@ -46,7 +46,27 @@ Nó là loại **tự dò chiều**, thiết kế cho bus hai chiều kiểu I²
 - Mạch *one-shot* nổ theo từng sườn và **tự sinh thêm xung**. Với `pulseIn` thì mỗi xung thừa là một phép đo khoảng cách sai.
 - Ở trạng thái nghỉ, trở kháng ngõ ra khoảng 4 kΩ. Cộng với điện dung dây là sườn tín hiệu bị bo tròn, và độ rộng xung — thứ duy nhất mang thông tin khoảng cách — bị lệch.
 
-**Cách làm đúng, và cũng là cách bản thiết kế này vốn yêu cầu: một cầu chia áp điện trở, chỉ trên chân ECHO.** Hai điện trở, ví dụ 1 kΩ nối từ ECHO vào chân ESP32 và 2 kΩ từ chân đó xuống GND. Chân TRIG nối thẳng, hầu hết mô đun HC-SR04 nhận mức 3,3 V làm mức cao.
+**Cách làm đúng, và cũng là cách bản thiết kế này vốn yêu cầu: một cầu chia áp điện trở, chỉ trên chân ECHO.** R1 nối từ ECHO vào chân ESP32, R2 từ chân đó xuống GND, điểm giữa đi vào GPIO 18. Chân TRIG nối thẳng, hầu hết mô đun HC-SR04 nhận mức 3,3 V làm mức cao.
+
+### Dùng 10k/20k hay 1k/2k?
+
+Cả hai đều cho **đúng 3,33 V**, vì chỉ tỉ số mới quyết định điện áp: `5 × 20/(10+20) = 5 × 2/(1+2)`. Khác nhau ở **trở kháng nguồn** của điểm giữa:
+
+| Cặp điện trở | Trở kháng điểm giữa | Dòng lấy từ ECHO | Sườn tín hiệu¹ | Sai số khoảng cách² |
+|---|---|---|---|---|
+| **10 kΩ / 20 kΩ** | 6,7 kΩ | 0,17 mA | ~730 ns | 0,013 cm |
+| **1 kΩ / 2 kΩ** | 0,67 kΩ | 1,7 mA | ~73 ns | 0,001 cm |
+
+¹ thời gian lên 10–90%, ước tính với khoảng 50 pF gồm điện dung chân ESP32 và dây nối ngắn
+² HC-SR04 mã hoá khoảng cách bằng độ rộng xung, 58 µs cho mỗi cm
+
+**Về thời gian thì khác biệt không đáng kể** — 0,013 cm chìm hoàn toàn dưới sai số ±1 cm mà cảm biến đang có. Cứ dùng 10k/20k, đó là giá trị ghi trong bảng vật tư.
+
+**Khác biệt thật nằm ở khả năng chống nhiễu.** Điểm giữa 6,7 kΩ nhạy với nhiễu gấp mười lần điểm giữa 0,67 kΩ. Bo mạch này đã có sẵn vấn đề nhiễu nặng: hai chân lưu lượng thả nổi bắt được 3 kHz, và dây bơm từng làm cảm biến siêu âm đọc sai hẳn. Vì vậy:
+
+- Đặt hai điện trở **sát chân ESP32**, không đặt ở đầu cảm biến. Đoạn dây 6,7 kΩ càng ngắn càng tốt, dưới 10 cm.
+- Đi dây ECHO **tách khỏi dây bơm và dây rơ le**, đừng bó chung.
+- Nếu làm hai điều trên mà vẫn nhiễu, hạ xuống **1k/2k** hoặc **2,2k/4,7k**. Đổi lại là ECHO phải gánh 1,7 mA — vẫn nhẹ nhàng với tầng đẩy kéo của HC-SR04.
 
 ## Mặt nước gợn khi bơm cũng làm sai số
 
