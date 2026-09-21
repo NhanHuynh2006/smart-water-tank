@@ -198,8 +198,19 @@ async function tickState(){
   lvlEl.textContent = pct.toFixed(1) + " %";
   lvlEl.className = "v" + (d.level_ok === false ? " untrusted" : "");
   document.getElementById("pctTxt").textContent = pct.toFixed(0) + "%";
-  document.getElementById("flow").textContent    = (d.flow_lpm ?? 0).toFixed(2) + " L/ph";
-  document.getElementById("flowOut").textContent = (d.flow_out_lpm ?? 0).toFixed(2) + " L/ph";
+  // flow_ok === false nghia la day tin hieu dang nhieu. Hien chu thay vi hien
+  // so 0, de khong ai nham "khong co nuoc chay" voi "khong do duoc".
+  const fEl = document.getElementById("flow"), foEl = document.getElementById("flowOut");
+  if (d.flow_ok === false) {
+    fEl.textContent = "nhiễu";  fEl.className = "v untrusted";
+  } else {
+    fEl.textContent = (d.flow_lpm ?? 0).toFixed(2) + " L/ph";  fEl.className = "v";
+  }
+  if (d.flow_out_ok === false) {
+    foEl.textContent = "nhiễu"; foEl.className = "v untrusted";
+  } else {
+    foEl.textContent = (d.flow_out_lpm ?? 0).toFixed(2) + " L/ph"; foEl.className = "v";
+  }
   document.getElementById("volOut").textContent  = (d.volume_out_l ?? 0).toFixed(1) + " L";
   document.getElementById("vol").textContent  = (d.volume_l ?? 0).toFixed(1) + " L";
   document.getElementById("pump").textContent = d.pump ? "ĐANG CHẠY" : "tắt";

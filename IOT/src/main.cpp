@@ -33,7 +33,15 @@ char  faultCode[24] = "";
 volatile uint32_t flowPulses = 0;        // cam bien DAU VAO
 uint32_t lastPulseSnapshot   = 0;
 volatile uint32_t flowOutPulses = 0;     // cam bien DAU RA
+// Bo dem xung THO: dem MOI suon xuong, khong qua bo loc nao. Dung de biet
+// day tin hieu co dang bat song hay khong.
+volatile uint32_t flowRawPulses    = 0;
+volatile uint32_t flowOutRawPulses = 0;
 uint32_t lastPulseOutSnapshot   = 0;
+uint32_t lastRawSnapshot        = 0;
+uint32_t lastRawOutSnapshot     = 0;
+// false = day tin hieu dang nhieu, so doc luu luong KHONG dung duoc
+bool  flowOk = true, flowOutOk = true;
 
 float levelCm   = 0, levelPct = 0;
 bool  levelOk   = false;
@@ -106,10 +114,12 @@ volatile uint32_t lastFlowUs = 0, lastFlowOutUs = 0;
 
 void IRAM_ATTR onFlowPulse() {
   uint32_t now = micros();
+  flowRawPulses++;
   if (now - lastFlowUs >= FLOW_MIN_PULSE_US) { flowPulses++; lastFlowUs = now; }
 }
 void IRAM_ATTR onFlowOutPulse() {
   uint32_t now = micros();
+  flowOutRawPulses++;
   if (now - lastFlowOutUs >= FLOW_MIN_PULSE_US) { flowOutPulses++; lastFlowOutUs = now; }
 }
 
@@ -234,27 +244,41 @@ void readLevel() {
 
 void readFlow(uint32_t dtMs) {
   noInterrupts();
-  uint32_t p = flowPulses;
+  uint32_t p  = flowPulses,    pr  = flowRawPulses;
+  uint32_t po = flowOutPulses, por = flowOutRawPulses;
   interrupts();
-  uint32_t d = p - lastPulseSnapshot;
-  lastPulseSnapshot = p;
-  float freq = (dtMs > 0) ? (d * 1000.0f / dtMs) : 0;
-  flowLpm = freq / FLOW_K_FACTOR;
-  float addL = flowLpm * (dtMs / 1000.0f) / 60.0f;
-  volumeL      += addL;
-  volumeTodayL += addL;
 
-  // Cam bien dau ra: cung cong thuc, bo dem va he so K rieng
-  noInterrupts();
-  uint32_t po = flowOutPulses;
-  interrupts();
-  uint32_t dOut = po - lastPulseOutSnapshot;
-  lastPulseOutSnapshot = po;
-  float freqOut = (dtMs > 0) ? (dOut * 1000.0f / dtMs) : 0;
-  flowOutLpm = freqOut / FLOW_OUT_K_FACTOR;
-  float addOut = flowOutLpm * (dtMs / 1000.0f) / 60.0f;
-  volumeOutL      += addOut;
-  volumeOutTodayL += addOut;
+  uint32_t d     = p  - lastPulseSnapshot;     lastPulseSnapshot    = p;
+  uint32_t dOut  = po - lastPulseOutSnapshot;  lastPulseOutSnapshot = po;
+  uint32_t dRaw  = pr - lastRawSnapshot;       lastRawSnapshot      = pr;
+  uint32_t dRawO = por - lastRawOutSnapshot;   lastRawOutSnapshot   = por;
+
+  float inv = (dtMs > 0) ? (1000.0f / dtMs) : 0;
+
+  // Tan so THO quyet dinh so doc co dung duoc hay khong. Vuot qua nguong
+  // vat ly nghia la day tin hieu dang bat song chu khong phai co nuoc chay.
+  flowOk    = (dRaw  * inv) <= FLOW_MAX_PLAUSIBLE_HZ;
+  flowOutOk = (dRawO * inv) <= FLOW_MAX_PLAUSIBLE_HZ;
+
+  if (flowOk) {
+    flowLpm = (d * inv) / FLOW_K_FACTOR;
+    float addL = flowLpm * (dtMs / 1000.0f) / 60.0f;
+    volumeL      += addL;
+    volumeTodayL += addL;
+  } else {
+    // Bao 0 va KHONG cong don. Cong don so rac vao bo dem the tich la cach
+    // chac chan nhat de pha hong rang buoc an toan theo the tich.
+    flowLpm = 0;
+  }
+
+  if (flowOutOk) {
+    flowOutLpm = (dOut * inv) / FLOW_OUT_K_FACTOR;
+    float addOut = flowOutLpm * (dtMs / 1000.0f) / 60.0f;
+    volumeOutL      += addOut;
+    volumeOutTodayL += addOut;
+  } else {
+    flowOutLpm = 0;
+  }
 }
 
 // Chi dung o dang nhi phan: do phan giai khong du cho gia tri dinh luong
@@ -384,7 +408,7 @@ void checkFaults() {
     raiseFault("OVERFLOW"); state = ST_OVERFLOW_LOCK; return;
   }
   // 4. Bom chay kho
-  if (pumpOn) {
+  if (pumpOn && flowOk) {
     if (flowLpm < DRYRUN_FLOW_LPM) {
       if (dryRunSince == 0) dryRunSince = now;
       else if (now - dryRunSince > DRYRUN_MS) {
@@ -404,7 +428,7 @@ void checkFaults() {
   } else noCurrentSince = 0;
 
   // 6. Nghi ngo ro ri: bom tat ma van co dong chay
-  if (!pumpOn && flowLpm > LEAK_FLOW_LPM) {
+  if (!pumpOn && flowOk && flowLpm > LEAK_FLOW_LPM) {
     if (leakSince == 0) leakSince = now;
     else if (now - leakSince > LEAK_MS) {
       raiseFault("LEAK_SUSPECTED");   // canh bao, khong khoa bom
@@ -425,7 +449,7 @@ void checkFaults() {
 
   // 9. Da bom qua nhieu nuoc trong MOT lan. Dem bang cam bien luu luong
   //    dau vao, hoan toan doc lap voi cam bien sieu am va voi phao.
-  if (pumpOn && (volumeL - fillStartVolumeL) > MAX_FILL_VOLUME_L) {
+  if (pumpOn && flowOk && (volumeL - fillStartVolumeL) > MAX_FILL_VOLUME_L) {
     raiseFault("VOLUME_LIMIT"); state = ST_OVERFLOW_LOCK; return;
   }
 
@@ -538,6 +562,8 @@ size_t buildTelemetry(char* buf, size_t cap, const Sample* s) {
     doc["volume_l"]           = volumeL;
     doc["volume_today_l"]     = volumeTodayL;
     doc["flow_out_lpm"]       = flowOutLpm;
+    doc["flow_ok"]            = flowOk;
+    doc["flow_out_ok"]        = flowOutOk;
     doc["volume_out_l"]       = volumeOutL;
     doc["volume_out_today_l"] = volumeOutTodayL;
     doc["pump"]      = pumpOn;
@@ -641,8 +667,15 @@ void onMessage(char* topic, byte* payload, unsigned int len) {
     sendAck(cmdId, "accepted", nullptr);
 
   } else if (!strcmp(action, "reset_volume")) {
-    volumeTodayL = 0;
-    volumeOutTodayL = 0;
+    // Xoa ca bo dem trong ngay LAN bo dem tong. Ban cu chi xoa bo dem ngay,
+    // nen 5 858 lit rac do nhieu tich luy lai nam mai trong NVS va khong co
+    // cach nao xoa duoc tu giao dien.
+    volumeTodayL = volumeOutTodayL = 0;
+    volumeL      = volumeOutL      = 0;
+    prefs.putFloat("vol", 0.0f);
+    prefs.putFloat("volday", 0.0f);
+    prefs.putFloat("volout", 0.0f);
+    prefs.putFloat("voloutday", 0.0f);
     sendAck(cmdId, "accepted", nullptr);
 
   } else {

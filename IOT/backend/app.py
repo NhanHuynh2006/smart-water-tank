@@ -71,6 +71,7 @@ CREATE TABLE IF NOT EXISTS telemetry (
   level_pct REAL, level_cm REAL, level_ok INTEGER,
   flow_lpm REAL, volume_l REAL, volume_today_l REAL,
   flow_out_lpm REAL, volume_out_l REAL, volume_out_today_l REAL,
+  flow_ok INTEGER, flow_out_ok INTEGER,   -- 0 = day tin hieu nhieu, so doc bo di
   pump INTEGER, state TEXT, mode TEXT,
   current_mv REAL, float_max INTEGER, float_src INTEGER,
   fault TEXT, rssi INTEGER, replay INTEGER DEFAULT 0
@@ -125,6 +126,10 @@ def init_db():
         for col in ("flow_out_lpm", "volume_out_l", "volume_out_today_l"):
             if col not in cols:
                 c.execute(f"ALTER TABLE telemetry ADD COLUMN {col} REAL")
+                print(f"[DB] da them cot telemetry.{col}")
+        for col in ("flow_ok", "flow_out_ok"):
+            if col not in cols:
+                c.execute(f"ALTER TABLE telemetry ADD COLUMN {col} INTEGER")
                 print(f"[DB] da them cot telemetry.{col}")
         for k, v in DEFAULT_CONFIG.items():
             c.execute("INSERT OR IGNORE INTO config(key,value) VALUES(?,?)", (k, v))
@@ -227,13 +232,15 @@ def on_message(cli, userdata, msg):
                 """INSERT INTO telemetry(dev,ts,ts_ms,recv_ts,seq,level_pct,level_cm,level_ok,
                    flow_lpm,volume_l,volume_today_l,
                    flow_out_lpm,volume_out_l,volume_out_today_l,
+                   flow_ok,flow_out_ok,
                    pump,state,mode,current_mv,
                    float_max,float_src,fault,rssi,replay)
-                   VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
+                   VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
                 (d.get("dev"), d.get("ts"), d.get("ts_ms"), now, d.get("seq"),
                  d.get("level_pct"), d.get("level_cm"), int(bool(d.get("level_ok"))),
                  d.get("flow_lpm"), d.get("volume_l"), d.get("volume_today_l"),
                  d.get("flow_out_lpm"), d.get("volume_out_l"), d.get("volume_out_today_l"),
+                 int(bool(d.get("flow_ok", True))), int(bool(d.get("flow_out_ok", True))),
                  int(bool(d.get("pump"))), d.get("state"), d.get("mode"),
                  d.get("current_mv"), int(bool(d.get("float_max"))),
                  int(bool(d.get("float_src"))), d.get("fault"), d.get("rssi"),

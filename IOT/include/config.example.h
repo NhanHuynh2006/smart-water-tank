@@ -85,6 +85,21 @@
 // that, nhung cat bot phan lon nhieu do Wi-Fi da do duoc o 1600-2700 Hz.
 #define FLOW_MIN_PULSE_US   1200UL
 
+// Tan so xung LON NHAT ma cam bien co the sinh ra ve mat vat ly.
+// YF-S401 chay het co 6 L/phut x 98 xung moi lit/phut = 588 Hz.
+// YF-S201 chay het co 30 L/phut x 7,5 = 225 Hz.
+// Lay 1200 Hz la rong gap doi truong hop nhanh nhat.
+//
+// CAO HON SO NAY KHONG PHAI LA NUOC. Do thuc te tren mach ngay 21/09: chan
+// GPIO 4 dem duoc 17 000 Hz khi da TAT Wi-Fi va khong co giot nuoc nao chay.
+// Day tin hieu dang tha noi tren dien tro keo len noi bo 45 kOhm nen bat song.
+//
+// Phai bat duoc truong hop nay, vi bo loc FLOW_MIN_PULSE_US khong loai bo
+// duoc nhieu — no chi lay mau thua ra, bien 17 000 Hz thanh 833 Hz, tuc
+// 8,5 L/phut, mot con so trong RAT THAT. Doc con so do vao rang buoc an toan
+// con nguy hiem hon la khong co cam bien.
+#define FLOW_MAX_PLAUSIBLE_HZ  1200.0f
+
 // ---------- Tham so dieu khien ----------
 #define LEVEL_LOW_PCT       30.0f
 // Ha tu 80 xuong 70 va tu 95 xuong 85 de mat nuoc dung xa mat cam bien hon.
