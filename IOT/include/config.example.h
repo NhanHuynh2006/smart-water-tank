@@ -21,8 +21,14 @@
 // ---------- Chan GPIO ----------
 #define PIN_TRIG        5     // ultrasonic trigger
 #define PIN_ECHO        18    // ultrasonic echo (qua chia ap 10k/20k)
-#define PIN_FLOW        4     // xung cam bien luu luong DAU VAO (bom -> bon)
-#define PIN_FLOW_OUT    19    // xung cam bien luu luong DAU RA  (bon -> tieu thu)
+// DA DAO NGAY 21/09. Bang chung: che do thu cong, bom TAT, ong xa LUON MO.
+//    GPIO 4  doc 0,26-0,36 L/phut   <- co dong chay
+//    GPIO 19 doc 0,00                <- khong co dong chay
+// Bom dang tat thi duong VAO bat buoc phai bang 0. No khong bang 0, con
+// duong duoc goi la RA thi lai bang 0 dung luc nuoc dang xa that.
+// Vay GPIO 4 la cam bien DAU RA, va GPIO 19 la cam bien DAU VAO.
+#define PIN_FLOW       19     // xung cam bien luu luong DAU VAO (bom -> bon)
+#define PIN_FLOW_OUT    4     // xung cam bien luu luong DAU RA  (bon -> tieu thu)
 #define PIN_RELAY       26    // relay dieu khien bom
 #define PIN_CURRENT     34    // ACS712 (qua chia ap 10k/10k), chan chi vao
 #define PIN_FLOAT_MAX   27    // phao muc cao, INPUT_PULLUP
@@ -164,7 +170,7 @@
 //
 // Chung nao bom con bom 4750 Hz vao day tin hieu thi khong the biet hai cam
 // bien co bi dau nguoc hay khong, va cung khong the dung so doc cho viec gi.
-#define FLOW_SENSOR_ENABLED   0
+#define FLOW_SENSOR_ENABLED   1
 
 // ---------- Tham so dieu khien ----------
 #define LEVEL_LOW_PCT       30.0f

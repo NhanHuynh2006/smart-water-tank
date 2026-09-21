@@ -83,6 +83,27 @@ Cả hai đều cho **đúng 3,33 V**, vì chỉ tỉ số mới quyết định
 - Đi dây ECHO **tách khỏi dây bơm và dây rơ le**, đừng bó chung.
 - Nếu làm hai điều trên mà vẫn nhiễu, hạ xuống **1k/2k** hoặc **2,2k/4,7k**. Đổi lại là ECHO phải gánh 1,7 mA — vẫn nhẹ nhàng với tầng đẩy kéo của HC-SR04.
 
+## HC-SR04 không nhìn thấy lớp nước mỏng ở đáy bồn
+
+Cảm biến cách đáy 15,5 cm, sai số đo ±1 cm. Vì vậy **lớp nước dưới 1 cm nằm lọt trong nhiễu** — phần mềm không phân biệt được "cạn hẳn" với "còn một chút".
+
+Hiện `0%` trong tình huống đó là nói dối: người vận hành nhìn vào bồn vẫn thấy nước, và nếu ống xả đang mở thì vẫn thấy nước chảy. Dashboard giờ hiện **"≤ 1 cm · dưới ngưỡng đo"** thay vì `0%`.
+
+Điều này cũng có nghĩa là **đừng dùng số đo mức làm trọng tài** khi nó mâu thuẫn với thứ quan sát trực tiếp được. Trong ba cảm biến của hệ, HC-SR04 là cái kém tin cậy nhất: chùm sóng 15° rộng hơn lòng thùng 10×10 cm, mặt nước gợn làm tán tiếng dội, và lớp đáy thì nằm dưới ngưỡng.
+
+## 50 Hz trên dây tín hiệu là điện lưới, không phải nước
+
+Đo ngày 21/09, bơm tắt, chế độ thủ công:
+
+| | Tần số xung |
+|---|---|
+| GPIO 19 | **50,00 Hz** — đúng, không xê dịch, mọi mẫu |
+| GPIO 4 | 20 – 35 Hz, dao động |
+
+Một cảm biến lưu lượng không thể cho đúng 50,00 Hz suốt hàng chục giây trong khi dòng chảy thay đổi. Đó là **điện lưới cảm ứng vào dây tín hiệu đang thả nổi** ở trở kháng cao. Trong cùng một lần chạy trước đó, GPIO 19 lúc cho 0 Hz lúc cho 50,5 Hz — nó bám vào rồi nhả ra khỏi điện lưới.
+
+Đây chính là lý do **điện trở 4,7 kΩ lên 3,3 V là bắt buộc**, không phải tuỳ chọn. Nó hạ trở kháng đường tín hiệu xuống mười lần và dập tắt cảm ứng này.
+
 ## YF-S401 có thể sai dải đo cho hệ này
 
 Dải làm việc của YF-S401 là **0,3 – 6 L/phút**. Dưới cận dưới thì cánh quạt không đủ lực quay, và cảm biến im lặng — không phải vì hỏng, mà vì nó không được thiết kế cho lưu lượng đó.

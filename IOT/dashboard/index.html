@@ -197,6 +197,16 @@ async function tickState(){
   const lvlEl = document.getElementById("lvl");
   lvlEl.textContent = pct.toFixed(1) + " %";
   lvlEl.className = "v" + (d.level_ok === false ? " untrusted" : "");
+  // HC-SR04 khong nhin thay lop nuoc mong o day bon: cam bien cach day 15,5 cm
+  // va sai so do la +-1 cm, nen duoi 1 cm la nam trong nhieu. Hien "0%" o do
+  // la noi doi — nguoi dung nhin vao bon van thay nuoc va van thay nuoc chay.
+  // Noi ro la DUOI NGUONG DO thay vi khang dinh bon da can.
+  if (d.level_ok !== false && (d.level_cm ?? 99) < 1.0) {
+    lvlEl.textContent = "≤ 1 cm · dưới ngưỡng đo";
+    lvlEl.style.fontSize = "0.72em";
+  } else {
+    lvlEl.style.fontSize = "";
+  }
   document.getElementById("pctTxt").textContent = pct.toFixed(0) + "%";
   // flow_ok === false nghia la day tin hieu dang nhieu. Hien chu thay vi hien
   // so 0, de khong ai nham "khong co nuoc chay" voi "khong do duoc".
