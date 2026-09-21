@@ -50,7 +50,9 @@ float volumeL    = 0, volumeTodayL    = 0;
 float flowOutLpm = 0;                    // L/phut DAU RA
 float volumeOutL = 0, volumeOutTodayL = 0;
 float currentMv = 0, currentOffsetMv = 0;
-bool  floatMax  = false, floatSrc = true;
+// floatMax = nuoc da cham vach CAO tren bon chua  -> phai ngat bom
+// floatMin = nuoc da tut duoi vach THAP tren bon chua -> duoc phep bat bom
+bool  floatMax  = false, floatMin = false;
 
 uint32_t lastValidLevelMs = 0;
 uint32_t sensorGoodSince  = 0;
@@ -172,6 +174,8 @@ static uint8_t levelWinCount = 0, levelWinHead = 0, levelFailStreak = 0;
 // LEVEL_MIN_DISTANCE_CM dung thang so nay, de mot bo loc hong khong the
 // lam mat luon lop bao ve cuoi cung. Am nghia la lan phat do khong co tieng doi.
 static float   lastRawDistCm = -1.0f;
+// So lan phat LIEN TIEP cho ket qua gan hon LEVEL_MIN_DISTANCE_CM.
+static uint8_t tooCloseStreak = 0;
 
 // Moc dau moi lan bom, de do tien do va tong luong da bom trong lan do.
 static float   fillStartVolumeL = 0, fillStartLevelCm = -1;
@@ -195,6 +199,12 @@ float medianOf5() {
 
   float d = readDistanceOnce();
   lastRawDistCm = d;
+  // Chi dem khi CO tieng doi. Lan phat khong co tieng doi khong noi len dieu
+  // gi ve muc nuoc, va khong duoc phep lam dut chuoi lan cung khong.
+  if (d > 0) {
+    if (d < LEVEL_MIN_DISTANCE_CM) { if (tooCloseStreak < 255) tooCloseStreak++; }
+    else tooCloseStreak = 0;
+  }
   bool good = (d > 0) && (d >= dMin) && (d <= dMax);
 
   if (good) {
@@ -209,7 +219,9 @@ float medianOf5() {
     if (levelFailStreak < 255) levelFailStreak++;
     if (levelFailStreak >= LEVEL_FAIL_STREAK_MAX) { levelWinCount = 0; return -1; }
   }
-  if (levelWinCount < 3) return -1;
+  // Can it nhat mot nua cua so truoc khi dam lay trung vi. Voi cua so 9 mau
+  // la 5 mau: du de 4 mau hong lien tiep khong lam lech ket qua.
+  if (levelWinCount < (LEVEL_MEDIAN_WINDOW + 1) / 2) return -1;
 
   // Chep levelWinCount mau MOI NHAT, di nguoc tu dau ghi. Chep tu chi so 0
   // la sai khi vong dem da quay vong: cac o dau khong con la mau moi nhat.
@@ -220,6 +232,12 @@ float medianOf5() {
   for (uint8_t i = 0; i + 1 < levelWinCount; i++)
     for (uint8_t j = i + 1; j < levelWinCount; j++)
       if (v[j] < v[i]) { float t = v[i]; v[i] = v[j]; v[j] = t; }
+
+  // Cua so trai ra qua rong thi cac mau khong noi ve cung mot mat nuoc.
+  // Tra ve -1 de bao KHONG DOC DUOC, chu khong dam lay trung vi cua hai nhom
+  // xap xi bang nhau — trung vi luc do chi la mot lan tung dong xu.
+  if (v[levelWinCount - 1] - v[0] > LEVEL_SPREAD_MAX_CM) return -1;
+
   return v[levelWinCount / 2];
 }
 
@@ -288,8 +306,12 @@ void readFlow(uint32_t dtMs) {
 
   // Tan so THO quyet dinh so doc co dung duoc hay khong. Vuot qua nguong
   // vat ly nghia la day tin hieu dang bat song chu khong phai co nuoc chay.
+#if FLOW_SENSOR_ENABLED
   flowOk    = (dRaw  * inv) <= FLOW_MAX_PLAUSIBLE_HZ;
   flowOutOk = (dRawO * inv) <= FLOW_MAX_PLAUSIBLE_HZ;
+#else
+  flowOk = flowOutOk = false;   // chua dau xong, khong tin so doc nao het
+#endif
 
   if (flowOk) {
     flowLpm = (d * inv) / FLOW_K_FACTOR;
@@ -337,10 +359,10 @@ void readFloats() {
 #else
   floatMax = (digitalRead(PIN_FLOAT_MAX) == HIGH);
 #endif
-#if FLOAT_SRC_ACTIVE_LOW
-  floatSrc = (digitalRead(PIN_FLOAT_SRC) == LOW);   // kich hoat = con nuoc
+#if FLOAT_MIN_ACTIVE_LOW
+  floatMin = (digitalRead(PIN_FLOAT_MIN) == LOW);
 #else
-  floatSrc = (digitalRead(PIN_FLOAT_SRC) == HIGH);
+  floatMin = (digitalRead(PIN_FLOAT_MIN) == HIGH);
 #endif
 }
 
@@ -351,8 +373,7 @@ void readFloats() {
 //  la bom bi ngat ngay trong chu ky do.
 // ------------------------------------------------------------
 bool waterTooClose() {
-  // So doc am nghia la khong co tieng doi, khong ket luan duoc gi, bo qua.
-  return (lastRawDistCm > 0) && (lastRawDistCm < LEVEL_MIN_DISTANCE_CM);
+  return tooCloseStreak >= TOO_CLOSE_STREAK;
 }
 
 // ------------------------------------------------------------
@@ -366,7 +387,6 @@ const char* pumpBlockReason() {
   if (waterTooClose())                      return "water_too_close";
   if (levelOk && levelPct >= LEVEL_OVERFLOW_PCT) return "overflow_guard";
   if (!levelOk)                             return "level_sensor_invalid";
-  if (!floatSrc)                            return "source_tank_empty";
   if (!pumpOn && pumpOffSince && millis() - pumpOffSince < MIN_OFF_MS)
                                             return "min_off_time";
   return nullptr;
@@ -429,8 +449,13 @@ void checkFaults() {
   if (!levelOk && sinceValid > SENSOR_TIMEOUT_MS) {
     raiseFault("SENSOR_TIMEOUT"); state = ST_FAULT_SENSOR; return;
   }
-  // 2. Mau thuan giua phao va sieu am
+  // 2. Mau thuan giua phao va sieu am, ca hai chieu
   if (floatMax && levelOk && levelPct < CONFLICT_LEVEL_PCT) {
+    raiseFault("SENSOR_CONFLICT"); state = ST_FAULT_SENSOR; return;
+  }
+  // Phao muc thap bao da tut duoi vach thap ma sieu am lai bao con day:
+  // mot trong hai dang hong, khong duoc tin cai nao het.
+  if (floatMin && levelOk && levelPct > CONFLICT_MIN_PCT) {
     raiseFault("SENSOR_CONFLICT"); state = ST_FAULT_SENSOR; return;
   }
   // 3. Chong tran. Ba duong doc lap: phao, phan tram da loc, va khoang cach
@@ -508,7 +533,10 @@ void runStateMachine() {
       break;
 
     case ST_IDLE:
-      if (autoMode && levelOk && levelPct < LEVEL_LOW_PCT) {
+      // Hai duong doc lap cung cho phep bat bom. Sieu am rot 30 phan tram
+      // so lan do trong thung hep nay, nen neu chi dua vao no thi co luc bon
+      // can that ma he thong van dung yen. Phao muc thap la duong thu hai.
+      if (autoMode && ((levelOk && levelPct < LEVEL_LOW_PCT) || floatMin)) {
         if (startPump()) state = ST_FILLING;
       }
       break;
@@ -536,7 +564,8 @@ void runStateMachine() {
     case ST_FAULT_SENSOR:
       stopPump();   // giu ngat moi chu ky, khong chi mot lan luc phat loi
       // Nhom tu phuc hoi: tin hieu hop le lien tuc du lau thi tu het
-      if (levelOk && !(floatMax && levelPct < CONFLICT_LEVEL_PCT)) {
+      if (levelOk && !(floatMax && levelPct < CONFLICT_LEVEL_PCT)
+                  && !(floatMin && levelPct > CONFLICT_MIN_PCT)) {
         if (sensorGoodSince == 0) sensorGoodSince = now;
         else if (now - sensorGoodSince > SENSOR_RECOVER_MS) {
           faultCode[0] = '\0';
@@ -568,7 +597,11 @@ void publishPumpState() {
 }
 
 size_t buildTelemetry(char* buf, size_t cap, const Sample* s) {
-  StaticJsonDocument<512> doc;
+  // 640 chu khong phai 512. Ban tin day du dai 449 byte va con them duoc
+  // ma su co dai toi 15 ky tu, nen 512 chi con thua vai chuc byte. Them hai
+  // truong flow_ok la tran, va ArduinoJson CAT CUT AM THAM: no van tra ve
+  // mot chuoi, chi la chuoi JSON hong.
+  StaticJsonDocument<640> doc;
   doc["dev"] = DEVICE_ID;
   if (s) {
     doc["ts"]  = s->ts;
@@ -602,16 +635,27 @@ size_t buildTelemetry(char* buf, size_t cap, const Sample* s) {
     doc["mode"]      = autoMode ? "AUTO" : "MANUAL";
     doc["current_mv"]= currentMv;
     doc["float_max"] = floatMax;
-    doc["float_src"] = floatSrc;
+    doc["float_min"] = floatMin;
     doc["fault"]     = faultCode;
     doc["rssi"]      = WiFi.RSSI();
   }
-  return serializeJson(doc, buf, cap);
+  if (doc.overflowed()) {
+    Serial.println("[LOI] ban tin telemetry TRAN BO DEM — JSON se hong, "
+                   "hay tang StaticJsonDocument va char buf[]");
+  }
+  size_t n = serializeJson(doc, buf, cap);
+  if (n >= cap - 1) {
+    Serial.printf("[LOI] ban tin telemetry bi CAT CUT o %u byte\n", (unsigned)n);
+  }
+  return n;
 }
 
 void publishTelemetry() {
   seqNo++;
-  char buf[448];
+  // Da tung dat 448 va bi cat cut. Hau qua rat kho tim: thiet bi van gui,
+  // broker van chuyen, backend van song — nhung json.loads hong nen moi ban
+  // tin bi vut lang le, va dashboard dung yen o so cu hang phut.
+  char buf[640];
   size_t n = buildTelemetry(buf, sizeof(buf), nullptr);
 
   if (mqtt.connected()) {
@@ -633,7 +677,7 @@ void flushRing() {
   if (ringCount == 0) return;
   Serial.printf("[MQTT] phat lai %u ban tin da dem\n", ringCount);
   uint16_t idx = (ringHead + OFFLINE_BUFFER_SIZE - ringCount) % OFFLINE_BUFFER_SIZE;
-  char buf[448];
+  char buf[640];
   for (uint16_t i = 0; i < ringCount; i++) {
     size_t n = buildTelemetry(buf, sizeof(buf), &ring[idx]);
     mqtt.publish(topicTelemetry, (uint8_t*)buf, n, false);
@@ -768,7 +812,7 @@ void setup() {
   pinMode(PIN_FLOW, INPUT);          // qua chia ap, KHONG keo len noi bo
 #endif
   pinMode(PIN_FLOAT_MAX, INPUT_PULLUP);
-  pinMode(PIN_FLOAT_SRC, INPUT_PULLUP);
+  pinMode(PIN_FLOAT_MIN, INPUT_PULLUP);
   pinMode(PIN_LED_OK, OUTPUT);
   pinMode(PIN_LED_FAULT, OUTPUT);
   pinMode(PIN_BTN_RESET, INPUT_PULLUP);

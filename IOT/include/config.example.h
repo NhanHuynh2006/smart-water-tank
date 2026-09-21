@@ -26,7 +26,7 @@
 #define PIN_RELAY       26    // relay dieu khien bom
 #define PIN_CURRENT     34    // ACS712 (qua chia ap 10k/10k), chan chi vao
 #define PIN_FLOAT_MAX   27    // phao muc cao, INPUT_PULLUP
-#define PIN_FLOAT_SRC   14    // phao bon nguon, INPUT_PULLUP
+#define PIN_FLOAT_MIN   14    // phao MUC THAP tren bon chua, INPUT_PULLUP
 #define PIN_LED_OK      2
 #define PIN_LED_FAULT   25
 #define PIN_BTN_RESET   33    // nut xoa loi, INPUT_PULLUP
@@ -51,8 +51,23 @@
 //
 // KIEM CHUNG LAI bang: pio run -e test_floats -t upload -t monitor
 // Nhan tay phao muc cao len, dong chu phai doi thanh "DA KICH HOAT".
+// CA HAI PHAO DEU NAM TREN BON CHUA. Bon nguon khong co cam bien nao ca,
+// nen phan mem KHONG CACH NAO biet bon nguon con nuoc hay khong, va khong
+// duoc phep vin vao do de chan bom. Chay kho duoc bat bang ba luat khac:
+// DRY_RUN (co lenh bom ma khong co dong chay), NO_CURRENT (khong co dong
+// dien) va NO_PROGRESS (bom chay ma muc khong len).
+//
+//   phao MUC CAO  (GPIO 27): nuoc cham toi vach cao  -> NGAT bom
+//   phao MUC THAP (GPIO 14): nuoc tut duoi vach thap -> CHO PHEP bat bom
+//
+// DO THAT NGAY 21/09, luc bon gan can:
+//   GPIO 27 doc MUC THAP  -> phao muc cao chua cham -> dat ACTIVE_LOW = 0
+//   GPIO 14 doc MUC CAO   -> phao muc thap da cham  -> dat ACTIVE_LOW = 0
+// Hai phao cung kieu, cung dau day, nen cung mot gia tri la hop ly.
+//
+// KIEM CHUNG LAI: pio run -e test_floats -t upload -t monitor
 #define FLOAT_MAX_ACTIVE_LOW  0
-#define FLOAT_SRC_ACTIVE_LOW  1
+#define FLOAT_MIN_ACTIVE_LOW  0
 
 // ---------- Hinh hoc bon ----------
 // DO THAT NGAY 21/09: mat cam bien cach day thung 15,5 cm, day 10 x 10 cm.
@@ -115,6 +130,25 @@
 // con nguy hiem hon la khong co cam bien.
 #define FLOW_MAX_PLAUSIBLE_HZ  1200.0f
 
+// ---------- TAT HAI CAM BIEN LUU LUONG ----------
+// Dat 0 khi day tin hieu chua dau xong. Do that ngay 21/09, bom da rut,
+// khong mot giot nuoc chay:
+//    GPIO 4  : 3 445 Hz keo len · 13 403 Hz khong keo · 3 150 Hz keo xuong
+//    GPIO 19 : 3 282 Hz keo len · 12 123 Hz khong keo · 2 938 Hz keo xuong
+//    GPIO 23 : 0 Hz keo len · 0 Hz keo xuong   <- chan doi chieu, khong noi gi
+// Tan so DOI theo tung kieu keo, nghia la khong co nguon nao giu chac day.
+// Gioi han vat ly cua YF-S401 la 588 Hz.
+//
+// Nhieu do lot qua duoc nguong 1200 Hz tung luc, sinh ra 8 lit "da bom" trong
+// mot bon 1 lit, va lam no cac bao dong gia LEAK_SUSPECTED va VOLUME_LIMIT.
+// Mot cam bien noi doi thi phai TAT han, khong duoc tin mot nua: he van chay
+// dung bang cam bien muc, hai phao va cam bien dong dien.
+//
+// Bat lai thanh 1 sau khi da: cap du 5 V va GND cho ca hai cam bien, va gan
+// dien tro keo len 4,7 kOhm tu moi chan tin hieu len 3,3 V.
+// Kiem tra bang: pio run -e test_flownoise -t upload -t monitor
+#define FLOW_SENSOR_ENABLED   0
+
 // ---------- Tham so dieu khien ----------
 #define LEVEL_LOW_PCT       30.0f
 // Ha tu 80 xuong 70 va tu 95 xuong 85 de mat nuoc dung xa mat cam bien hon.
@@ -132,6 +166,15 @@
 // Dat chan cung o 4,5 cm: gan hon the la nuoc da vuot muc lam viec 1 cm,
 // va cung da cham nguong so doc khong con dang tin cua HC-SR04.
 #define LEVEL_MIN_DISTANCE_CM   4.5f
+
+// Bao nhieu lan phat LIEN TIEP duoi nguong tren thi moi coi la nuoc that su
+// da len qua cao. Mot lan duy nhat khong du: do that cho thay cam bien thinh
+// thoang tra ve mot so ngan vo co, va luc bom vua khoi dong thi con hay hon.
+// Da gap: bom vua bat 4 giay da bi khoa OVERFLOW trong khi bon dang can kiet.
+//
+// 3 lan x chu ky 200 ms = 600 ms. Nuoc day nhanh nhat cung chi len 0,278 cm/s,
+// tuc 0,17 cm trong 600 ms — khong the vuot qua chan an toan trong khoang do.
+#define TOO_CLOSE_STREAK        3
 // Bon chi 1 lit. Bom JT-DC3L day 1,67 L/phut, tuc 0,028 L moi giay.
 // Giu bom chay toi thieu 10 giay la bom them 0,28 lit, bang 28 phan tram
 // bon — du de vot tu nguong dung 70 phan tram len gan tran. Ha xuong 3 giay:
@@ -153,7 +196,13 @@
 // Co cot nuoc thi cham hon, cu cho la cham gap doi: 72 giay.
 // Dat 90 giay. Gia tri cu 240 giay rong gap hon ba lan thuc te, tuc la
 // bom co the chay them hon hai phut sau khi bon da day.
-#define MAX_FILL_MS          90000UL
+// DO THAT NGAY 21/09 tren bom da lap vao he: muc len 1,2 cm trong 20 giay,
+// tuc 0,06 cm/s = 0,36 L/phut. Cham hon datasheet (1,67 L/phut) gan nam lan
+// vi con cot nuoc va suc can duong ong.
+//    day tu can len 70 phan tram = 7 cm -> 117 giay
+// Dat 200 giay, rong gan gap doi. Gia tri cu 90 giay se bao FILL_TIMEOUT
+// ngay giua mot lan bom hoan toan binh thuong.
+#define MAX_FILL_MS         200000UL
 
 // ---------- Ba chan an toan KHONG phu thuoc cam bien sieu am ----------
 // Bon 10 lit. Bom them qua so nay trong MOT lan bom la chac chan co van de:
@@ -164,12 +213,16 @@
 // NO_PROGRESS_MS thi ngat. Bom that day 1,67 L/phut vao tiet dien 400 cm2
 // tuc 0,069 cm/s, nen trong 60 s phai len it nhat 4,1 cm. Lay 1,5 cm la
 // rong gap gan ba lan, du cho bom yeu hay cot nuoc cao.
-#define NO_PROGRESS_MS      20000UL
+// Voi toc do do duoc 0,06 cm/s, trong 45 giay muc phai len 2,7 cm.
+// Doi hoi 1,0 cm la chi bang mot phan ba thuc te — du rong de nhieu +-1 cm
+// cua sieu am khong gay bao dong gia, van du chat de bat duoc cam bien noi doi.
+// Ban cu 20 giay/1,0 cm da bao NO_PROGRESS ngay giua lan bom binh thuong.
+#define NO_PROGRESS_MS      45000UL
 #define NO_PROGRESS_CM      1.0f
 
 // Tran cuoi cung. Khong dieu kien, khong ngoai le, khong tu phuc hoi.
 // Bom khong duoc phep chay lien tuc lau hon so nay du bat ky ly do gi.
-#define PUMP_HARD_LIMIT_MS  120000UL
+#define PUMP_HARD_LIMIT_MS  240000UL
 
 // ---------- Nguong phat hien su co ----------
 #define DRYRUN_MS           6000UL
@@ -215,6 +268,9 @@
 #define LEVEL_STALE_MS      3000UL
 #define SENSOR_RECOVER_MS   5000UL
 #define CONFLICT_LEVEL_PCT  70.0f
+// Phao muc thap bao "da tut duoi vach thap" ma sieu am lai bao day hon so
+// nay thi hai cam bien dang noi nguoc nhau — mot trong hai dang hong.
+#define CONFLICT_MIN_PCT    60.0f
 // Toc do doi muc nuoc toi da coi la co the ve mat vat ly, cm moi giay.
 // TINH THEO BOM THAT: 1,67 L/phut / 100 cm2 = 0,278 cm/s khi bom.
 // Xa nhanh qua voi mo cung chi khoang 0,2 cm/s.
@@ -242,10 +298,26 @@
 // tren 60 ms de tieng vong cua lan truoc kip tat han. Ban cu phat 5 lan lien
 // tiep cach nhau 6 ms nen lan sau bat phai tieng vong cua lan truoc.
 // Nay moi chu ky dieu khien chi phat MOT lan, va lay trung vi truot 5 mau.
-#define LEVEL_MEDIAN_WINDOW 5
+// 9 chu khong phai 5. Do that trong thung 10 x 10 cm: ngoai nhieu +-1 cm,
+// cam bien con thinh thoang cho SAI SO THO — doc 0,00 cm trong khi bon dang
+// o 4,6 cm. Cua so 5 mau chi chiu duoc 2 mau hong lien tiep; 9 mau chiu duoc 4.
+// 9 mau x 200 ms = 1,8 giay, trong do nuoc chi kip dang 0,11 cm nen khong
+// lam cham phan ung chut nao.
+#define LEVEL_MEDIAN_WINDOW 9
 // Bien ngoai dai hinh hoc con chap nhan, tinh bang cm. So doc nam ngoai
 // [15,5-10-6 , 15,5+6] = [-0,5 , 21,5] cm bi loai truoc khi vao cua so trung vi.
 #define LEVEL_GATE_MARGIN_CM   6.0f
+
+// Do phan tan toi da trong cua so trung vi, tinh bang cm.
+//
+// Do that khi bom dang chay: cam bien nhay qua lai giua 4,8 cm va 0,00 cm —
+// luc thay mat nuoc, luc nhin xuyen xuong DAY thung. Mat nuoc bi dong nuoc
+// vao lam gon nen tieng doi tan di, chi con tieng doi tu day tro ve.
+//
+// Trung vi khong cuu duoc kieu hong nay: khi hai nhom xap xi bang nhau thi
+// trung vi chi la mot lan tung dong xu. Thay vi doan bua, hay noi thang la
+// KHONG BIET — cac chan an toan theo thoi gian van lam viec binh thuong.
+#define LEVEL_SPREAD_MAX_CM    3.0f
 // Bao nhieu lan phat hong LIEN TIEP thi coi la mat cam bien va xoa cua so.
 // 5 lan x chu ky 200 ms = 1 giay, van con thua truoc SENSOR_TIMEOUT_MS = 4 s.
 // Do that: rot khoang 30 phan tram, nen chuoi 5 lan rot lien tiep xay ra

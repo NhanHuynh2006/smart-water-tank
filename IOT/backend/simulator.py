@@ -248,7 +248,7 @@ def run_live(args):
                               else ("FILLING" if pump else "IDLE")),
                     "mode": "AUTO" if mode["auto"] else "MANUAL",
                     "current_mv": 38.0 if pump else 0.5,
-                    "float_max": pct_true >= 99, "float_src": True,
+                    "float_max": pct_true >= 99, "float_min": pct_true <= 25,
                     "fault": fault["code"], "rssi": -55}
                 cli.publish(f"{root}/telemetry", json.dumps(payload), qos=0)
 

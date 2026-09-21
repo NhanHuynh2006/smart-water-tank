@@ -21,7 +21,7 @@ Cách dùng: sao chép **toàn bộ** nội dung dưới đây, dán cho công c
 | S6 | Cảm biến lưu lượng ĐẦU RA | 5 V | 3 dây đỏ đen vàng |
 | S3 | Cảm biến dòng ACS712 | mô đun 5 A | ngõ ra tương tự |
 | S4 | Phao mức cao | công tắc phao thường mở | |
-| S5 | Phao bồn nguồn | công tắc phao thường mở | |
+| S5 | Phao mức THẤP, trên bồn chứa | công tắc phao thường mở | |
 | K1 | Mô đun rơ le 1 kênh | cuộn 5 V, tiếp điểm 10 A | **kích mức thấp**, có opto |
 | M1 | Bơm chìm | **5 V** | tải cảm |
 | SW1 | Nút nhấn | 4 chân, thường mở | nút xoá lỗi |
@@ -56,7 +56,7 @@ Cách dùng: sao chép **toàn bộ** nội dung dưới đây, dán cho công c
 | GPIO 26 | `PIN_RELAY` | ra | K1 chân IN | nối thẳng |
 | GPIO 34 | `PIN_CURRENT` | vào tương tự | S3 chân OUT | **chia áp 10 k / 10 k** |
 | GPIO 27 | `PIN_FLOAT_MAX` | vào, kéo lên trong | S4 | nối thẳng xuống GND |
-| GPIO 14 | `PIN_FLOAT_SRC` | vào, kéo lên trong | S5 | nối thẳng xuống GND |
+| GPIO 14 | `PIN_FLOAT_MIN` | vào, kéo lên trong | S5 | nối thẳng xuống GND |
 | GPIO 33 | `PIN_BTN_RESET` | vào, kéo lên trong | SW1 | nối thẳng xuống GND |
 | GPIO 2 | `PIN_LED_OK` | ra | LED có sẵn trên bo | không đi dây |
 | GPIO 25 | `PIN_LED_FAULT` | ra | LED1 qua R7 220 Ω | anode về GPIO |
@@ -204,15 +204,15 @@ Firmware đọc như sau, cách đấu phải khớp:
 | Thiết bị | Chân | Mã trong firmware | Nghĩa của mức LOW |
 |---|---|---|---|
 | S4 phao mức cao | GPIO 27 | `floatMax = (digitalRead(...) == LOW)` | **LOW = phao đã nổi lên, nước gần tràn** |
-| S5 phao bồn nguồn | GPIO 14 | `floatSrc = (digitalRead(...) == LOW)` | **LOW = bồn nguồn CÒN nước** |
+| S5 phao mức THẤP, trên bồn chứa | GPIO 14 | `floatMin = (digitalRead(...) == HIGH)` | **HIGH = nước đã tụt dưới vạch thấp** |
 | SW1 nút xoá lỗi | GPIO 33 | tích cực mức thấp | LOW = đang bấm |
 
 Hai phao mang ý nghĩa **ngược nhau về mặt vật lý**, đây là chỗ hay đấu nhầm nhất:
 
 - **S4 phải đóng mạch khi nước dâng cao.** Lắp gần miệng bồn chính, hướng sao cho nước dâng thì tiếp điểm đóng.
-- **S5 phải đóng mạch khi bồn nguồn CÒN nước.** Khi bồn nguồn cạn, tiếp điểm **hở**, GPIO 14 đọc mức cao, firmware hiểu là hết nước và chặn bơm.
+- **S5 là phao mức THẤP của bồn chứa, không phải phao bồn nguồn.** Bồn nguồn không có cảm biến nào. Khi nước trong bồn chứa tụt xuống dưới vạch thấp, S5 kích hoạt và **cho phép bật bơm** — nó không chặn bơm bao giờ.
 
-Đấu ngược S5 sẽ khiến hệ chạy bơm khô đúng lúc bồn nguồn cạn, tức là gây ra chính sự cố mà thiết kế muốn ngăn.
+Đấu ngược S5 làm hệ mất đường thứ hai để biết bồn đã cạn. Cảm biến siêu âm rớt khoảng 30% số lần đo trong thùng 10×10 cm, nên mất S5 là có lúc bồn cạn thật mà hệ thống vẫn đứng yên. Đặt `FLOAT_MIN_ACTIVE_LOW` cho khớp thay vì đổi cách đấu dây.
 
 Phao thường bán loại có hai hướng lắp, phân biệt bằng chiều mũi tên hoặc bằng cách lật ngược thân phao. **Đo thông mạch bằng đồng hồ trước khi lắp cố định.**
 
@@ -312,7 +312,7 @@ Xin **hai hình riêng biệt**.
 | TP1 | GPIO 18, khi HC-SR04 đang phát | không vượt 3,3 V |
 | TP2 | GPIO 34, khi bơm tắt | khoảng 1,25 V |
 | TP3 | GPIO 27 xuống GND, khi phao mức cao đang nổi | thông mạch |
-| TP4 | GPIO 14 xuống GND, khi bồn nguồn còn nước | thông mạch |
+| TP4 | GPIO 14 xuống GND, khi nước bồn chứa trên vạch thấp | thông mạch |
 | TP5 | Chân VIN của ESP32, **trong lúc bơm khởi động** | không tụt dưới 4,7 V |
 | TP6 | GPIO 33, khi bấm SW1 | xuống mức thấp |
 | TP7 | Dây vàng cảm biến lưu lượng, **chưa nối vào ESP32**, cảm biến đã cấp 5 V | xem bảng ở mục 4B: ~5 V thì phải chia áp, ~0 V thì nối thẳng |

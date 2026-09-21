@@ -73,7 +73,7 @@ CREATE TABLE IF NOT EXISTS telemetry (
   flow_out_lpm REAL, volume_out_l REAL, volume_out_today_l REAL,
   flow_ok INTEGER, flow_out_ok INTEGER,   -- 0 = day tin hieu nhieu, so doc bo di
   pump INTEGER, state TEXT, mode TEXT,
-  current_mv REAL, float_max INTEGER, float_src INTEGER,
+  current_mv REAL, float_max INTEGER, float_min INTEGER,
   fault TEXT, rssi INTEGER, replay INTEGER DEFAULT 0
 );
 CREATE INDEX IF NOT EXISTS idx_tel_recv ON telemetry(recv_ts);
@@ -134,7 +134,7 @@ def init_db():
             if col not in cols:
                 c.execute(f"ALTER TABLE telemetry ADD COLUMN {col} REAL")
                 print(f"[DB] da them cot telemetry.{col}")
-        for col in ("flow_ok", "flow_out_ok"):
+        for col in ("flow_ok", "flow_out_ok", "float_min"):
             if col not in cols:
                 c.execute(f"ALTER TABLE telemetry ADD COLUMN {col} INTEGER")
                 print(f"[DB] da them cot telemetry.{col}")
@@ -226,11 +226,30 @@ def on_connect(cli, userdata, flags, rc):
 
 
 def on_message(cli, userdata, msg):
+    # paho NUOT moi ngoai le nem ra tu day va ghi vao mot logger khong ai bat.
+    # Hau qua da gap that: backend van song, van tra loi /api/health, van gui
+    # PINGREQ, broker van chuyen ban tin toi — ma khong mot dong nao duoc ghi
+    # vao co so du lieu, va dashboard dung yen o so cu suot nhieu phut.
+    # Boc them mot lop de ngoai le hien ra man hinh thay vi bien mat.
+    try:
+        _on_message(cli, userdata, msg)
+    except Exception:
+        import traceback
+        print(f"[MQTT] LOI khi xu ly '{msg.topic}':", flush=True)
+        traceback.print_exc()
+
+
+def _on_message(cli, userdata, msg):
     global last_pump_state
     now = time.time()
     try:
         d = json.loads(msg.payload.decode())
-    except Exception:
+    except Exception as e:
+        # Vut lang le la cach chac chan nhat de mot ban tin hong tro thanh
+        # mot gio dong ho ngoi do lo tai sao dashboard khong nhuc nhich.
+        print(f"[MQTT] ban tin hong tren '{msg.topic}' ({len(msg.payload)} byte): {e}",
+              flush=True)
+        print(f"       {msg.payload[:80]!r} ... {msg.payload[-40:]!r}", flush=True)
         return
 
     if msg.topic == T_TELEMETRY:
@@ -245,7 +264,7 @@ def on_message(cli, userdata, msg):
                    flow_out_lpm,volume_out_l,volume_out_today_l,
                    flow_ok,flow_out_ok,
                    pump,state,mode,current_mv,
-                   float_max,float_src,fault,rssi,replay)
+                   float_max,float_min,fault,rssi,replay)
                    VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
                 (d.get("dev"), d.get("ts"), d.get("ts_ms"), now, d.get("seq"),
                  d.get("level_pct"), d.get("level_cm"), int(bool(d.get("level_ok"))),
@@ -254,7 +273,7 @@ def on_message(cli, userdata, msg):
                  int(bool(d.get("flow_ok", True))), int(bool(d.get("flow_out_ok", True))),
                  int(bool(d.get("pump"))), d.get("state"), d.get("mode"),
                  d.get("current_mv"), int(bool(d.get("float_max"))),
-                 int(bool(d.get("float_src"))), d.get("fault"), d.get("rssi"),
+                 int(bool(d.get("float_min"))), d.get("fault"), d.get("rssi"),
                  int(bool(d.get("replay")))))
         if not d.get("replay") and d.get("volume_l") is not None:
             a = leak.update(now, float(d["volume_l"]))

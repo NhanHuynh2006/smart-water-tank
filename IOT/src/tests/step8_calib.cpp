@@ -35,7 +35,7 @@ void setup() {
   pinMode(PIN_TRIG, OUTPUT);
   pinMode(PIN_ECHO, INPUT);
   pinMode(PIN_FLOAT_MAX, INPUT_PULLUP);
-  pinMode(PIN_FLOAT_SRC, INPUT_PULLUP);
+  pinMode(PIN_FLOAT_MIN, INPUT_PULLUP);
 
   Serial.println();
   Serial.println("=== DO HINH HOC BON — BOM LUON NGAT ===");
@@ -44,8 +44,8 @@ void setup() {
   Serial.printf("=> khoang cach hop le phai nam trong [%.1f .. %.1f] cm\n",
                 TANK_SENSOR_TO_BOTTOM_CM - TANK_MAX_LEVEL_CM,
                 TANK_SENSOR_TO_BOTTOM_CM);
-  Serial.println("phao: HO = tiep diem mo, CHAM = tiep diem dong");
-  Serial.println("---- d_cm | muc_cm | muc_% | hop_le | phao_max | phao_nguon ----");
+  Serial.println("hai phao deu tren bon chua: HO = tiep diem mo, CHAM = tiep diem dong");
+  Serial.println("---- d_cm | muc_cm | muc_% | hop_le | phao_max | phao_thap ----");
 
   uint32_t t0 = millis();
   float dmin = 1e9, dmax = -1e9, dsum = 0; int n = 0, bad = 0;
@@ -54,12 +54,12 @@ void setup() {
     relayOff();
     float d = pingCm();
     bool fmax = (digitalRead(PIN_FLOAT_MAX) == LOW);
-    bool fsrc = (digitalRead(PIN_FLOAT_SRC) == LOW);
+    bool fmin = (digitalRead(PIN_FLOAT_MIN) == LOW);
 
     if (d < 0) {
       bad++;
       Serial.printf("  --.- |   --.- |  --.- | KHONG DOC DUOC | %s | %s\n",
-                    fmax ? "CHAM" : "HO", fsrc ? "CHAM" : "HO");
+                    fmax ? "CHAM" : "HO", fmin ? "CHAM" : "HO");
     } else {
       float h  = TANK_SENSOR_TO_BOTTOM_CM - d;
       float pc = (h / TANK_MAX_LEVEL_CM) * 100.0f;
@@ -69,7 +69,7 @@ void setup() {
       dsum += d; n++;
       Serial.printf("%6.1f | %6.1f | %5.1f | %s | %s | %s\n",
                     d, h, pc, ok ? "  hop le  " : "NGOAI DAI!",
-                    fmax ? "CHAM" : "HO", fsrc ? "CHAM" : "HO");
+                    fmax ? "CHAM" : "HO", fmin ? "CHAM" : "HO");
     }
     delay(PERIOD);
   }

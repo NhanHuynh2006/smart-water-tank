@@ -202,12 +202,12 @@ async function tickState(){
   // so 0, de khong ai nham "khong co nuoc chay" voi "khong do duoc".
   const fEl = document.getElementById("flow"), foEl = document.getElementById("flowOut");
   if (d.flow_ok === false) {
-    fEl.textContent = "nhiễu";  fEl.className = "v untrusted";
+    fEl.textContent = "không tin được";  fEl.className = "v untrusted";
   } else {
     fEl.textContent = (d.flow_lpm ?? 0).toFixed(2) + " L/ph";  fEl.className = "v";
   }
   if (d.flow_out_ok === false) {
-    foEl.textContent = "nhiễu"; foEl.className = "v untrusted";
+    foEl.textContent = "không tin được"; foEl.className = "v untrusted";
   } else {
     foEl.textContent = (d.flow_out_lpm ?? 0).toFixed(2) + " L/ph"; foEl.className = "v";
   }

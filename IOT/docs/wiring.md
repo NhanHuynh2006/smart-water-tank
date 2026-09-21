@@ -11,7 +11,7 @@
 | GPIO 26 | chân IN module rơ le | nối thẳng |
 | GPIO 34 | ngõ ra ACS712 | chia áp 10k/10k |
 | GPIO 27 | phao mức cao | điện trở kéo lên nội bộ |
-| GPIO 14 | phao bồn nguồn | điện trở kéo lên nội bộ |
+| GPIO 14 | phao mức THẤP, trên bồn chứa | điện trở kéo lên nội bộ |
 | GPIO 33 | nút xóa lỗi | điện trở kéo lên nội bộ |
 | GPIO 2 | đèn báo trực tuyến | có sẵn trên bo |
 | GPIO 25 | đèn báo sự cố | qua điện trở 220 ohm |
@@ -35,6 +35,42 @@ GPIO 34 là chân chỉ vào, không có điện trở kéo nội bộ, đúng c
 Ngưỡng vào của ESP32 là 0,825 V và 2,475 V, nên 1,02 V rơi đúng **vùng không xác định**. Chân sẽ dao động theo nhiễu và sinh ra hàng nghìn xung giả mỗi giây. Chạy `test_flow` mà thấy cột xung/giây vượt 700 khi bơm chưa chạy thì gần như chắc chắn bạn đang mắc lỗi này.
 
 Cách phân biệt nhanh: rút hẳn dây tín hiệu ra khỏi GPIO. Nếu số xung vẫn đếm thì lỗi ở cấu hình chân, không phải ở cảm biến.
+
+## Đừng cho chân ECHO đi qua TXS0108E
+
+TXS0108E **không hợp với HC-SR04**, dù nó là mô đun chuyển mức 5 V ↔ 3,3 V rất phổ biến.
+
+Nó là loại **tự dò chiều**, thiết kế cho bus hai chiều kiểu I²C. Cách nó đoán chiều là dựa vào điện trở kéo yếu khoảng 10 kΩ ở hai phía cộng một mạch *one-shot* tăng tốc sườn. Ba hệ quả:
+
+- Chân ECHO của HC-SR04 là ngõ ra **đẩy kéo mạnh**, không phải cực máng hở yếu. TXS0108E dò nhầm chiều, có lúc tự dao động hoặc kẹt.
+- Mạch *one-shot* nổ theo từng sườn và **tự sinh thêm xung**. Với `pulseIn` thì mỗi xung thừa là một phép đo khoảng cách sai.
+- Ở trạng thái nghỉ, trở kháng ngõ ra khoảng 4 kΩ. Cộng với điện dung dây là sườn tín hiệu bị bo tròn, và độ rộng xung — thứ duy nhất mang thông tin khoảng cách — bị lệch.
+
+**Cách làm đúng, và cũng là cách bản thiết kế này vốn yêu cầu: một cầu chia áp điện trở, chỉ trên chân ECHO.** Hai điện trở, ví dụ 1 kΩ nối từ ECHO vào chân ESP32 và 2 kΩ từ chân đó xuống GND. Chân TRIG nối thẳng, hầu hết mô đun HC-SR04 nhận mức 3,3 V làm mức cao.
+
+## Mặt nước gợn khi bơm cũng làm sai số
+
+Đo thật khi bơm chạy: cảm biến nhảy qua lại giữa 4,8 cm và 0,00 cm — lúc thấy mặt nước, lúc nhìn xuyên xuống đáy thùng. Dòng nước đổ vào làm mặt nước gợn, tiếng dội tán đi hướng khác, chỉ còn tiếng dội từ đáy quay về.
+
+Hai cách chữa, nên làm cả hai:
+
+- **Ống lặng.** Một đoạn ống nhựa thẳng đứng, đường kính 4–5 cm, cắm từ dưới mặt cảm biến xuống ngập trong nước, khoan vài lỗ nhỏ ở đáy ống. Nước trong ống đứng yên trong khi nước ngoài ống gợn. Đây là cách chuẩn cho đo mức bằng siêu âm ở bồn nhỏ.
+- **Đưa đầu vào xuống dưới mặt nước**, hoặc cho nó chảy men theo thành thùng thay vì rơi thẳng xuống giữa.
+
+Thùng 10 × 10 cm còn một khó khăn riêng: chùm sóng 15° của HC-SR04 ở khoảng cách 15,5 cm đã rộng hơn 8 cm, tức là gần bằng cả lòng thùng. Tia biên chạm thành thùng là chuyện chắc chắn xảy ra. Ống lặng cũng giải quyết luôn chuyện này.
+
+## Cả hai phao đều nằm trên bồn chứa
+
+Bồn nguồn **không có cảm biến nào**. Phần mềm không cách nào biết bồn nguồn còn nước hay không, nên nó không được phép viện vào đó để chặn bơm. Chạy khô được bắt bằng ba luật khác: `DRY_RUN` (có lệnh bơm mà không có dòng chảy), `NO_CURRENT` (không có dòng điện qua bơm) và `NO_PROGRESS` (bơm chạy mà mực nước không lên).
+
+| Phao | Chân | Khi kích hoạt nghĩa là | Tác dụng |
+|---|---|---|---|
+| Mức CAO | GPIO 27 | nước chạm vạch cao | **ngắt bơm**, khoá chống tràn |
+| Mức THẤP | GPIO 14 | nước tụt dưới vạch thấp | **cho phép bật bơm** |
+
+Phao mức thấp là **đường thứ hai** song song với siêu âm. Cảm biến siêu âm rớt khoảng 30% số lần đo trong thùng 10×10 cm, nên nếu chỉ dựa vào nó thì có lúc bồn cạn thật mà hệ thống vẫn đứng yên.
+
+Hai phao nói ngược nhau so với siêu âm thì báo `SENSOR_CONFLICT` và không tin cái nào hết.
 
 ## Hai phao: cực tính phải đo, không được đoán
 

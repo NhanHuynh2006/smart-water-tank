@@ -26,7 +26,7 @@ Không chủ đề nào dùng QoS 2. Vấn đề nhận trùng bản tin đã đ
   "flow_lpm": 1.28, "volume_l": 143.62, "volume_today_l": 12.40,
   "flow_out_lpm": 0.42, "volume_out_l": 98.10, "volume_out_today_l": 8.75,
   "pump": true, "state": "FILLING", "mode": "AUTO",
-  "current_mv": 38.2, "float_max": false, "float_src": true,
+  "current_mv": 38.2, "float_max": false, "float_min": true,
   "fault": "", "rssi": -55
 }
 ```
@@ -53,7 +53,7 @@ Không chủ đề nào dùng QoS 2. Vấn đề nhận trùng bản tin đã đ
 
 Bốn hành động: `mode`, `pump`, `clear_fault`, `reset_volume`.
 
-Mười mã lý do từ chối: `auto_mode_active`, `fault_active`, `overflow_guard`, `float_max_triggered`, `level_sensor_invalid`, `source_tank_empty`, `min_off_time`, `no_active_fault`, `condition_still_present`, `unknown_action`.
+Mười mã lý do từ chối: `auto_mode_active`, `fault_active`, `overflow_guard`, `float_max_triggered`, `level_sensor_invalid`, `water_too_close`, `min_off_time`, `no_active_fault`, `condition_still_present`, `unknown_action`.
 
 Xác nhận luôn mang trạng thái thực tế của thiết bị sau khi xử lý lệnh, nên giao diện hiển thị trạng thái đã được thiết bị xác nhận chứ không phải trạng thái người dùng vừa yêu cầu.
 

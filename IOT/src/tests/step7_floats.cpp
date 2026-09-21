@@ -2,7 +2,9 @@
 //
 // Chuong trinh nay khong bao gio bat bom. Ro le bi giu NGAT suot.
 //
-// CACH DUNG: nap xong, NHAC TAY phao muc cao len het co.
+// CA HAI PHAO DEU NAM TREN BON CHUA. Bon nguon khong co cam bien nao.
+//
+// CACH DUNG: nap xong, NHAC TAY tung phao len het co.
 //   - Neu dong "phao muc cao" doi tu NGHI sang DA KICH HOAT  -> cuc tinh DUNG.
 //   - Neu no doi nguoc lai, hoac khong doi gi -> sua FLOAT_MAX_ACTIVE_LOW
 //     trong config.h (dang la 0, doi thanh 1, hoac nguoc lai) roi nap lai.
@@ -29,44 +31,44 @@ void setup() {
   Serial.begin(115200);
   delay(400);
   pinMode(PIN_FLOAT_MAX, INPUT_PULLUP);
-  pinMode(PIN_FLOAT_SRC, INPUT_PULLUP);
+  pinMode(PIN_FLOAT_MIN, INPUT_PULLUP);
 
   Serial.println();
   Serial.println("=== KIEM THU HAI PHAO — BOM LUON NGAT ===");
-  Serial.printf("config: FLOAT_MAX_ACTIVE_LOW = %d, FLOAT_SRC_ACTIVE_LOW = %d\n",
-                FLOAT_MAX_ACTIVE_LOW, FLOAT_SRC_ACTIVE_LOW);
+  Serial.printf("config: FLOAT_MAX_ACTIVE_LOW = %d, FLOAT_MIN_ACTIVE_LOW = %d\n",
+                FLOAT_MAX_ACTIVE_LOW, FLOAT_MIN_ACTIVE_LOW);
   Serial.println("HAY NHAC TAY PHAO MUC CAO LEN va xem dong duoi doi the nao.");
   Serial.println("Chay 60 giay roi dung han.");
   Serial.println();
 
   uint32_t t0 = millis();
-  int lastMax = -1, lastSrc = -1;
+  int lastMax = -1, lastMin = -1;
 
   while (millis() - t0 < RUN_MS) {
     relayOff();
     int rawMax = digitalRead(PIN_FLOAT_MAX);
-    int rawSrc = digitalRead(PIN_FLOAT_SRC);
+    int rawMin = digitalRead(PIN_FLOAT_MIN);
 
 #if FLOAT_MAX_ACTIVE_LOW
     bool actMax = (rawMax == LOW);
 #else
     bool actMax = (rawMax == HIGH);
 #endif
-#if FLOAT_SRC_ACTIVE_LOW
-    bool actSrc = (rawSrc == LOW);
+#if FLOAT_MIN_ACTIVE_LOW
+    bool actMin = (rawMin == LOW);
 #else
-    bool actSrc = (rawSrc == HIGH);
+    bool actMin = (rawMin == HIGH);
 #endif
 
-    if (rawMax != lastMax || rawSrc != lastSrc) {
-      lastMax = rawMax; lastSrc = rawSrc;
+    if (rawMax != lastMax || rawMin != lastMin) {
+      lastMax = rawMax; lastMin = rawMin;
       Serial.printf("[%5lus] phao muc cao: chan %s -> %-14s | "
-                    "phao bon nguon: chan %s -> %s\n",
+                    "phao muc THAP: chan %s -> %s\n",
                     (millis() - t0) / 1000,
                     rawMax == LOW ? "THAP" : "CAO ",
                     actMax ? "DA KICH HOAT" : "nghi",
-                    rawSrc == LOW ? "THAP" : "CAO ",
-                    actSrc ? "con nuoc" : "CAN NUOC");
+                    rawMin == LOW ? "THAP" : "CAO ",
+                    actMin ? "DA TUT DUOI VACH THAP" : "tren vach thap");
     }
     delay(100);
   }
@@ -75,7 +77,7 @@ void setup() {
   Serial.println();
   Serial.println("=== Y NGHIA ===");
   Serial.println("phao muc cao DA KICH HOAT  -> bom bi chan, khong the chay.");
-  Serial.println("phao bon nguon CAN NUOC    -> bom bi chan, tranh chay kho.");
+  Serial.println("phao muc THAP da tut       -> CHO PHEP bat bom. No khong chan bom bao gio.");
   Serial.println("Neu nhac phao len ma dong chu khong doi dung nhu mo ta,");
   Serial.println("hay doi FLOAT_MAX_ACTIVE_LOW trong config.h roi nap lai.");
   Serial.println("XONG. Chuong trinh dung han, ro le van NGAT.");
