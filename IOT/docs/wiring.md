@@ -91,6 +91,96 @@ Hiện `0%` trong tình huống đó là nói dối: người vận hành nhìn 
 
 Điều này cũng có nghĩa là **đừng dùng số đo mức làm trọng tài** khi nó mâu thuẫn với thứ quan sát trực tiếp được. Trong ba cảm biến của hệ, HC-SR04 là cái kém tin cậy nhất: chùm sóng 15° rộng hơn lòng thùng 10×10 cm, mặt nước gợn làm tán tiếng dội, và lớp đáy thì nằm dưới ngưỡng.
 
+## Cách nối điện trở 4,7 kΩ cho hai cảm biến YF-S401
+
+### Trước khi nối: kiểm tra mô đun có sẵn điện trở kéo lên chưa
+
+Cấp nguồn 5 V cho cảm biến, **dây vàng chưa nối vào ESP32**, đo điện áp dây vàng so với GND bằng đồng hồ:
+
+| Đo được | Nghĩa là | Làm gì |
+|---|---|---|
+| khoảng **0 V** hoặc trôi nổi | không có điện trở kéo lên sẵn | làm theo hướng dẫn dưới đây |
+| khoảng **5 V** | đã có sẵn điện trở kéo lên 5 V | **đừng** làm theo mục này — dùng cầu chia áp 10k/20k và đặt `FLOW_PIN_PULLUP = 0` |
+
+Bỏ qua bước này mà mô đun lại có sẵn điện trở kéo lên 5 V thì bạn đang đưa 5 V vào chân ESP32.
+
+### Sơ đồ nối
+
+YF-S401 có ba dây: **đỏ = 5 V**, **đen = GND**, **vàng = tín hiệu**.
+
+```
+                            ESP32
+                        ┌───────────┐
+      ┌──────────────── │ 3V3       │
+      │                 │           │
+     ┌┴┐  R1            │           │
+     │ │  4,7 kΩ        │           │
+     └┬┘                │           │
+      │                 │           │
+      ├──────────────── │ GPIO 19   │   cảm biến ĐẦU VÀO
+      │                 │           │
+   vàng                 │           │
+  ┌───┴────┐            │           │
+  │ YF-S401│ đen ────── │ GND       │
+  │  VÀO   │ đỏ  ─────────────────────── 5 V (từ cọc buck, nhánh sạch)
+  └────────┘            │           │
+                        │           │
+      ┌──────────────── │ 3V3       │   (cùng một chân 3V3)
+      │                 │           │
+     ┌┴┐  R2            │           │
+     │ │  4,7 kΩ        │           │
+     └┬┘                │           │
+      │                 │           │
+      ├──────────────── │ GPIO 4    │   cảm biến ĐẦU RA
+      │                 │           │
+   vàng                 │           │
+  ┌───┴────┐            │           │
+  │ YF-S401│ đen ────── │ GND       │
+  │   RA   │ đỏ  ─────────────────────── 5 V
+  └────────┘            └───────────┘
+```
+
+Nói bằng lời, làm hai lần giống hệt nhau:
+
+1. Dây **vàng** của cảm biến cắm thẳng vào chân GPIO. Không qua bộ chuyển mức, không qua cầu chia áp.
+2. Một điện trở **4,7 kΩ** nối từ **chính chân GPIO đó** lên **chân 3V3** của ESP32.
+3. Dây **đen** về GND chung với ESP32.
+4. Dây **đỏ** lấy 5 V từ cọc buck, nhánh sạch — **không lấy từ nhánh bơm**.
+
+Trên breadboard: cắm dây vàng vào một hàng, cắm một chân điện trở vào **cùng hàng đó**, chân còn lại cắm vào đường ray 3,3 V.
+
+### Vì sao phải là 3,3 V chứ không phải 5 V
+
+**Nối lên 5 V là hỏng chân ESP32.** Ngõ ra hall của YF-S401 là **cực thu hở** — nó chỉ kéo xuống đất, không tự đẩy điện áp ra. Mức cao hoàn toàn do điện trở kéo lên quyết định. Kéo lên 3,3 V thì mức cao là 3,3 V, đúng bằng thứ ESP32 chịu được. Kéo lên 5 V thì mức cao là 5 V, và chân GPIO chỉ chịu 3,6 V.
+
+Đó cũng là lý do cách này an toàn mà **không cần bộ chuyển mức nào cả**.
+
+### Vài con số để yên tâm
+
+| | |
+|---|---|
+| Dòng qua mỗi điện trở khi cảm biến kéo xuống | 3,3 V ÷ 4,7 kΩ = **0,70 mA** |
+| Tổng hai cảm biến | 1,4 mA — chân 3V3 của ESP32 dư sức |
+| Trở kháng đường tín hiệu | 45 kΩ → **4,3 kΩ** (4,7 k song song với kéo lên nội bộ 45 k) |
+
+Giảm hơn mười lần chính là thứ dập tắt cảm ứng 50 Hz. Giữ nguyên `FLOW_PIN_PULLUP = 1` trong `config.h` — điện trở nội bộ mắc song song không gây hại, điện trở ngoài 4,7 kΩ áp đảo nó.
+
+### Ba điều dễ làm hỏng kết quả
+
+- **Đặt điện trở sát chân ESP32**, không đặt ở đầu cảm biến. Đoạn dây từ cảm biến tới điện trở vẫn còn trở kháng cao.
+- **Tách dây vàng khỏi dây bơm.** Đừng bó chung, đừng chạy song song. Cắt ngang thì cắt vuông góc.
+- **Điốt 1N4007 song song ngược hai cực bơm**, vạch trắng quay về cực dương. Không có nó thì mỗi lần rơ le ngắt là một xung vài trăm vôn phóng vào toàn mạch.
+
+### Kiểm chứng sau khi nối
+
+Khoá van xả, tắt bơm, rồi chạy:
+
+```bash
+cd ~/Documents/IOT/IOT && pio run -e test_flownoise -t upload -t monitor
+```
+
+Cột **kéo lên 3,3 V** của cả hai chân phải cho **0 Hz**, giống hệt chân đối chiếu GPIO 23. Còn thấy 50 Hz là điện trở chưa ăn — kiểm tra lại xem nó có thực sự nối vào đúng hàng của dây vàng không.
+
 ## 50 Hz trên dây tín hiệu là điện lưới, không phải nước
 
 Đo ngày 21/09, bơm tắt, chế độ thủ công:
