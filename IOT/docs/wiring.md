@@ -36,6 +36,21 @@ Ngưỡng vào của ESP32 là 0,825 V và 2,475 V, nên 1,02 V rơi đúng **v�
 
 Cách phân biệt nhanh: rút hẳn dây tín hiệu ra khỏi GPIO. Nếu số xung vẫn đếm thì lỗi ở cấu hình chân, không phải ở cảm biến.
 
+## Đo trạng thái rơ le bằng độ gợn dòng, không bằng mức trung bình
+
+ACS712 là cảm biến **hai chiều**. Ngõ ra nằm giữa dải và lệch **lên hoặc xuống** tuỳ chiều dòng chạy qua IP+ và IP-. Vì vậy "mV cao hơn" **không** có nghĩa là "dòng lớn hơn", và dùng mức trung bình để đoán xem bơm có chạy không là sai.
+
+Thứ đọc đúng là **độ gợn**. Động cơ chổi than chạy thì dòng gợn mạnh do cổ góp; lúc ngắt thì đường dòng phẳng. Đo thật ngày 21/09:
+
+| Chân điều khiển | Trung bình | Độ gợn |
+|---|---|---|
+| MỨC THẤP | 1545,88 mV | **4,47 mV** |
+| MỨC CAO | 1516,54 mV | **27,05 mV** |
+
+Tỉ số gợn **6,0 lần** tách hai trạng thái ra rất rõ, và không phụ thuộc chiều đấu dây qua IP+ / IP-. Mức trung bình thì ngược lại: chân MỨC CAO cho số *nhỏ hơn* dù đó mới là lúc bơm chạy, vì dòng lệch ngõ ra xuống dưới điểm giữa.
+
+Chạy `pio run -e test_relaytruth -t upload -t monitor` để đo lại bất cứ lúc nào. Bơm chỉ chạy 6 giây mỗi phía, và chương trình kết thúc bằng việc đưa rơ le về phía ngắt.
+
 ## Đừng cho chân ECHO đi qua TXS0108E
 
 TXS0108E **không hợp với HC-SR04**, dù nó là mô đun chuyển mức 5 V ↔ 3,3 V rất phổ biến.
