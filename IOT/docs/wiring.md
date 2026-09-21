@@ -22,7 +22,7 @@ GPIO 34 là chân chỉ vào, không có điện trở kéo nội bộ, đúng c
 
 Đây là chỗ sai nhiều nhất, và sai thì cảm biến đọc ra hàng nghìn lít mỗi phút.
 
-**Cách A, khuyên dùng.** Nối dây tín hiệu **thẳng** vào GPIO, không chia áp, và để `FLOW_PIN_PULLUP = 1` trong `config.h`. Điện trở kéo lên nội bộ của ESP32 kéo chân lên 3,3 V, còn cảm biến chỉ kéo xuống đất khi có xung. Ngõ ra hall của YF-S201 và YF-S401 là cực thu hở nên cách này đúng về điện. Cảm biến vẫn cấp nguồn 5 V bình thường.
+**Cách A, khuyên dùng.** Nối dây tín hiệu vào GPIO **không qua chia áp**, và hàn thêm một **điện trở 4,7 kΩ từ dây tín hiệu lên 3,3 V**, rồi để `FLOW_PIN_PULLUP = 1` trong `config.h`. Điện trở ngoài này bắt buộc: đo thật cho thấy điện trở kéo lên nội bộ 45 kΩ quá yếu, khi Wi-Fi bật thì chân bắt 1600 tới 2700 Hz nhiễu dù không có nước chảy. Điện trở kéo lên nội bộ của ESP32 kéo chân lên 3,3 V, còn cảm biến chỉ kéo xuống đất khi có xung. Ngõ ra hall của YF-S201 và YF-S401 là cực thu hở nên cách này đúng về điện. Cảm biến vẫn cấp nguồn 5 V bình thường.
 
 **Cách B.** Nếu mô đun của bạn **đã có sẵn điện trở kéo lên VCC 5 V** thì ngõ ra là 0–5 V thật, khi đó phải qua chia áp 10k/20k và đặt `FLOW_PIN_PULLUP = 0`.
 

@@ -145,8 +145,20 @@ Chân dao động theo nhiễu và sinh hàng nghìn xung giả mỗi giây. Đo
 ```
 dây đỏ  → 5 V
 dây đen → GND điểm sao
-dây vàng → THẲNG vào GPIO, không qua điện trở nào
+dây vàng → GPIO, VÀ một điện trở 4,7 kΩ từ dây vàng lên 3,3 V
 ```
+
+**Điện trở kéo lên ngoài 4,7 kΩ là bắt buộc, không phải tuỳ chọn.** Đo trên mạch thật cho thấy điều này. Với điện trở kéo lên **nội bộ** của ESP32, khoảng 45 kΩ:
+
+| Tình huống | Số xung đếm được |
+|---|---|
+| Chạy `test_flow`, Wi-Fi **tắt** | **0 Hz**, đúng |
+| Chạy phần sụn chính, Wi-Fi **bật** | **1635 tới 2735 Hz** nhiễu |
+| Thêm bộ lọc xung trong phần mềm | còn **455 Hz**, vẫn sai |
+
+Nghĩa là 45 kΩ quá yếu để giữ mức cao trước nhiễu vô tuyến của chính Wi-Fi trên bo. Điện trở 4,7 kΩ mạnh gấp mười lần, đó mới là cách sửa thật. Phần mềm chỉ giảm bớt chứ không dứt điểm được.
+
+Dấu hiệu nhận biết: nếu **cả hai** cảm biến đọc ra con số **giống hệt nhau** thì đó là nhiễu đồng pha, không phải nước. Nước chảy qua hai chỗ khác nhau không bao giờ cho hai số trùng khít.
 
 Cấu hình `FLOW_PIN_PULLUP = 1` và `FLOW_OUT_PIN_PULLUP = 1` trong `config.h`. Ngõ ra hall của YF-S201 và YF-S401 là **cực thu hở**: nó chỉ kéo chân xuống đất, không bao giờ tự đẩy lên 5 V. Điện trở kéo lên nội bộ giữ chân ở 3,3 V lúc nghỉ, nên tín hiệu dao động sạch giữa 0 V và 3,3 V.
 

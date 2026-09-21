@@ -94,8 +94,24 @@ void ringPush(const Sample& s) {
 // ------------------------------------------------------------
 //  Tien ich
 // ------------------------------------------------------------
-void IRAM_ATTR onFlowPulse()    { flowPulses++; }
-void IRAM_ATTR onFlowOutPulse() { flowOutPulses++; }
+// Loc xung qua gan nhau. Do tren mach that: khi Wi-Fi bat, hai chan nay bat
+// duoc 1600 den 2700 Hz nhieu trong khi khong he co nuoc chay; tat Wi-Fi thi
+// dem duoc dung 0. Dien tro keo len NOI BO cua ESP32 khoang 45 kOhm, qua yeu
+// de giu muc cao truoc nhieu vo tuyen tren day dan dai.
+// YF-S401 o luu luong toi da 6 L/phut chi cho 6 x 98 = 588 Hz, tuc moi xung
+// cach nhau it nhat 1,7 ms. Bo qua xung den som hon FLOW_MIN_PULSE_US.
+// LUU Y: day CHI la lop phong thu phan mem. Cach sua that la han them dien
+// tro keo len NGOAI 4,7 kOhm len 3,3 V, manh gap 10 lan loai noi bo.
+volatile uint32_t lastFlowUs = 0, lastFlowOutUs = 0;
+
+void IRAM_ATTR onFlowPulse() {
+  uint32_t now = micros();
+  if (now - lastFlowUs >= FLOW_MIN_PULSE_US) { flowPulses++; lastFlowUs = now; }
+}
+void IRAM_ATTR onFlowOutPulse() {
+  uint32_t now = micros();
+  if (now - lastFlowOutUs >= FLOW_MIN_PULSE_US) { flowOutPulses++; lastFlowOutUs = now; }
+}
 
 void setRelay(bool on) {
 #if RELAY_ACTIVE_LOW
@@ -236,6 +252,17 @@ void readCurrent() {
   for (int i = 0; i < 200; i++) acc += analogRead(PIN_CURRENT);
   float mv = (acc / 200.0f) * 3300.0f / 4095.0f;
   currentMv = fabs(mv - currentOffsetMv);
+
+  // Diem nghi cua ACS712 KHONG dung yen. Do thuc te tren mach nay thay no
+  // troi 32 mV trong 20 giay dau sau khi cap nguon, tuc lon hon ca nguong
+  // nhan biet 15 mV. Hieu chuan mot lan duy nhat luc khoi dong la khong du:
+  // sau vai phut moi phep so sanh deu lech theo.
+  // Nen bam theo diem nghi bang trung binh truot cham, chi cap nhat KHI BOM
+  // DANG TAT. Bom chay thi dung cap nhat, neu khong no se hoc luon ca dong
+  // cua bom va lam luat NO_CURRENT mu han.
+  if (!pumpOn) {
+    currentOffsetMv += (mv - currentOffsetMv) * CURRENT_OFFSET_ALPHA;
+  }
 }
 
 void readFloats() {
@@ -625,7 +652,10 @@ void setup() {
   snprintf(topicCmd,       sizeof(topicCmd),       "wt/%s/%s/cmd",        SITE_ID, DEVICE_ID);
   snprintf(topicAck,       sizeof(topicAck),       "wt/%s/%s/cmd/ack",    SITE_ID, DEVICE_ID);
 
-  // Do gia tri lech khong cua cam bien dong khi bom chac chan dang tat
+  // Do gia tri lech khong cua cam bien dong khi bom chac chan dang tat.
+  // Cho nguon va cam bien on dinh truoc, neu khong se lay nham gia tri
+  // dang troi ngay sau khi cap dien lam moc.
+  delay(CURRENT_SETTLE_MS);
   uint32_t acc = 0;
   for (int i = 0; i < 200; i++) acc += analogRead(PIN_CURRENT);
   currentOffsetMv = (acc / 200.0f) * 3300.0f / 4095.0f;
