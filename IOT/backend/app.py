@@ -106,12 +106,19 @@ CREATE TABLE IF NOT EXISTS config (
 );
 """
 
+# Bang nay CHI de hien thi. No khong bao gio duoc gui xuong thiet bi — luat
+# dieu khien nam trong firmware. Vay no PHAI chep dung include/config.h, neu
+# khong dashboard se ve vach nguong o mot cho ma thiet bi khong he dung lai.
+#
+# Doi gia tri o day thi phai doi ca trong include/config.h, va nguoc lai.
 DEFAULT_CONFIG = {
-    "level_low_pct": "30",
-    "level_high_pct": "80",
-    "level_overflow_pct": "95",
-    "min_on_s": "10",
-    "min_off_s": "20",
+    "level_low_pct": "30",      # LEVEL_LOW_PCT
+    "level_high_pct": "70",     # LEVEL_HIGH_PCT
+    "level_overflow_pct": "85", # LEVEL_OVERFLOW_PCT
+    "min_on_s": "3",            # MIN_ON_MS
+    "min_off_s": "20",          # MIN_OFF_MS
+    "tank_max_level_cm": "10",  # TANK_MAX_LEVEL_CM
+    "tank_volume_l": "1.0",     # TANK_AREA_CM2 x TANK_MAX_LEVEL_CM
 }
 
 
@@ -131,8 +138,12 @@ def init_db():
             if col not in cols:
                 c.execute(f"ALTER TABLE telemetry ADD COLUMN {col} INTEGER")
                 print(f"[DB] da them cot telemetry.{col}")
+        # GHI DE chu khong phai INSERT OR IGNORE. Ban cu chi chen khi thieu,
+        # nen mot co so du lieu tao tu truoc giu mai nguong 80/95 trong khi
+        # firmware da doi sang 70/85, va dashboard ve vach sai suot.
         for k, v in DEFAULT_CONFIG.items():
-            c.execute("INSERT OR IGNORE INTO config(key,value) VALUES(?,?)", (k, v))
+            c.execute("INSERT INTO config(key,value) VALUES(?,?) "
+                      "ON CONFLICT(key) DO UPDATE SET value=excluded.value", (k, v))
 
 
 # ----------------------------------------------------------------------

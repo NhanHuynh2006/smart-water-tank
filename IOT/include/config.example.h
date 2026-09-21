@@ -31,7 +31,13 @@
 #define PIN_LED_FAULT   25
 #define PIN_BTN_RESET   33    // nut xoa loi, INPUT_PULLUP
 
-#define RELAY_ACTIVE_LOW  1   // dat 0 neu module relay kich muc cao
+// DO THAT NGAY 21/09: dat 1, firmware dua chan len MUC CAO de NGAT bom,
+// nhung bom VAN CHAY. Muc nuoc dang tu 0,2 cm len 11,2 cm trong khi web bao
+// "bom tat". Vay module nay KICH MUC CAO, phai dat 0.
+//
+// Day la ly do that su cua viec bom khong chiu dung: khong phai phan mem
+// quen ngat, ma la moi lan phan mem ra lenh NGAT thi phan cung lai BAT.
+#define RELAY_ACTIVE_LOW  0
 
 // ---------- Cuc tinh hai phao ----------
 // Ca hai chan deu bat keo len noi bo, nen chan HO doc ra muc CAO.
@@ -192,6 +198,21 @@
 #define LEAK_MS             60000UL
 #define LEAK_FLOW_LPM       0.20f
 #define SENSOR_TIMEOUT_MS   4000UL
+
+// Bao lau khong co mot phep do hop le nao thi coi la MAT cam bien.
+//
+// HC-SR04 trong thung 10 x 10 cm rot khoang 30 phan tram so lan phat: chum
+// song 15 do o khoang 15 cm da rong hon 7 cm nen tia bien danh vao thanh
+// thung, co lan khong co tieng doi tro ve kip.
+//
+// Ban cu cho levelOk = false ngay tu MOT lan rot. Hau qua: levelOk lat
+// lien tuc 200 ms mot lan, va nhom ST_FAULT_SENSOR — von doi 5 GIAY LIEN TUC
+// khong rot lan nao moi chiu phuc hoi — khong bao gio thoat ra duoc.
+// Thiet bi ket o SENSOR_TIMEOUT vinh vien du cam bien van chay.
+//
+// Nay giu lai so doc hop le cuoi trong 2 giay. Rot le di qua duoc, mat that
+// van bi bat sau 2 giay, va ST_FILLING van ngat bom ngay khi levelOk false.
+#define LEVEL_STALE_MS      3000UL
 #define SENSOR_RECOVER_MS   5000UL
 #define CONFLICT_LEVEL_PCT  70.0f
 // Toc do doi muc nuoc toi da coi la co the ve mat vat ly, cm moi giay.
@@ -200,6 +221,20 @@
 // Dat 1 cm/s: rong gap 3,6 lan truong hop bom nhanh nhat, du cho ca luc xa
 // nuoc, nhung chan duoc phan lon xung nhieu cua cam bien sieu am.
 #define MAX_LEVEL_RATE_CMS  1.0f
+
+// Sai so do cua rieng phep do, khong lien quan gi toi nuoc chay nhanh hay cham.
+// Do that trong thung 10 x 10 cm: hai lan doc lien tiep cach nhau 0,2 giay
+// lech nhau toi 1,1 cm. Chum song 15 do cua HC-SR04 o khoang 15 cm da rong
+// hon 7 cm, tia bien danh vao THANH thung roi moi doi ve nen moi lan do lai
+// chon mot duong di khac.
+//
+// Neu chi lay MAX_LEVEL_RATE_CMS x dt lam gioi han thi trong mot chu ky 0,2 s
+// chi cho phep lech 0,2 cm, va moi so doc that deu bi loai oan — thiet bi
+// bao SENSOR_TIMEOUT lien tuc du cam bien van chay tot.
+//
+// Cong them so nay vao gioi han: nhieu tung mau di qua duoc, nhung neu muc
+// nuoc troi that thi qua vai giay tich luy lai van vuot gioi han va bi bat.
+#define LEVEL_NOISE_CM      2.0f
 
 // ---------- Chu ky ----------
 #define CONTROL_PERIOD_MS   200UL
@@ -213,7 +248,10 @@
 #define LEVEL_GATE_MARGIN_CM   6.0f
 // Bao nhieu lan phat hong LIEN TIEP thi coi la mat cam bien va xoa cua so.
 // 5 lan x chu ky 200 ms = 1 giay, van con thua truoc SENSOR_TIMEOUT_MS = 4 s.
-#define LEVEL_FAIL_STREAK_MAX  5
+// Do that: rot khoang 30 phan tram, nen chuoi 5 lan rot lien tiep xay ra
+// vai lan moi phut. Moi lan xoa cua so la mat them 600 ms nua de gom lai du
+// 3 mau. Nang len 10 lan (2 giay) — van con thua truoc SENSOR_TIMEOUT_MS 4 s.
+#define LEVEL_FAIL_STREAK_MAX  10
 #define TELEMETRY_PERIOD_MS 1000UL
 #define NVS_SAVE_PERIOD_MS  60000UL
 #define OFFLINE_BUFFER_SIZE 240

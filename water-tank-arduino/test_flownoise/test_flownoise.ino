@@ -1,17 +1,20 @@
-// Buoc 9: chan cam bien luu luong CO DUOC NOI DAY khong?
+// Buoc 9: chan luu luong dang bi CAI GI dieu khien?
 //
-// Phep thu: keo chan len 3,3 V roi keo xuong dat, va xem chan co ngoan ngoan
-// di theo khong.
-//   - Day THA NOI          : chan di theo ca hai chieu  -> CHUA NOI DAY
-//   - Cam bien NOI DUNG    : chan bi cam bien giu chat mot ben, khong di theo
+// Do tan so o BA kieu cau hinh chan. Ket qua phan biet duoc ba truong hop:
+//
+//   Cam bien noi dung, dung yen : 0 Hz o CA BA kieu.
+//                                 (ngo ra hut xuong kieu cuc thu ho, khi
+//                                  khong quay thi no giu yen mot muc)
+//   Day THA NOI                 : tan so DOI NHIEU theo tung kieu.
+//   Co tin hieu that dang danh  : tan so GIONG NHAU o ca ba kieu.
+//
 // Ro le giu NGAT suot, chuong trinh tu dung han.
 #include <Arduino.h>
 #include <WiFi.h>
 #include "config.h"
 
-volatile uint32_t cIn = 0, cOut = 0;
-void IRAM_ATTR isrIn()  { cIn++; }
-void IRAM_ATTR isrOut() { cOut++; }
+volatile uint32_t cnt = 0;
+void IRAM_ATTR isr() { cnt++; }
 
 void relayOff() {
 #if RELAY_ACTIVE_LOW
@@ -21,25 +24,49 @@ void relayOff() {
 #endif
 }
 
-// Doc 200 lan trong 100 ms, dem bao nhieu lan o muc cao
-int highRatio(int pin) {
-  int h = 0;
-  for (int i = 0; i < 200; i++) { if (digitalRead(pin) == HIGH) h++; delayMicroseconds(500); }
-  return h / 2;   // phan tram
+float hz(int pin, int mode, uint32_t ms) {
+  pinMode(pin, mode);
+  delay(60);
+  cnt = 0;
+  attachInterrupt(digitalPinToInterrupt(pin), isr, FALLING);
+  delay(ms);
+  detachInterrupt(digitalPinToInterrupt(pin));
+  return cnt * 1000.0f / ms;
 }
 
-void probe(const char* nhan, int pin) {
-  pinMode(pin, INPUT_PULLUP);   delay(50); int up   = highRatio(pin);
-  pinMode(pin, INPUT_PULLDOWN); delay(50); int down = highRatio(pin);
-  pinMode(pin, INPUT_PULLUP);
+int pctHigh(int pin, int mode) {
+  pinMode(pin, mode); delay(60);
+  int h = 0;
+  for (int i = 0; i < 200; i++) { if (digitalRead(pin) == HIGH) h++; delayMicroseconds(500); }
+  return h / 2;
+}
 
-  const char* ketluan;
-  if (up > 90 && down < 10)       ketluan = "THA NOI — CHUA NOI DAY (chan di theo ca hai chieu)";
-  else if (up > 90 && down > 90)  ketluan = "bi giu o MUC CAO — co nguon ngoai giu, co ve da noi";
-  else if (up < 10 && down < 10)  ketluan = "bi giu o MUC THAP — cam bien dang keo xuong, da noi";
-  else                            ketluan = "DAO LIEN TUC — co tin hieu hoac nhieu manh";
-  Serial.printf("%-20s keo len: %3d%% cao | keo xuong: %3d%% cao  ->  %s\n",
-                nhan, up, down, ketluan);
+void khaosat(const char* nhan, int pin) {
+  float hUp   = hz(pin, INPUT_PULLUP,   1500);
+  float hNone = hz(pin, INPUT,          1500);
+  float hDown = hz(pin, INPUT_PULLDOWN, 1500);
+  int   pUp   = pctHigh(pin, INPUT_PULLUP);
+  int   pDown = pctHigh(pin, INPUT_PULLDOWN);
+
+  Serial.printf("\n%s\n", nhan);
+  Serial.printf("  keo len 3,3 V : %8.0f Hz   (%3d%% thoi gian o muc cao)\n", hUp,   pUp);
+  Serial.printf("  khong keo     : %8.0f Hz\n", hNone);
+  Serial.printf("  keo xuong dat : %8.0f Hz   (%3d%% thoi gian o muc cao)\n", hDown, pDown);
+
+  float mx = max(hUp, max(hNone, hDown));
+  if (mx < 5) {
+    Serial.println("  => IM LANG o ca ba kieu. Day duoc giu chat. DUNG.");
+  } else {
+    float mn = min(hUp, min(hNone, hDown));
+    if (mn > 0 && mx / mn < 1.5f)
+      Serial.printf("  => Tan so GIONG NHAU o ca ba kieu (%.0f Hz). Co nguon that dang danh vao chan.\n", mx);
+    else
+      Serial.println("  => Tan so DOI THEO tung kieu. Day KHONG duoc giu chat: THA NOI.");
+    if (mx > FLOW_MAX_PLAUSIBLE_HZ)
+      Serial.printf("  => %.0f Hz vuot xa gioi han vat ly %.0f Hz cua cam bien. Day la NHIEU.\n",
+                    mx, (float)FLOW_MAX_PLAUSIBLE_HZ);
+  }
+  pinMode(pin, INPUT_PULLUP);
 }
 
 void setup() {
@@ -50,44 +77,22 @@ void setup() {
   WiFi.mode(WIFI_OFF); delay(300);
 
   Serial.println();
-  Serial.println("=== CHAN LUU LUONG DA NOI DAY CHUA? (Wi-Fi tat) ===");
-  probe("dau vao  GPIO 4", PIN_FLOW);
-  probe("dau ra   GPIO 19", PIN_FLOW_OUT);
+  Serial.println("=== CHAN LUU LUONG DANG BI CAI GI DIEU KHIEN? ===");
+  Serial.println("Wi-Fi tat, bom ngat, khong co nuoc chay.");
+  Serial.printf("Gioi han vat ly cua cam bien: %.0f Hz\n", (float)FLOW_MAX_PLAUSIBLE_HZ);
 
-  Serial.println();
-  Serial.println("=== DEM XUNG HAI CHAN CUNG LUC, 3 giay, Wi-Fi tat ===");
-#if FLOW_PIN_PULLUP
-  pinMode(PIN_FLOW, INPUT_PULLUP); pinMode(PIN_FLOW_OUT, INPUT_PULLUP);
-#else
-  pinMode(PIN_FLOW, INPUT);        pinMode(PIN_FLOW_OUT, INPUT);
-#endif
-  cIn = cOut = 0;
-  attachInterrupt(digitalPinToInterrupt(PIN_FLOW),     isrIn,  FALLING);
-  attachInterrupt(digitalPinToInterrupt(PIN_FLOW_OUT), isrOut, FALLING);
-  delay(3000);
-  detachInterrupt(digitalPinToInterrupt(PIN_FLOW));
-  detachInterrupt(digitalPinToInterrupt(PIN_FLOW_OUT));
-  Serial.printf("dau vao : %8lu xung (%7.0f Hz)\n", (unsigned long)cIn,  cIn  / 3.0f);
-  Serial.printf("dau ra  : %8lu xung (%7.0f Hz)\n", (unsigned long)cOut, cOut / 3.0f);
+  khaosat("dau vao   GPIO 4", PIN_FLOW);
+  khaosat("dau ra    GPIO 19", PIN_FLOW_OUT);
 
+  // Doi chieu: mot chan chac chan KHONG noi gi, de biet the nao la tha noi
   Serial.println();
-  Serial.println("=== DEM LAI VOI Wi-Fi BAT ===");
-  WiFi.mode(WIFI_STA); WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
-  for (int i = 0; i < 40 && WiFi.status() != WL_CONNECTED; i++) delay(250);
-  Serial.printf("Wi-Fi: %s, RSSI %d dBm\n",
-                WiFi.status() == WL_CONNECTED ? "da noi" : "KHONG NOI DUOC", WiFi.RSSI());
-  cIn = cOut = 0;
-  attachInterrupt(digitalPinToInterrupt(PIN_FLOW),     isrIn,  FALLING);
-  attachInterrupt(digitalPinToInterrupt(PIN_FLOW_OUT), isrOut, FALLING);
-  delay(3000);
-  detachInterrupt(digitalPinToInterrupt(PIN_FLOW));
-  detachInterrupt(digitalPinToInterrupt(PIN_FLOW_OUT));
-  Serial.printf("dau vao : %8lu xung (%7.0f Hz)\n", (unsigned long)cIn,  cIn  / 3.0f);
-  Serial.printf("dau ra  : %8lu xung (%7.0f Hz)\n", (unsigned long)cOut, cOut / 3.0f);
+  Serial.println("--- DOI CHIEU: GPIO 23 (khong noi gi trong so do) ---");
+  khaosat("chan trong GPIO 23", 23);
 
   relayOff();
   Serial.println();
-  Serial.println("Khong co nuoc chay, nen MOI xung dem duoc o tren deu la NHIEU.");
+  Serial.println("So sanh hai chan luu luong voi chan trong GPIO 23:");
+  Serial.println("giong nhau -> chua noi day. Khac han -> da noi, va la nhieu tu nguon khac.");
   Serial.println("XONG. Chuong trinh dung han.");
 }
 

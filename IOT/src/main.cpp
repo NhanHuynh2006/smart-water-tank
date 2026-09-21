@@ -223,15 +223,22 @@ float medianOf5() {
   return v[levelWinCount / 2];
 }
 
+// Mot lan phat hong KHONG co nghia la mat cam bien. Giu so doc hop le cuoi
+// them LEVEL_STALE_MS nua roi moi ha co levelOk.
+void markLevelStale() {
+  levelOk = (lastValidLevelMs != 0) &&
+            (millis() - lastValidLevelMs <= LEVEL_STALE_MS);
+}
+
 void readLevel() {
   float d = medianOf5();
-  if (d < 0) { levelOk = false; return; }
+  if (d < 0) { markLevelStale(); return; }
 
   float h = TANK_SENSOR_TO_BOTTOM_CM - d;
   h = LEVEL_CAL_A * h + LEVEL_CAL_B;
 
   // Loc so doc phi vat ly ngay tai nguon
-  if (h < -LEVEL_GATE_MARGIN_CM || h > TANK_MAX_LEVEL_CM + 2.0f) { levelOk = false; return; }
+  if (h < -LEVEL_GATE_MARGIN_CM || h > TANK_MAX_LEVEL_CM + 2.0f) { markLevelStale(); return; }
 
   // Tieng doi tro ve tu DAY bon hoac xa hon nghia la KHONG CO NUOC, chu khong
   // phai la phep do hong. Thung 10 x 10 cm hep hon chum song 15 do cua
@@ -249,8 +256,12 @@ void readLevel() {
 
   if (lastGoodLevelCm >= 0) {
     float dt = (millis() - lastValidLevelMs) / 1000.0f;
-    if (dt > 0.05f && fabs(h - lastGoodLevelCm) / dt > MAX_LEVEL_RATE_CMS) {
-      levelOk = false; return;
+    // Gioi han = phan do nuoc that su co the troi trong khoang dt, CONG
+    // them sai so cua rieng phep do. Thieu ve sau thi nhieu tung mau bi
+    // hieu nham la cam bien hong.
+    float allowed = MAX_LEVEL_RATE_CMS * dt + LEVEL_NOISE_CM;
+    if (dt > 0.05f && fabs(h - lastGoodLevelCm) > allowed) {
+      markLevelStale(); return;
     }
   }
 
@@ -678,7 +689,9 @@ void onMessage(char* topic, byte* payload, unsigned int len) {
 
   } else if (!strcmp(action, "clear_fault")) {
     if (faultCode[0] == '\0') { sendAck(cmdId, "rejected", "no_active_fault"); return; }
-    if (floatMax || (levelOk && levelPct >= LEVEL_OVERFLOW_PCT)) {
+    // Cung ba duong kiem tra nhu luat chong tran, de khong xoa duoc loi
+    // trong khi dieu kien gay ra no van con.
+    if (floatMax || waterTooClose() || (levelOk && levelPct >= LEVEL_OVERFLOW_PCT)) {
       sendAck(cmdId, "rejected", "condition_still_present"); return;
     }
     faultCode[0] = '\0';

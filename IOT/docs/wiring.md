@@ -48,6 +48,8 @@ Nếu chọn được, hãy dùng kiểu **mở khi đầy** và đặt `FLOAT_M
 
 ## Chân điều khiển rơ le cần điện trở kéo lên 10 kΩ
 
+**Cập nhật 21/09: mô đun trên mạch này kích mức CAO, không phải mức thấp.** Đã đo: firmware đưa chân lên mức cao để ngắt bơm mà bơm vẫn chạy, mực nước dâng từ 0,2 cm lên 11,2 cm trong khi web báo "bơm tắt". `RELAY_ACTIVE_LOW` đã đổi thành `0`. Vì vậy điện trở kéo ở mục này phải nối **xuống GND**, không phải lên 3,3 V.
+
 Mô đun rơ le kích mức thấp hiểu **mức thấp là lệnh bật**. Từ lúc cấp điện tới lúc `setup()` chạy được dòng đầu tiên, chân GPIO 26 vẫn **thả nổi**, và mô đun có thể hiểu nhầm thành lệnh bật. Khoảng đó dài chừng 300 ms của bootloader ROM, lặp lại **mỗi lần khởi động, mỗi lần nhấn nút reset, và mỗi lần nạp chương trình**.
 
 Phần mềm đã đưa rơ le về ngắt ngay dòng đầu của `setup()`, nhưng không rút ngắn được phần bootloader. Cách bịt hẳn là **một điện trở 10 kΩ từ chân IN của rơ le lên 3,3 V**: khi ESP32 chưa điều khiển, điện trở giữ chân ở mức cao, tức lệnh ngắt.

@@ -119,7 +119,7 @@
 
 <script>
 const API = "";
-let CFG = { low: 30, high: 80 };
+let CFG = { low: 30, high: 70 };   // du phong; gia tri that lay tu /api/config
 
 async function jget(u){ const r = await fetch(API+u); return r.json(); }
 async function send(action, value){
@@ -275,7 +275,7 @@ async function tickHistory(){
   try{
     const cfg = await jget("/api/config");
     CFG.low  = parseFloat(cfg.level_low_pct)  || 30;
-    CFG.high = parseFloat(cfg.level_high_pct) || 80;
+    CFG.high = parseFloat(cfg.level_high_pct) || 70;
   }catch(e){}
   tickState(); tickHistory();
   setInterval(tickState, 1000);     // khối trạng thái 1 Hz
