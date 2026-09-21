@@ -83,6 +83,21 @@ Cả hai đều cho **đúng 3,33 V**, vì chỉ tỉ số mới quyết định
 - Đi dây ECHO **tách khỏi dây bơm và dây rơ le**, đừng bó chung.
 - Nếu làm hai điều trên mà vẫn nhiễu, hạ xuống **1k/2k** hoặc **2,2k/4,7k**. Đổi lại là ECHO phải gánh 1,7 mA — vẫn nhẹ nhàng với tầng đẩy kéo của HC-SR04.
 
+## YF-S401 có thể sai dải đo cho hệ này
+
+Dải làm việc của YF-S401 là **0,3 – 6 L/phút**. Dưới cận dưới thì cánh quạt không đủ lực quay, và cảm biến im lặng — không phải vì hỏng, mà vì nó không được thiết kế cho lưu lượng đó.
+
+Lưu lượng thật của hệ này, đo bằng tốc độ đổi mực nước:
+
+| Đường | Lưu lượng đo được | So với dải 0,3–6 L/phút |
+|---|---|---|
+| Bơm đẩy vào | **0,36 L/phút** | sát đáy dải, chỉ dư 20% |
+| Xả trọng lực | **0,134 L/phút** | **dưới đáy dải** |
+
+Nghĩa là ngay cả khi đấu dây hoàn hảo, cảm biến đầu ra nhiều khả năng vẫn đọc 0 trong lúc nước đang xả thật. Và cảm biến đầu vào thì làm việc ngay mép dải, nơi sai số hệ số K lớn nhất.
+
+Muốn đo được dải này cần cảm biến nhỏ hơn, hoặc chấp nhận rằng lưu lượng chỉ dùng để **phát hiện có hay không có dòng chảy**, chứ không dùng làm số định lượng. Cách thứ hai vẫn đủ cho luật `DRY_RUN`.
+
 ## YF-S401 qua TXS0108E: cũng hỏng, và theo một kiểu khác
 
 TXS0108E **danh nghĩa là hợp** với ngõ ra cực thu hở như YF-S401 — nó vốn sinh ra cho bus kiểu I²C. Nhưng trên bo mạch này nó vẫn hỏng, vì ba lý do chồng lên nhau.
@@ -108,6 +123,26 @@ Ba điều trong bảng này chỉ thẳng vào TXS0108E:
 - **Hai kênh cho tần số gần bằng nhau.** Hai cảm biến rời nhau không có lý do gì trùng nhau tới 5%. Cùng một con chip thì có.
 - **Tắt Wi-Fi không làm thay đổi gì.** Vậy không phải nhiễu sóng vô tuyến — là chính con chip đang dao động.
 - **Tần số đổi theo cách cấu hình chân.** Chân thả nổi thật thì im (GPIO 23 cho 0 Hz). Chân bị một nguồn thật điều khiển thì không đổi theo cách kéo. Chỉ có mạch dò chiều đang bị điện trở kéo của ESP32 quấy nhiễu mới cho kiểu này.
+
+### Bỏ chip rồi vẫn còn nhiễu: bơm đang bơm vào dây tín hiệu
+
+Sau khi bỏ TXS0108E, nền nhiễu lúc bơm tắt giảm khoảng 100 lần, từ 3 445 Hz xuống 26 Hz. Nhưng **lúc bơm chạy** thì cả hai chân cùng vọt lên:
+
+| | GPIO 4 | GPIO 19 |
+|---|---|---|
+| Bơm tắt | 26,4 Hz | 25,2 Hz |
+| **Bơm chạy** | **4 755,9 Hz** | **4 722,0 Hz** |
+
+4 750 Hz chia hệ số K 98 ra 48 L/phút, trong khi bơm thật chỉ đẩy 0,36 L/phút. Và hai kênh trùng nhau tới **0,7%** — hai cảm biến rời nhau không thể trùng như vậy. Đây là **nhiễu đồng pha** do bơm bơm vào cả hai đường tín hiệu cùng lúc.
+
+Bốn thứ cần làm, theo thứ tự hiệu quả:
+
+1. **Điốt 1N4007 song song ngược hai cực bơm.** Vạch trắng quay về cực dương. Khi rơ le ngắt, cuộn dây động cơ sinh xung ngược vài trăm vôn; điốt cho nó tự tiêu tán tại chỗ thay vì phóng ra toàn mạch.
+2. **Điện trở 4,7 kΩ từ mỗi chân tín hiệu lên 3,3 V.** Điện trở kéo lên nội bộ 45 kΩ quá yếu, để đường tín hiệu ở trở kháng cao và biến nó thành ăng ten.
+3. **Tách dây bơm khỏi dây tín hiệu.** Đừng bó chung, đừng chạy song song. Cắt ngang nhau thì cắt vuông góc.
+4. **Tụ 470 µF trên nhánh cấp nguồn bơm**, đặt gần rơ le, và đất đi hình sao như mục nguồn mô tả.
+
+Chừng nào bơm còn bơm 4 750 Hz vào dây tín hiệu thì **không thể biết hai cảm biến có bị đấu ngược hay không**, vì nhiễu át hoàn toàn tín hiệu thật.
 
 ### Cách làm đúng: bỏ hẳn bộ chuyển mức
 

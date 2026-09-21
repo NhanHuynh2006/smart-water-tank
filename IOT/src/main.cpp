@@ -266,7 +266,7 @@ void readLevel() {
   // Neu coi do la loi thi bon can se khong bao gio do duoc, bom khong bao gio
   // duoc phep chay, va he thong thanh vo dung. Vay coi la muc 0.
   // An toan khong mat gi: neu cam bien that su hong theo kieu tra so qua lon,
-  // luat NO_PROGRESS ngat bom sau 20 giay vi muc khong nhich len.
+  // luat NO_PROGRESS ngat bom sau NO_PROGRESS_MS vi muc khong nhich len.
   //
   // Phai ep ve 0 TRUOC khi kiem tra toc do doi muc, neu khong so am se bi
   // hieu la muc nhay 6 cm trong mot chu ky va bi loai oan.

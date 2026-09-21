@@ -147,6 +147,23 @@
 // Bat lai thanh 1 sau khi da: cap du 5 V va GND cho ca hai cam bien, va gan
 // dien tro keo len 4,7 kOhm tu moi chan tin hieu len 3,3 V.
 // Kiem tra bang: pio run -e test_flownoise -t upload -t monitor
+// 21/09, sau khi bo TXS0108E khoi hai chan luu luong:
+//    GPIO 4  : 3 445 Hz  ->  25 Hz   (keo len 3,3 V)
+//    GPIO 19 : 3 282 Hz  ->  51 Hz
+//    GPIO 23 : 0 Hz (chan doi chieu, khong noi gi)
+// Giam khoang 100 lan, du duoi nguong 1200 Hz nen bat lai duoc.
+// VAN CON 25-51 Hz, tuc 0,26 va 0,52 L/phut ao — xem muc canh bao ben duoi.
+// TAT LAI ngay 21/09 sau phep thu test_flowmap:
+//    bom TAT  : GPIO 4 = 26,4 Hz   ·  GPIO 19 = 25,2 Hz
+//    bom CHAY : GPIO 4 = 4755,9 Hz ·  GPIO 19 = 4722,0 Hz
+//
+// 4750 Hz chia cho he so K 98 la 48 L/phut, trong khi bom that chi day
+// 0,36 L/phut. Va hai kenh trung nhau toi 0,7 phan tram — hai cam bien roi
+// nhau khong the trung nhau nhu vay. Do la nhieu dong pha do bom bom vao ca
+// hai duong tin hieu cung luc, khong phai nuoc.
+//
+// Chung nao bom con bom 4750 Hz vao day tin hieu thi khong the biet hai cam
+// bien co bi dau nguoc hay khong, va cung khong the dung so doc cho viec gi.
 #define FLOW_SENSOR_ENABLED   0
 
 // ---------- Tham so dieu khien ----------
