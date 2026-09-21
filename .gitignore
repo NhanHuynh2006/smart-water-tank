@@ -42,3 +42,7 @@ graft/
 # He dieu hanh
 .DS_Store
 Thumbs.db
+
+# anh chup man hinh tam
+dash.png
+.playwright-mcp/
