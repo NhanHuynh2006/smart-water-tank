@@ -153,6 +153,24 @@ Hiện `0%` trong tình huống đó là nói dối: người vận hành nhìn 
 
 Điều này cũng có nghĩa là **đừng dùng số đo mức làm trọng tài** khi nó mâu thuẫn với thứ quan sát trực tiếp được. Trong ba cảm biến của hệ, HC-SR04 là cái kém tin cậy nhất: chùm sóng 15° rộng hơn lòng thùng 10×10 cm, mặt nước gợn làm tán tiếng dội, và lớp đáy thì nằm dưới ngưỡng.
 
+## Vì sao cảm biến lưu lượng đầu ra luôn đọc 0 dù van xả luôn mở
+
+Đây **không phải** lỗi đấu dây, không phải đấu ngược, và không phải cảm biến hỏng. Đo ngày 22/09, bơm tắt, van xả mở:
+
+| | |
+|---|---|
+| Mức nước | 5,57 → 4,13 cm trong 59 giây |
+| Lưu lượng xả **thật** | **0,147 L/phút** |
+| Dải làm việc YF-S401 | **0,30 – 6,00 L/phút** |
+
+Lưu lượng xả nằm **dưới đáy dải đo hai lần**. Dưới cận dưới thì áp lực nước không đủ thắng ma sát để quay cánh quạt — cánh đứng yên, không có xung nào sinh ra, và cảm biến đọc 0. Đó là **kết quả đúng với vật lý**, không phải sự cố.
+
+Ba cách chữa, theo thứ tự dễ làm:
+
+1. **Mở van to hơn** cho lưu lượng vượt 0,3 L/phút. Kiểm chứng bằng chính phép đo trên: nước phải tụt nhanh hơn 0,3 cm mỗi 10 giây.
+2. **Đổi sang cảm biến hợp dải**, ví dụ loại hiệu ứng Hall cỡ nhỏ đo được từ 0,05 L/phút, hoặc cảm biến kiểu cánh quạt trong ống 1/4 inch.
+3. **Bỏ đo định lượng đầu ra**, chỉ dùng mức nước để suy ra lượng tiêu thụ. Mực nước sau khi lọc đã đủ mượt để làm việc này: phép đo 0,147 L/phút ở trên chính là tính từ mức nước, và nó đáng tin hơn cảm biến đang lắp.
+
 ## ESP32 chỉ bắt được Wi-Fi 2,4 GHz
 
 Đo ngày 22/09: máy tính nối mạng `NhanHuynh` bình thường, nhưng ở **5745 MHz**, tức băng **5 GHz**. ESP32 quét ra 31 mạng quanh đó mà **không có `NhanHuynh`** trong danh sách — vì phần cứng Wi-Fi của nó chỉ có băng 2,4 GHz.

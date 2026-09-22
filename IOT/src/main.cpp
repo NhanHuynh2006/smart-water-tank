@@ -174,6 +174,8 @@ static uint8_t levelWinCount = 0, levelWinHead = 0, levelFailStreak = 0;
 // LEVEL_MIN_DISTANCE_CM dung thang so nay, de mot bo loc hong khong the
 // lam mat luon lop bao ve cuoi cung. Am nghia la lan phat do khong co tieng doi.
 static float   lastRawDistCm = -1.0f;
+// Dau ra cua bo loc mu. Am nghia la chua co mau nao de khoi tao.
+static float   levelEmaCm    = -1.0f;
 // So lan phat LIEN TIEP cho ket qua gan hon LEVEL_MIN_DISTANCE_CM.
 static uint8_t tooCloseStreak = 0;
 
@@ -250,6 +252,10 @@ float medianOf5() {
 void markLevelStale() {
   levelOk = (lastValidLevelMs != 0) &&
             (millis() - lastValidLevelMs <= LEVEL_STALE_MS);
+  // Mat han cam bien thi xoa bo loc. Neu khong, luc tin hieu quay lai no se
+  // keo dau ra tu gia tri cu sang gia tri moi trong suot ba giay, va muc nuoc
+  // hien tren giao dien se troi tu tu qua mot khoang cham khong he co that.
+  if (!levelOk) levelEmaCm = -1.0f;
 }
 
 void readLevel() {
@@ -289,12 +295,22 @@ void readLevel() {
   }
 #endif
 
-  levelCm  = h;
-  levelPct = (h / TANK_MAX_LEVEL_CM) * 100.0f;
-  if (levelPct > 100) levelPct = 100;
-  levelOk  = true;
+  // h la so doc THO sau trung vi. Cac cong xac thuc o tren deu so voi no,
+  // va lastGoodLevelCm cung luu no — neu so voi dau ra da lam muot thi cong
+  // chan toc do se tu so voi chinh phien ban tre cua minh va mat tac dung.
   lastGoodLevelCm  = h;
   lastValidLevelMs = millis();
+  levelOk  = true;
+
+  // Trung vi loai dot bien nhung KHONG lam muot. Trung binh truot mu moi lam
+  // muot. Mau dau tien nhay thang vao, khong co gi de trung binh voi no.
+  if (levelEmaCm < 0) levelEmaCm = h;
+  else                levelEmaCm += (h - levelEmaCm) * LEVEL_EMA_ALPHA;
+
+  levelCm  = levelEmaCm;
+  levelPct = (levelEmaCm / TANK_MAX_LEVEL_CM) * 100.0f;
+  if (levelPct > 100) levelPct = 100;
+  if (levelPct < 0)   levelPct = 0;
 }
 
 void readFlow(uint32_t dtMs) {

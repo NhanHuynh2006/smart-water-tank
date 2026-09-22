@@ -296,7 +296,12 @@
 #define CURRENT_SETTLE_MS     1500UL
 #define LEAK_MS             60000UL
 #define LEAK_FLOW_LPM       0.20f
-#define SENSOR_TIMEOUT_MS   4000UL
+// Nang 4 -> 9 giay, phai lon hon LEVEL_STALE_MS mot khoang du rong.
+// levelOk chi ha khi da 5 giay khong co so doc hop le nao; bao su co ngay o
+// giay thu 4 nghia la bao truoc ca khi co dieu gi dang xay ra.
+// Bom van duoc canh doc lap: FILL_LEVEL_GRACE_MS 10 s, MAX_FILL_MS 200 s,
+// PUMP_HARD_LIMIT_MS 240 s, waterTooClose va phao muc cao.
+#define SENSOR_TIMEOUT_MS   9000UL
 
 // Bao lau khong co mot phep do hop le nao thi coi la MAT cam bien.
 //
@@ -311,7 +316,10 @@
 //
 // Nay giu lai so doc hop le cuoi trong 2 giay. Rot le di qua duoc, mat that
 // van bi bat sau 2 giay, va ST_FILLING van ngat bom ngay khi levelOk false.
-#define LEVEL_STALE_MS      3000UL
+// Nang 3 -> 5 giay. Cua so trung vi gio dai 15 mau, tuc 3 giay, nen sau mot
+// chuoi phat hong no can chung do thoi gian de gom lai du mau. Giu 3 giay thi
+// levelOk ha xuong ngay truoc khi cua so kip day lai.
+#define LEVEL_STALE_MS      5000UL
 
 // Bom duoc phep chay tiep bao lau khi DANG BOM ma mat tin hieu muc.
 //
@@ -329,7 +337,10 @@
 // 10 giay o luu luong do duoc 0,36 L/phut la them 0,06 lit, tuc 6 phan tram
 // cua bon 1 lit. Cong voi LEVEL_STALE_MS thi toi da 13 giay khong co so doc.
 #define FILL_LEVEL_GRACE_MS 10000UL
-#define SENSOR_RECOVER_MS   5000UL
+// Ha 5 -> 2,5 giay. Doi 5 giay LIEN TUC khong rot lan nao la qua kho voi cam
+// bien nay, nen thiet bi ket lai o nhom su co lau hon han thoi gian no that
+// su hong. levelOk gio da co san 5 giay du tru ben trong roi.
+#define SENSOR_RECOVER_MS   2500UL
 #define CONFLICT_LEVEL_PCT  70.0f
 // Phao muc thap bao "da tut duoi vach thap" ma sieu am lai bao day hon so
 // nay thi hai cam bien dang noi nguoc nhau — mot trong hai dang hong.
@@ -366,7 +377,25 @@
 // o 4,6 cm. Cua so 5 mau chi chiu duoc 2 mau hong lien tiep; 9 mau chiu duoc 4.
 // 9 mau x 200 ms = 1,8 giay, trong do nuoc chi kip dang 0,11 cm nen khong
 // lam cham phan ung chut nao.
-#define LEVEL_MEDIAN_WINDOW 9
+// 15 chu khong phai 9. Do ngay 22/09, bom TAT va mat nuoc tinh, 40 mau:
+//    do lech chuan 0,472 cm · dai dao dong 2,32 cm · buoc nhay lon nhat 1,75 cm
+// Trong khi nuoc that chi tut 0,013 cm moi giay. Nhieu gap hai muoi lan tin
+// hieu. Cua so 9 mau chiu duoc 4 mau hong lien tiep; 15 mau chiu duoc 7.
+#define LEVEL_MEDIAN_WINDOW 15
+
+// ---------- Bo loc lam muot dau ra ----------
+// Trung vi chi loai dot bien, no KHONG lam muot. Chin mau deu lech +-0,5 cm
+// thi trung vi cua chung van lech +-0,5 cm, va phan tram tren giao dien nhay
+// giat cuc hai muoi phan tram du mat nuoc dung yen.
+//
+// Trung binh truot mu dat SAU trung vi moi lam muot duoc. He so 0,06 o chu ky
+// 200 ms cho hang so thoi gian khoang 3,2 giay, va giam nhieu ngau nhien
+// khoang sau lan: sqrt(0,06 / 1,94) = 0,176.
+//
+// Cai gia phai tra la tre 3,2 giay. Nuoc chay nhanh nhat cung chi 0,06 cm/s,
+// nen tre do tuong duong sai lech 0,19 cm — nho hon ca sai so cua phep do.
+// Chan an toan waterTooClose doc thang khoang cach THO nen khong he bi tre.
+#define LEVEL_EMA_ALPHA     0.06f
 // Bien ngoai dai hinh hoc con chap nhan, tinh bang cm. So doc nam ngoai
 // [15,5-10-6 , 15,5+6] = [-0,5 , 21,5] cm bi loai truoc khi vao cua so trung vi.
 #define LEVEL_GATE_MARGIN_CM   6.0f
@@ -380,7 +409,10 @@
 // Trung vi khong cuu duoc kieu hong nay: khi hai nhom xap xi bang nhau thi
 // trung vi chi la mot lan tung dong xu. Thay vi doan bua, hay noi thang la
 // KHONG BIET — cac chan an toan theo thoi gian van lam viec binh thuong.
-#define LEVEL_SPREAD_MAX_CM    3.0f
+// Noi tu 3,0 len 4,5 cm cho khop cua so 15 mau: cua so dai hon thi trai qua
+// nhieu thoi gian hon nen tu nhien rong hon. Trung vi 15 mau cong bo loc mu
+// da du suc xu ly do phan tan nay.
+#define LEVEL_SPREAD_MAX_CM    4.5f
 
 // ---------- CHE DO CHAN DOAN: TIN CAM BIEN MUC VO DIEU KIEN ----------
 // Dat 1 de BO cong xac thuc: bo kiem tra do phan tan cua so, bo cong chan
