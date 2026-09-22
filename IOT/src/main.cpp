@@ -679,7 +679,10 @@ void publishTelemetry() {
   size_t n = buildTelemetry(buf, sizeof(buf), nullptr);
 
   if (mqtt.connected()) {
-    mqtt.publish(topicTelemetry, (uint8_t*)buf, n, false);
+    if (!mqtt.publish(topicTelemetry, (uint8_t*)buf, n, false)) {
+      Serial.printf("[MQTT] GUI THAT BAI, ban tin %u byte — bo dem qua nho?\n",
+                    (unsigned)n);
+    }
   } else {
     Sample s;
     s.ts = nowTs(); s.seq = seqNo;
@@ -783,14 +786,41 @@ void onMessage(char* topic, byte* payload, unsigned int len) {
 // ------------------------------------------------------------
 //  Ket noi khong chan
 // ------------------------------------------------------------
+// Ma trang thai cua WiFi.status() doi ra chu, de doc man hinh biet hong o dau
+static const char* wifiStatusText(int st) {
+  switch (st) {
+    case WL_IDLE_STATUS:     return "dang khoi dong";
+    case WL_NO_SSID_AVAIL:   return "KHONG THAY MANG nay";
+    case WL_CONNECT_FAILED:  return "SAI MAT KHAU hoac bi tu choi";
+    case WL_CONNECTION_LOST: return "MAT KET NOI";
+    case WL_DISCONNECTED:    return "chua noi";
+    default:                 return "trang thai la";
+  }
+}
+
 void mqttTryConnect() {
   if (millis() < nextReconnectMs) return;
   if (WiFi.status() != WL_CONNECTED) {
+    // Ban cu im lang hoan toan o nhanh nay. Hau qua: mat Wi-Fi trong nhu
+    // thiet bi treo — man hinh chi co mot dong [BOOT] san sang roi khong gi
+    // nua, va khong co cach nao biet la hong o Wi-Fi hay o MQTT.
+    static uint32_t lastWifiMsgMs = 0;
+    if (millis() - lastWifiMsgMs > 5000) {
+      lastWifiMsgMs = millis();
+      Serial.printf("[WIFI] chua noi duoc '%s' — %s (ma %d)\n",
+                    WIFI_SSID, wifiStatusText(WiFi.status()), WiFi.status());
+    }
     WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
     nextReconnectMs = millis() + RECONNECT_BASE_MS;
     return;
   }
-  Serial.print("[MQTT] dang ket noi... ");
+  static bool wifiAnnounced = false;
+  if (!wifiAnnounced) {
+    wifiAnnounced = true;
+    Serial.printf("[WIFI] da noi '%s' · IP %s · RSSI %d dBm\n",
+                  WIFI_SSID, WiFi.localIP().toString().c_str(), WiFi.RSSI());
+  }
+  Serial.printf("[MQTT] dang ket noi %s:%d... ", MQTT_HOST, MQTT_PORT);
   bool ok = mqtt.connect(DEVICE_ID, MQTT_USER, MQTT_PASS,
                          topicStatus, 1, true, "{\"online\":false}");
   if (ok) {
@@ -878,7 +908,11 @@ void setup() {
   mqtt.setServer(MQTT_HOST, MQTT_PORT);
   mqtt.setCallback(onMessage);
   mqtt.setKeepAlive(MQTT_KEEPALIVE_S);
-  mqtt.setBufferSize(512);
+  // 768 chu khong phai 512. Ban tin telemetry dung bo dem 640 byte, va
+  // PubSubClient::publish tra ve false MA KHONG BAO GI neu goi tin dai hon
+  // bo dem cua no. Hai con so nay phai di cung nhau, neu khong thiet bi se
+  // im lang dung luc no tuong minh dang gui.
+  mqtt.setBufferSize(768);
 
   lastValidLevelMs = millis();
   Serial.println("[BOOT] san sang");

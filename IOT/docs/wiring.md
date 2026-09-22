@@ -124,6 +124,16 @@ Hiện `0%` trong tình huống đó là nói dối: người vận hành nhìn 
 
 Điều này cũng có nghĩa là **đừng dùng số đo mức làm trọng tài** khi nó mâu thuẫn với thứ quan sát trực tiếp được. Trong ba cảm biến của hệ, HC-SR04 là cái kém tin cậy nhất: chùm sóng 15° rộng hơn lòng thùng 10×10 cm, mặt nước gợn làm tán tiếng dội, và lớp đáy thì nằm dưới ngưỡng.
 
+## ESP32 chỉ bắt được Wi-Fi 2,4 GHz
+
+Đo ngày 22/09: máy tính nối mạng `NhanHuynh` bình thường, nhưng ở **5745 MHz**, tức băng **5 GHz**. ESP32 quét ra 31 mạng quanh đó mà **không có `NhanHuynh`** trong danh sách — vì phần cứng Wi-Fi của nó chỉ có băng 2,4 GHz.
+
+Triệu chứng rất dễ chẩn đoán nhầm: điện thoại và máy tính đều vào mạng ngon lành, nên người ta tưởng mạng không có vấn đề gì và đi tìm lỗi ở chỗ khác. Thiết bị thì báo `WL_DISCONNECTED`, mã 6.
+
+Cách chữa nằm ở **điểm phát**, không nằm ở code: vào cài đặt điểm phát di động và đổi băng tần sang **2,4 GHz**, hoặc bật chế độ tương thích nếu máy có. Máy tính sẽ tự nối lại vào cùng dải IP nên `MQTT_HOST` không cần sửa.
+
+Chạy `pio run -e test_wifiscan -t upload -t monitor` để xem chính ESP32 nhìn thấy những mạng nào. Không thấy tên mạng trong danh sách thì không phải lỗi mật khẩu, và không có tham số nào trong firmware sửa được.
+
 ## Cách nối điện trở 4,7 kΩ cho hai cảm biến YF-S401
 
 ### Trước khi nối: kiểm tra mô đun có sẵn điện trở kéo lên chưa

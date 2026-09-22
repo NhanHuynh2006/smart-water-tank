@@ -134,7 +134,14 @@
 // duoc nhieu — no chi lay mau thua ra, bien 17 000 Hz thanh 833 Hz, tuc
 // 8,5 L/phut, mot con so trong RAT THAT. Doc con so do vao rang buoc an toan
 // con nguy hiem hon la khong co cam bien.
-#define FLOW_MAX_PLAUSIBLE_HZ  1200.0f
+// HA TU 1200 XUONG 700 ngay 22/09. Do sau khi gan dien tro 4,7 kOhm, luc bom
+// chay hai chan van cho 1474 va 1548 Hz. Mot phan nhieu do dao dong xuong
+// duoi 1200 Hz va LOT QUA cong, cong don hon 2 lit ao trong vai giay va lam
+// no bao dong gia VOLUME_LIMIT ngay trong lan bom dau tien.
+//
+// 700 Hz van cao hon gioi han vat ly 588 Hz cua YF-S401, va cao gap hai muoi
+// lan tan so that cua he nay: bom day 0,36 L/phut, tuc chi 35 Hz.
+#define FLOW_MAX_PLAUSIBLE_HZ   700.0f
 
 // ---------- TAT HAI CAM BIEN LUU LUONG ----------
 // Dat 0 khi day tin hieu chua dau xong. Do that ngay 21/09, bom da rut,
@@ -159,17 +166,20 @@
 //    GPIO 23 : 0 Hz (chan doi chieu, khong noi gi)
 // Giam khoang 100 lan, du duoi nguong 1200 Hz nen bat lai duoc.
 // VAN CON 25-51 Hz, tuc 0,26 va 0,52 L/phut ao — xem muc canh bao ben duoi.
-// TAT LAI ngay 21/09 sau phep thu test_flowmap:
-//    bom TAT  : GPIO 4 = 26,4 Hz   ·  GPIO 19 = 25,2 Hz
-//    bom CHAY : GPIO 4 = 4755,9 Hz ·  GPIO 19 = 4722,0 Hz
+// 22/09, SAU KHI GAN DIEN TRO 4,7 kOhm len 3,3 V cho ca hai chan:
+//    bom TAT  : GPIO 19 = 0,0 Hz    ·  GPIO 4 = 0,0 Hz     <- sach tuyet doi
+//    bom CHAY : GPIO 19 = 1548,4 Hz ·  GPIO 4 = 1474,4 Hz
 //
-// 4750 Hz chia cho he so K 98 la 48 L/phut, trong khi bom that chi day
-// 0,36 L/phut. Va hai kenh trung nhau toi 0,7 phan tram — hai cam bien roi
-// nhau khong the trung nhau nhu vay. Do la nhieu dong pha do bom bom vao ca
-// hai duong tin hieu cung luc, khong phai nuoc.
+// Nen luc bom tat gio DUNG BANG 0, truoc do la 25-51 Hz. So doc luc khong bom
+// da dung duoc, va bo dem the tich khong con cong don rac nua.
 //
-// Chung nao bom con bom 4750 Hz vao day tin hieu thi khong the biet hai cam
-// bien co bi dau nguoc hay khong, va cung khong the dung so doc cho viec gi.
+// Luc bom chay van con khoang 1500 Hz, tuc 15,8 L/phut trong khi bom that chi
+// day 0,36 L/phut — van la nhieu, nhung da giam ba lan so voi 4750 Hz do duoc
+// truoc khi gan dien tro. Phan con lai thuoc ve diot 1N4007 mac song song
+// nguoc hai cuc bom va viec tach day bom khoi day tin hieu.
+//
+// Cong FLOW_MAX_PLAUSIBLE_HZ = 1200 Hz bat duoc muc 1500 Hz nay va bao
+// "khong tin duoc" dung trong khoang bom chay, nen bat cam bien la an toan.
 #define FLOW_SENSOR_ENABLED   1
 
 // ---------- Tham so dieu khien ----------
