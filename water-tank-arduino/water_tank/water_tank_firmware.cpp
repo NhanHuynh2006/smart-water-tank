@@ -520,8 +520,12 @@ void checkFaults() {
   //     dang di dau mat. Ca hai deu la ly do phai dung.
   if (pumpOn && levelOk) {
     if (progressMarkCm < 0) { progressMarkCm = levelCm; progressMarkMs = now; }
+    // Moc chi di XUONG theo day cua dai nhieu, khong bao gio di len theo mot
+    // so doc vot cao. Ban cu dat moc bang so doc tuc thoi, nen mot dinh nhieu
+    // nang moc len va muc that sau do khong con vuot noi moc + nguong.
+    else if (levelCm < progressMarkCm) progressMarkCm = levelCm;
     else if (levelCm > progressMarkCm + NO_PROGRESS_CM) {
-      progressMarkCm = levelCm; progressMarkMs = now;       // co tien do, dat moc moi
+      progressMarkCm = levelCm; progressMarkMs = now;       // co tien do that
     } else if (now - progressMarkMs > NO_PROGRESS_MS) {
       raiseFault("NO_PROGRESS"); state = ST_FAULT_DRYRUN; return;
     }
@@ -531,8 +535,29 @@ void checkFaults() {
 // ------------------------------------------------------------
 //  MAY TRANG THAI
 // ------------------------------------------------------------
+// Su co thuoc nhom cam bien thi tu phuc hoi duoc; cac su co khac phai cho
+// nguoi van hanh xoa bang tay.
+static bool isSensorFault(const char* code) {
+  return !strcmp(code, "SENSOR_TIMEOUT")
+      || !strcmp(code, "SENSOR_CONFLICT")
+      || !strcmp(code, "LEVEL_LOST");
+}
+
 void runStateMachine() {
   uint32_t now = millis();
+
+  // BAT BIEN: co ma su co thi trang thai PHAI la mot trang thai su co.
+  //
+  // Ban cu de hai thu nay roi nhau. ST_MANUAL_ON bi rao chan va ST_FILLING
+  // khi tat che do tu dong deu nhay thang ve ST_IDLE ma khong xoa faultCode.
+  // Ket qua la thiet bi hien IDLE nhu binh thuong, trong khi pumpBlockReason
+  // van tra ve "fault_active" va chan moi lenh bat bom. Nhin thi lanh, thuc
+  // te la ket cung va khong co gi tren giao dien noi ra dieu do.
+  if (faultCode[0] != '\0' &&
+      (state == ST_BOOT || state == ST_IDLE ||
+       state == ST_FILLING || state == ST_MANUAL_ON)) {
+    state = isSensorFault(faultCode) ? ST_FAULT_SENSOR : ST_FAULT_DRYRUN;
+  }
 
   switch (state) {
     case ST_BOOT:

@@ -83,6 +83,35 @@ Cả hai đều cho **đúng 3,33 V**, vì chỉ tỉ số mới quyết định
 - Đi dây ECHO **tách khỏi dây bơm và dây rơ le**, đừng bó chung.
 - Nếu làm hai điều trên mà vẫn nhiễu, hạ xuống **1k/2k** hoặc **2,2k/4,7k**. Đổi lại là ECHO phải gánh 1,7 mA — vẫn nhẹ nhàng với tầng đẩy kéo của HC-SR04.
 
+## Điốt 1N4007 không làm giảm nhiễu lưu lượng — nhiễu đi theo đường nguồn
+
+Đo ngày 22/09, trước và sau khi gắn điốt song song ngược hai cực bơm **và** đưa dây bơm đi xa hẳn khỏi dây tín hiệu:
+
+| | Trước điốt | Sau điốt + tách dây |
+|---|---|---|
+| GPIO 19, bơm chạy | 1 548,4 Hz | 1 567,0 Hz |
+| GPIO 4, bơm chạy | 1 474,4 Hz | 1 487,3 Hz |
+| Cả hai, bơm tắt | 0 Hz | 0 Hz |
+
+Chênh nhau dưới 1,3%, nằm trong sai số phép đo. **Điốt và việc tách dây không làm giảm gì cả.**
+
+Kết luận: phần nhiễu còn lại **không lan qua không khí**. Nếu là bức xạ thì tách dây ra xa phải có tác dụng. Nó **dẫn theo đường nguồn và đường đất** — bơm rút dòng, đường 5 V sụt và gợn, đất chung có sụt áp giữa điểm nối của cảm biến và điểm nối của ESP32. Điốt chỉ dập xung cảm ứng lúc ngắt, không chạm tới chuyện này.
+
+Điốt vẫn nên giữ: nó bảo vệ tiếp điểm rơ le khỏi xung vài trăm vôn mỗi lần ngắt. Nó chỉ không phải thuốc cho bệnh này.
+
+### Phép thử dứt điểm, chỉ cần dời hai sợi dây
+
+Hiện cả bơm lẫn hai cảm biến lưu lượng đều ăn 5 V từ cọc buck. Hãy **rút dây đỏ của hai cảm biến khỏi cọc buck và cắm vào chân 5 V của ESP32** — chân đó lấy điện từ cổng USB, hoàn toàn tách khỏi đường bơm. Giữ nguyên dây đen và dây vàng.
+
+Rồi chạy `pio run -e test_flowmap -t upload -t monitor`:
+
+| Kết quả | Kết luận |
+|---|---|
+| Lúc bơm chạy về gần 0 Hz | nhiễu dẫn theo **nguồn cảm biến** → tách nguồn, hoặc thêm tụ 470 µF và đất hình sao |
+| Vẫn 1 500 Hz | nhiễu dẫn theo **đường đất chung** → phải đi lại đất theo hình sao, gộp tại cọc âm của buck |
+
+Đây là cách duy nhất còn lại để tách hai khả năng, và nó không tốn gì ngoài việc dời hai sợi dây.
+
 ## Bơm không phải nguyên nhân duy nhất — số đo đã loạn từ trước khi bơm chạy
 
 Phép thử `test_pumpecho` phát siêu âm 200 ms một lần và đóng cắt rơ le giữa chừng, để tách nhiễu điện khỏi gợn nước. Kết quả bác bỏ **cả hai** giả thuyết trước đó:

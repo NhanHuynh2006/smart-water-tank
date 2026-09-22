@@ -250,8 +250,21 @@
 // Doi hoi 1,0 cm la chi bang mot phan ba thuc te — du rong de nhieu +-1 cm
 // cua sieu am khong gay bao dong gia, van du chat de bat duoc cam bien noi doi.
 // Ban cu 20 giay/1,0 cm da bao NO_PROGRESS ngay giua lan bom binh thuong.
-#define NO_PROGRESS_MS      45000UL
-#define NO_PROGRESS_CM      1.0f
+// TINH LAI ngay 22/09 theo nhieu DO DUOC luc bom chay.
+//
+// Muc nuoc luc bom chay dao dong khoang +-0,6 cm, tuc dai dinh-dinh 1,2 cm.
+// Nguong cu 1,0 cm NAM TRONG dai nhieu do, nen hai chuyen xay ra:
+//   - mot so doc vot cao dat "moc tien do" len cao gia tao, va muc that sau
+//     do khong bao gio vuot noi moc + 1,0 cm nua;
+//   - bao dong NO_PROGRESS no giua lan bom hoan toan binh thuong.
+//
+// Dat 2,0 cm, cao hon han dai nhieu 1,2 cm. Trong 60 giay bom that dua muc
+// len 0,06 x 60 = 3,6 cm, tuc van gap 1,8 lan nguong. Hai dai tach han nhau.
+//
+// 60 giay bom them 0,36 lit vao bon 1 lit. Chap nhan duoc, va MAX_FILL_MS,
+// PUMP_HARD_LIMIT_MS, waterTooClose cung phao muc cao deu van canh.
+#define NO_PROGRESS_MS      60000UL
+#define NO_PROGRESS_CM      2.0f
 
 // Tran cuoi cung. Khong dieu kien, khong ngoai le, khong tu phuc hoi.
 // Bom khong duoc phep chay lien tuc lau hon so nay du bat ky ly do gi.
