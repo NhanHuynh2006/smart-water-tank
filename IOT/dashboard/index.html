@@ -419,7 +419,15 @@ async function tick(){
   const bad = /FAULT|OVERFLOW/.test(d.state||"");
   lamp($("lState"), d.state||"—", bad?"crit":"good");
 
-  const pct = d.level_pct ?? 0;
+  /* Hien con so ma BO DIEU KHIEN dang thuc su dung.
+     Khi cam bien mat tin hieu, level_pct dong bang o lan doc hop le cuoi,
+     trong khi mo hinh muc nuoc moi la thu dang cam lai va dang quyet dinh
+     luc nao ngat bom. Hien so dong bang thi man hinh dung yen mot luc roi
+     NHAY mot phat khi cam bien quay lai — nguoi xem tuong thiet bi treo.
+     Dong chu ngay duoi da ghi ro dang chay theo mo hinh. */
+  const blind = d.level_ok === false && (d.level_model_cm ?? -1) >= 0;
+  const pct = blind ? (d.level_model_cm / (CFG.cm || 10)) * 100
+                    : (d.level_pct ?? 0);
   ease("pct", pct, v => {
     $("bigPct").textContent = v.toFixed(1);
     $("roPct").textContent  = v.toFixed(1) + " %";
@@ -430,6 +438,11 @@ async function tick(){
   const ls = levelState(d);
   $("whyPct").textContent = ls.t;
   $("whyPct").className = "why" + (ls.c ? " warn" : "");
+  // Mat nuoc trong ong thuy chuyen sang vien dut khi so dang den tu mo hinh,
+  // de nhin mot cai la biet day la uoc luong chu khong phai phep do.
+  $("water").setAttribute("opacity", blind ? ".45" : ".8");
+  $("meniscus").setAttribute("fill", blind ? "var(--warn)" : "#cde2fb");
+  $("bigPct").setAttribute("fill", blind ? "var(--warn)" : "var(--ink)");
 
   // bơm: thân sáng lên và cánh quay khi chạy
   $("pumpBody").setAttribute("stroke", d.pump ? C("--run") : C("--edge"));
