@@ -102,6 +102,8 @@ body{
 .login input{font:400 13px var(--sans);color:var(--ink);background:var(--recess);
   border:1px solid var(--edge);border-radius:3px;padding:9px 12px;min-width:220px}
 .login input:focus{outline:2px solid var(--water);outline-offset:1px}
+.cmdmsg{font-size:13px;margin:4px 0 0;min-height:1.4em;color:var(--ink-2)}
+.cmdmsg.ok{color:var(--good)} .cmdmsg.no{color:var(--warn)}
 .login .err{color:var(--crit);font-size:12.5px;margin:8px 0 0;min-height:1em}
 button{
   font:500 13px/1 var(--sans);color:var(--ink);background:var(--recess);
@@ -269,6 +271,7 @@ td.num{font-family:var(--mono);font-variant-numeric:tabular-nums;white-space:now
             <button id="bReset" class="warn">Đặt lại thể tích</button></div>
           <div class="row"><span>Phiên</span>
             <button id="bLogout">Đăng xuất</button></div>
+          <p class="cmdmsg" id="cmdMsg" role="status" aria-live="polite"></p>
         </div>
       </section>
     </div>
@@ -514,7 +517,13 @@ async function tick(){
   const auto = d.mode === "AUTO";
   $("bAuto").setAttribute("aria-pressed", auto);
   $("bManual").setAttribute("aria-pressed", !auto);
-  $("bOn").disabled = auto || !CAN; $("bOff").disabled = auto || !CAN;
+  // Theo doi luc bom tat de dem nguoc thoi gian nghi toi thieu.
+  if (lastPumpSeen === true && !d.pump) lastOffAt = Date.now();
+  lastPumpSeen = !!d.pump;
+  const rest = d.pump ? 0 : Math.ceil(CFG.minOff - (Date.now() - lastOffAt) / 1000);
+  $("bOn").disabled  = auto || !CAN || d.pump || rest > 0;
+  $("bOff").disabled = auto || !CAN || !d.pump;
+  $("bOn").textContent = (!auto && !d.pump && rest > 0) ? `Bật bơm · chờ ${rest} s` : "Bật bơm";
 }
 
 async function history(){
@@ -558,6 +567,7 @@ async function books(){
 /* Xem thi ai cung duoc. Dieu khien thi phai dang nhap: backend giu phien
    trong cookie HttpOnly, trang nay khong bao gio cam mat khau hay ma phien. */
 let CAN = false;
+let lastOffAt = 0, lastPumpSeen = null;
 
 async function checkAuth(){
   try { CAN = !!(await (await fetch("/api/auth",{cache:"no-store"})).json()).can_control; }
@@ -581,13 +591,48 @@ $("login").addEventListener("submit", async e => {
     : "Sai mật khẩu.";
 });
 
+/* Ly do thiet bi tu choi, noi bang loi nguoi dung hieu duoc. Ban cu khong
+   hien gi ca: nguoi dung bam "Bat bom" tam lan lien mot giay, lan nao cung bi
+   tu choi vi bom dang nghi, ma trang dung im nhu khong co chuyen gi. */
+const WHY = {
+  min_off_time:          () => `Bơm vừa tắt, phải nghỉ ${CFG.minOff} giây giữa hai lần bật để bảo vệ động cơ.`,
+  auto_mode_active:      () => "Đang ở chế độ tự động. Chuyển sang thủ công trước.",
+  fault_active:          () => "Đang có lỗi. Bấm Xóa lỗi trước.",
+  float_max_triggered:   () => "Phao mức cao đã chạm, bồn đầy.",
+  overflow_guard:        () => "Mực nước đã tới ngưỡng khoá chống tràn.",
+  water_too_close:       () => "Mặt nước quá gần cảm biến, bồn gần đầy.",
+  level_sensor_invalid:  () => "Chưa đọc được mực nước, không dám bật bơm.",
+  no_active_fault:       () => "Không có lỗi nào để xoá.",
+  condition_still_present: () => "Nguyên nhân gây lỗi vẫn còn, chưa xoá được.",
+};
+const DONE = { mode:"Đã đổi chế độ.", pump:"Đã thực hiện.", clear_fault:"Đã xoá lỗi.",
+               reset_volume:"Đã đặt lại thể tích." };
+
+function say(text, cls){ const m=$("cmdMsg"); m.textContent=text; m.className="cmdmsg"+(cls?" "+cls:""); }
+
+let busy = false;
 async function send(action, value){
-  const r = await fetch("/api/command", {
-    method:"POST", headers:{"Content-Type":"application/json"},
-    body: JSON.stringify(value === undefined ? {action} : {action, value})
-  });
-  if (r.status === 401) { await checkAuth(); return; }   // phien het han
-  setTimeout(books, 400);
+  if (busy) return;                 // dang cho xac nhan lenh truoc
+  busy = true; say("Đang gửi lệnh…");
+  try {
+    const r = await fetch("/api/command", {
+      method:"POST", headers:{"Content-Type":"application/json"},
+      body: JSON.stringify(value === undefined ? {action} : {action, value})
+    });
+    if (r.status === 401) { say(""); await checkAuth(); return; }   // het phien
+    const { cmd_id } = await r.json();
+    // Doi thiet bi xac nhan, toi da 4 giay
+    for (let i = 0; i < 20; i++){
+      await new Promise(f => setTimeout(f, 200));
+      const c = (await get("/api/commands?limit=10")).find(x => x.cmd_id === cmd_id);
+      if (!c || c.status === "pending") continue;
+      if (c.status === "accepted") say(DONE[action] || "Đã thực hiện.", "ok");
+      else say((WHY[c.reason] || (() => "Thiết bị từ chối: " + c.reason))(), "no");
+      break;
+    }
+    if ($("cmdMsg").textContent === "Đang gửi lệnh…")
+      say("Thiết bị chưa phản hồi. Kiểm tra kết nối.", "no");
+  } finally { busy = false; books(); }
 }
 $("bLogout").onclick = async () => { await fetch("/api/logout",{method:"POST"}); checkAuth(); };
 $("bAuto").onclick=()=>send("mode",true);   $("bManual").onclick=()=>send("mode",false);
@@ -602,6 +647,7 @@ $("bClear").onclick=()=>send("clear_fault");$("bReset").onclick=()=>send("reset_
     CFG.over = +cfg.level_overflow_pct || 85;
     CFG.volume = cfg.tank_volume_l ?? "—";
     CFG.cm = +cfg.tank_max_level_cm || 10;
+    CFG.minOff = +cfg.min_off_s || 20;
   } catch {}
 
   // Cay thuoc dung canh ong thuy. Vach chinh moi 2 cm co ghi so, vach phu
@@ -625,6 +671,11 @@ $("bClear").onclick=()=>send("clear_fault");$("bReset").onclick=()=>send("reset_
   $("fMax").setAttribute("cy", yOf(CFG.over));
   $("fMin").setAttribute("cy", yOf(CFG.low));
 
+  CFG.minOff ??= 20;
+  try {
+    const ev = await get("/api/events?limit=1");
+    if (ev.length && !ev[0].pump) lastOffAt = ev[0].recv_ts * 1000;
+  } catch {}
   await checkAuth();
   tick(); history(); books();
   setInterval(tick, 1000); setInterval(history, 3000); setInterval(books, 6000);
