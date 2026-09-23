@@ -501,14 +501,12 @@ async function tick(){
   $("pumpTxt").textContent = d.pump ? "đang chạy" : "tắt";
   $("pipeIn").setAttribute("stroke", d.pump ? C("--water") : C("--edge"));
 
-  const src = d.flow_src === "level" ? "suy từ mức nước" : "cảm biến lưu lượng";
   ease("fi", d.flow_lpm ?? 0, v => {
     $("fiTxt").textContent = v.toFixed(2); $("roIn").textContent = v.toFixed(2) + " L/ph"; });
   ease("fo", d.flow_out_lpm ?? 0, v => {
     $("foTxt").textContent = v.toFixed(2); $("roOut").textContent = v.toFixed(2) + " L/ph"; });
-  $("whyIn").textContent = src;
   const outLost = d.flow_out_ok === false && (d.blind_ms ?? 0) >= LONG_BLIND_MS;
-  $("whyOut").textContent = outLost ? "chưa tính được — mất mức nước" : src;
+  $("whyOut").textContent = outLost ? "chưa tính được — mất mức nước" : "";
   $("whyOut").className = "why" + (outLost ? " warn" : "");
 
   ease("vol", d.volume_l ?? 0, v => $("roVol").textContent = v.toFixed(2) + " L");
