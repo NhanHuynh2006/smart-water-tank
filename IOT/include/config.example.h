@@ -8,7 +8,31 @@
 #define WIFI_SSID       "TEN_WIFI_CUA_BAN"
 #define WIFI_PASSWORD   "MAT_KHAU_WIFI"
 
+// Mang du phong. Thiet bi thu lan luot tung mang cho toi khi vao duoc mot cai.
+// De trong thi bo qua. ESP32 CHI bat duoc bang 2,4 GHz — mang 5 GHz no khong
+// nhin thay, du dien thoai va may tinh deu thay binh thuong.
+#define WIFI_SSID_2     ""
+#define WIFI_PASSWORD_2 ""
+#define WIFI_SSID_3     ""
+#define WIFI_PASSWORD_3 ""
+
 // ---------- MQTT broker ----------
+// ---------- Tim broker ----------
+// Dat ten may chay mosquitto vao day thi thiet bi tu hoi mang xem may do
+// dang o IP nao, bang mDNS. Doi Wi-Fi hay doi IP bao nhieu lan cung khong
+// phai sua file nay nua.
+//
+// Vi sao can: trong hai ngay thu nghiem, IP may tinh doi hai lan
+// (x.x.x.x -> x.x.x.x) va ca hai lan thiet bi deu im lang cho
+// toi khi sua tay MQTT_HOST. Dat tay mot dia chi IP la tu buoc minh phai sua
+// no moi lan doi mang.
+//
+// Ten lay bang lenh: hostname
+// Kiem tra phan giai duoc chua: getent hosts $(hostname).local
+// De trong "" thi bo qua mDNS va dung thang MQTT_HOST ben duoi.
+#define MQTT_HOST_NAME  "ten-may-cua-ban"
+
+// Dia chi du phong, dung khi mDNS khong tra loi.
 #define MQTT_HOST       "192.168.1.10"   // IP may chay mosquitto
 #define MQTT_PORT       1883
 #define MQTT_USER       "device1"
