@@ -153,6 +153,24 @@ Hiện `0%` trong tình huống đó là nói dối: người vận hành nhìn 
 
 Điều này cũng có nghĩa là **đừng dùng số đo mức làm trọng tài** khi nó mâu thuẫn với thứ quan sát trực tiếp được. Trong ba cảm biến của hệ, HC-SR04 là cái kém tin cậy nhất: chùm sóng 15° rộng hơn lòng thùng 10×10 cm, mặt nước gợn làm tán tiếng dội, và lớp đáy thì nằm dưới ngưỡng.
 
+## HC-SR04 khoá cứng, và chỉ ngắt nguồn mới cứu được
+
+Ngày 22/09 cảm biến im hoàn toàn: 242 lần phát, 0 tiếng dội. Nạp lại phần sụn nhiều lần không cứu được — vì **nạp lại chỉ khởi động lại ESP32, không cắt nguồn 5 V của cảm biến**, mà nguồn đó lấy thẳng từ cọc buck.
+
+Ngày 23/09 người dùng bị mất điện và cấp lại. **Cảm biến hoạt động trở lại ngay lập tức**, đọc mượt suốt cả buổi.
+
+Đây là kiểu hỏng đáng nhớ: HC-SR04 có thể **khoá cứng** sau một xung kích dị thường hoặc một lần sụt áp, và ở nguyên trạng thái đó cho tới khi bị cắt nguồn. Nút reset của ESP32 không giải quyết được, và không có lệnh phần mềm nào chạm tới được.
+
+Nếu gặp lại: **rút nguồn cả mạch chừng mười giây rồi cắm lại**, trước khi kết luận cảm biến hỏng. Muốn chữa tận gốc thì cấp nguồn cho HC-SR04 qua một chân GPIO điều khiển được — chân đó chịu được 40 mA, đủ cho cảm biến — để phần sụn tự cắt nguồn cảm biến khi thấy nó im quá lâu.
+
+## Vùng 5,8 cm: cảm biến nói dối chứ không im lặng
+
+Đo lặp lại năm lần trong ngày 23/09, luôn ở cùng một chỗ: khi mức nước đang bơm chạm khoảng **5,7 – 5,9 cm**, cảm biến chuyển từ đo mặt nước sang đo **đáy thùng**, và trả về giá trị tương đương mức 0 – 1 cm. Nó **không** báo lỗi; số đọc trông hoàn toàn hợp lệ.
+
+Bằng chứng đó là nói dối chứ không phải nước thật tụt: chỉ hai chục giây sau, cảm biến quay lại và đọc đúng 5,8 cm — nước chưa hề đi đâu.
+
+Ba lớp phần mềm đã được thêm để chịu được kiểu hỏng này, xem mục dưới.
+
 ## HC-SR04 chết hẳn: 0 tiếng dội trên 242 lần phát
 
 Đo ngày 23/09, ba đoạn liên tiếp — bồn cạn, bơm 90 giây thêm 0,54 lít, rồi bơm tắt:

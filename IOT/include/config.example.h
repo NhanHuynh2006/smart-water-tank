@@ -294,8 +294,24 @@
 //
 // 60 giay bom them 0,36 lit vao bon 1 lit. Chap nhan duoc, va MAX_FILL_MS,
 // PUMP_HARD_LIMIT_MS, waterTooClose cung phao muc cao deu van canh.
-#define NO_PROGRESS_MS      60000UL
-#define NO_PROGRESS_CM      2.0f
+// TINH LAI ngay 23/09 theo toc do RONG do duoc khi van xa DANG MO.
+//
+// Sai cu: toi lay 0,06 cm/s, la toc do bom khi van xa DONG. Van cua nguoi
+// dung luon mo, nen nuoc vao mot phan chay ra ngay. Toc do RONG do duoc:
+//    3,13 cm luc 10:29:46  ->  5,63 cm luc 10:31:05  =  0,032 cm/s
+// Trong 60 giay muc chi len 1,9 cm, tuc NGAY DUOI nguong 2,0 cm. Bao dong
+// gia la chac chan xay ra, va da xay ra: NO_PROGRESS no dung luc muc dang
+// len muot va cam bien dang doc tot.
+//
+// Dat 90 giay / 1,5 cm. Toc do doi hoi la 1,5/90 = 0,0167 cm/s, bang mot
+// nua toc do rong do duoc — bien an toan 1,9 lan. Nhieu cua muc nuoc sau khi
+// loc chi con khoang 0,1 cm moi buoc nen 1,5 cm nam cao hon han.
+//
+// 90 giay bom them 0,54 lit. Bon 1 lit, nhung nguong dung 70 phan tram va
+// MAX_FILL_MS = 200 s deu cat truoc, va day chi la luoi do cuoi cung cho
+// truong hop cam bien muc noi doi.
+#define NO_PROGRESS_MS      90000UL
+#define NO_PROGRESS_CM      1.5f
 
 // Tran cuoi cung. Khong dieu kien, khong ngoai le, khong tu phuc hoi.
 // Bom khong duoc phep chay lien tuc lau hon so nay du bat ky ly do gi.
@@ -332,7 +348,27 @@
 // giay thu 4 nghia la bao truoc ca khi co dieu gi dang xay ra.
 // Bom van duoc canh doc lap: FILL_LEVEL_GRACE_MS 10 s, MAX_FILL_MS 200 s,
 // PUMP_HARD_LIMIT_MS 240 s, waterTooClose va phao muc cao.
-#define SENSOR_TIMEOUT_MS   9000UL
+// Nang 9 -> 20 giay. Do that ngay 23/09: cam bien nay sap tung dot 10-20
+// giay roi tu hoi, va moi dot deu sinh ra mot bao dong FAULT_SENSOR du khong
+// co gi phai xu ly — nhat la sau khi lan bom da ket thuc binh thuong.
+//
+// Khi bom TAT thi mot doan mu 20 giay khong gay hai gi: khong co gi dang
+// chay de phai ngat. Khi bom CHAY thi luat nay khong dung con so 20 giay ma
+// dung MODEL_MAX_BLIND_MS, va mo hinh muc nuoc cam lai trong suot doan do.
+// Nang 9 -> 45 giay, bang dung MODEL_MAX_BLIND_MS.
+//
+// Do that ngay 23/09: cam bien nay sap tung dot 10-25 giay roi tu hoi lai.
+// Voi nguong 9 hay 20 giay thi MOI dot deu sinh ra mot FAULT_SENSOR, ke ca
+// khi dot do xay ra NGAY SAU mot lan bom da ket thuc binh thuong — khong co
+// gi phai xu ly, chi la mot dong chu do tren giao dien.
+//
+// Khi bom TAT thi mot doan mu 45 giay khong gay hai: khong co gi dang chay
+// de phai ngat. Khi bom CHAY thi luat nay cung dung 45 giay, va trong suot
+// doan do mo hinh muc nuoc cam lai viec dieu khien.
+//
+// Cam bien hong THAT — nhu hom qua, 242 lan phat khong mot tieng doi — van
+// bi bao sau 45 giay. Do moi la truong hop luat nay sinh ra de bat.
+#define SENSOR_TIMEOUT_MS  45000UL
 
 // Bao lau khong co mot phep do hop le nao thi coi la MAT cam bien.
 //
@@ -384,7 +420,26 @@
 // 60 giay chay mu them 0,36 lit vao bon 1 lit. Chan waterTooClose doc thang
 // khoang cach tho, phao muc cao, MAX_FILL_MS va PUMP_HARD_LIMIT_MS deu van canh.
 #define MODEL_CORRECT_ALPHA 0.05f
-#define MODEL_MAX_BLIND_MS  60000UL
+
+// Sau mot doan mat cam bien, so doc quay lai phai nam trong khoang nay so voi
+// mo hinh thi moi duoc nhan.
+//
+// Do that ngay 23/09: cam bien mat luc muc o 5,83 cm, mo hinh chay tiep len
+// 6,91 cm, roi cam bien quay lai voi so doc 0,15 cm. Khong co cong nay thi
+// so 0,15 duoc nhan ngay, lastGoodLevelCm nhay ve 0,15, mo hinh bi keo sup
+// va lan bom bi huy khi chi con 0,09 cm nua la toi nguong dung.
+//
+// Mot lan quay lai KHAC cho 6,22 cm — lech 0,7 cm so voi mo hinh, hoan toan
+// hop ly. 2,5 cm nhan duoc truong hop do va loai truong hop 0,15 cm.
+//
+// Cong nay chi lam viec sau khi da mat cam bien; luc dang doc binh thuong
+// thi mo hinh khong co quyen phu quyet gi ca.
+#define MODEL_REJOIN_CM     2.5f
+// 45 giay chu khong 60. Tinh theo so do that: cam bien sap o khoang 5,8 cm,
+// va tu do len nguong dung 7,0 cm chi con 1,2 cm. O toc do rong 0,032 cm/s
+// la 38 giay. 45 giay du cho mo hinh hoan thanh lan bom, va khong du de no
+// di qua xa neu mo hinh sai.
+#define MODEL_MAX_BLIND_MS  45000UL
 // Ha 5 -> 2,5 giay. Doi 5 giay LIEN TUC khong rot lan nao la qua kho voi cam
 // bien nay, nen thiet bi ket lai o nhom su co lau hon han thoi gian no that
 // su hong. levelOk gio da co san 5 giay du tru ben trong roi.
@@ -413,6 +468,22 @@
 // Cong them so nay vao gioi han: nhieu tung mau di qua duoc, nhung neu muc
 // nuoc troi that thi qua vai giay tich luy lai van vuot gioi han va bi bat.
 #define LEVEL_NOISE_CM      2.0f
+
+// Muc nuoc duoc phep TUT bao nhieu trong mot chu ky KHI BOM DANG CHAY.
+//
+// Rang buoc vat ly: bom day 0,36 L/phut, xa trong luc chi 0,147 L/phut, nen
+// bom chay thi muc BAT BUOC phai len. Bat ky so doc tut xuong nao trong luc
+// do cung la sai, va chi duoc phep lech bang dung sai so cua phep do.
+//
+// Vi sao can rieng con so nay: cong chan toc do cu doi xung, cho phep lech
+// 1,0 x dt + 2,0 = 2,2 cm moi chu ky theo CA HAI chieu. Do that ngay 23/09
+// cho thay cam bien khong sup mot phat ma TRUOT DAN qua vai chu ky —
+// 5,6 -> 3,5 -> 1,5 -> 0,5 cm — moi buoc deu duoi 2,2 cm nen lot qua het,
+// va levelOk van bao true suot. Mo hinh bi keo theo va NO_PROGRESS no.
+//
+// 1,0 cm chan duoc chuoi truot do ngay tu buoc dau, trong khi van rong gap
+// muoi lan nhieu con lai sau bo loc (khoang 0,1 cm moi buoc).
+#define LEVEL_FALL_PUMPING_CM  1.0f
 
 // ---------- Chu ky ----------
 #define CONTROL_PERIOD_MS   200UL

@@ -299,6 +299,24 @@ void readLevel() {
     if (dt > 0.05f && fabs(h - lastGoodLevelCm) > allowed) {
       markLevelStale(); return;
     }
+    // Cong khong doi xung khi dang bom. Bom day 0,36 L/phut con xa trong luc
+    // chi 0,147 L/phut, nen muc BAT BUOC phai len — moi so doc tut xuong deu
+    // la sai. Cong doi xung o tren khong bat duoc chuoi truot dan cua cam
+    // bien, vi tung buoc mot deu nam duoi gioi han cua no.
+    if (pumpOn && dt > 0.05f && (lastGoodLevelCm - h) > LEVEL_FALL_PUMPING_CM) {
+      markLevelStale(); return;
+    }
+  }
+
+  // Quay lai sau mot doan mat cam bien: doi chieu voi mo hinh truoc khi tin.
+  // Trong doan mat, mo hinh la thu duy nhat con biet muc nuoc o dau; neu nhan
+  // bua so doc dau tien quay ve thi chinh mo hinh bi keo sup theo.
+  if (blindSinceMs != 0 && levelModelCm >= 0 &&
+      fabs(h - levelModelCm) > MODEL_REJOIN_CM) {
+    markLevelStale(); return;
+  }
+
+  {
   }
 #endif
 
@@ -553,7 +571,18 @@ void checkFaults() {
   // khoi dong. Ban cu doi dieu kien nay khac 0 nen thiet bi dut day cam bien
   // ngay tu dau se KHONG BAO GIO bao loi, chi im lang khong chay bom.
   uint32_t sinceValid = lastValidLevelMs ? (now - lastValidLevelMs) : now;
-  if (!levelOk && sinceValid > SENSOR_TIMEOUT_MS) {
+
+  // MAU THUAN DA SUA. Luat nay cat o SENSOR_TIMEOUT_MS = 9 giay, trong khi
+  // mo hinh muc nuoc duoc phep chay mu toi MODEL_MAX_BLIND_MS = 45 giay.
+  // Ket qua la mo hinh KHONG BAO GIO duoc dung toi: bom luon bi ngat o giay
+  // thu 9, dung cai tinh huong ma mo hinh sinh ra de vuot qua.
+  //
+  // Dang bom va mo hinh con dung duoc thi cho theo cua so cua mo hinh. Luc
+  // ranh roi thi van la 9 giay, vi khong co gi phai vuot qua ca.
+  uint32_t levelTimeoutMs =
+      (state == ST_FILLING && levelModelCm >= 0) ? MODEL_MAX_BLIND_MS
+                                                 : SENSOR_TIMEOUT_MS;
+  if (!levelOk && sinceValid > levelTimeoutMs) {
     raiseFault("SENSOR_TIMEOUT"); state = ST_FAULT_SENSOR; return;
   }
   // 2. Mau thuan giua phao va sieu am, ca hai chieu
@@ -787,6 +816,7 @@ size_t buildTelemetry(char* buf, size_t cap, const Sample* s) {
     doc["level_trust_always"] = (bool)LEVEL_TRUST_ALWAYS;
     doc["level_rate_cms"]     = levelRateCmS;
     doc["level_model_cm"]     = levelModelCm;
+    doc["blind_ms"]           = blindSinceMs ? (millis() - blindSinceMs) : 0;
     doc["flow_src"]           = FLOW_FROM_LEVEL ? "level" : "sensor";
     doc["volume_out_l"]       = volumeOutL;
     doc["volume_out_today_l"] = volumeOutTodayL;
