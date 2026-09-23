@@ -102,6 +102,10 @@ body{
 .login input{font:400 13px var(--sans);color:var(--ink);background:var(--recess);
   border:1px solid var(--edge);border-radius:3px;padding:9px 12px;min-width:220px}
 .login input:focus{outline:2px solid var(--water);outline-offset:1px}
+.who{display:flex;align-items:center;gap:10px;color:var(--good)}
+button.link{background:none;border:0;padding:0;color:var(--ink-2);font-size:12.5px;
+  text-decoration:underline;text-underline-offset:3px;cursor:pointer}
+button.link:hover{color:var(--ink)}
 .cmdmsg{font-size:13px;margin:4px 0 0;min-height:1.4em;color:var(--ink-2)}
 .cmdmsg.ok{color:var(--good)} .cmdmsg.no{color:var(--warn)}
 .login .err{color:var(--crit);font-size:12.5px;margin:8px 0 0;min-height:1em}
@@ -250,7 +254,10 @@ td.num{font-family:var(--mono);font-variant-numeric:tabular-nums;white-space:now
       <!-- ===================== ĐIỀU KHIỂN ===================== -->
       <section class="desk">
         <h2>Điều khiển</h2>
-        <p class="hint" id="deskHint">Nút gửi lệnh đi. Sơ đồ chỉ đổi sau khi thiết bị xác nhận.</p>
+        <p class="hint who" id="deskHint" hidden>
+          Đã đăng nhập quản trị.
+          <button type="button" class="link" id="bLogout">Đăng xuất</button>
+        </p>
         <form class="login" id="login" hidden>
           <div class="row">
             <input type="password" id="pw" placeholder="Mật khẩu quản trị"
@@ -259,7 +266,7 @@ td.num{font-family:var(--mono);font-variant-numeric:tabular-nums;white-space:now
           </div>
           <p class="err" id="pwErr" role="alert"></p>
         </form>
-        <div class="rows" id="rows">
+        <div class="rows" id="rows" hidden>
           <div class="row"><span>Chế độ</span>
             <button id="bAuto" aria-pressed="false">Tự động</button>
             <button id="bManual" aria-pressed="false">Thủ công</button></div>
@@ -269,8 +276,6 @@ td.num{font-family:var(--mono);font-variant-numeric:tabular-nums;white-space:now
           <div class="row"><span>Khác</span>
             <button id="bClear" class="warn">Xóa lỗi</button>
             <button id="bReset" class="warn">Đặt lại thể tích</button></div>
-          <div class="row"><span>Phiên</span>
-            <button id="bLogout">Đăng xuất</button></div>
           <p class="cmdmsg" id="cmdMsg" role="status" aria-live="polite"></p>
         </div>
       </section>
