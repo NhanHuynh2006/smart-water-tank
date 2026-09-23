@@ -18,7 +18,7 @@ import uuid
 from contextlib import contextmanager
 
 import paho.mqtt.client as mqtt
-from fastapi import FastAPI, HTTPException, Query
+from fastapi import FastAPI, Header, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from pydantic import BaseModel
@@ -435,8 +435,39 @@ def get_commands(limit: int = 30):
     return [dict(r) for r in rows]
 
 
+# ============================================================
+#  KHOA LENH DIEU KHIEN
+#
+#  Cac endpoint CHI DOC de mo: xem muc nuoc hay bieu do thi khong hai ai.
+#  Nhung /api/command BAT DUOC BOM. Khi dashboard duoc dua ra Internet thi
+#  bat ky ai co duong link deu bat duoc bom that ngoai doi.
+#
+#  Dat bien moi truong WT_TOKEN thi moi lenh dieu khien phai kem dung token
+#  do o header X-Auth-Token. Khong dat thi khong doi gi ca — chay o may nha
+#  nhu cu. start.sh o che do cong khai tu sinh token va in ra man hinh.
+# ============================================================
+TOKEN = os.environ.get("WT_TOKEN", "").strip()
+
+
+def require_token(given: str | None):
+    if not TOKEN:
+        return                                  # chay noi bo, khong khoa
+    # So sanh theo kieu khong ro ri thoi gian, tranh do token bang cach do
+    # tung ky tu mot.
+    import hmac
+    if not given or not hmac.compare_digest(given, TOKEN):
+        raise HTTPException(401, "thieu hoac sai X-Auth-Token")
+
+
+@app.get("/api/auth")
+def auth_mode():
+    """Dashboard hoi truoc de biet co can xin token hay khong."""
+    return {"token_required": bool(TOKEN)}
+
+
 @app.post("/api/command")
-def post_command(cmd: Command):
+def post_command(cmd: Command, x_auth_token: str | None = Header(default=None)):
+    require_token(x_auth_token)
     if cmd.action not in ("mode", "pump", "clear_fault", "reset_volume"):
         raise HTTPException(400, "hanh dong khong duoc ho tro")
     cid = uuid.uuid4().hex[:8]
@@ -461,7 +492,8 @@ def get_config():
 
 
 @app.put("/api/config")
-def put_config(cfg: dict):
+def put_config(cfg: dict, x_auth_token: str | None = Header(default=None)):
+    require_token(x_auth_token)
     with _db_lock, db() as c:
         for k, v in cfg.items():
             c.execute("INSERT INTO config(key,value) VALUES(?,?) "

@@ -85,7 +85,19 @@
 // The tich lam viec = 100 cm2 x 10 cm = 1 000 cm3 = 1 LIT.
 // Bon 1 lit, khong phai 10 lit. Moi nguong thoi gian va the tich ben duoi
 // deu duoc tinh lai theo con so nay.
-#define TANK_SENSOR_TO_BOTTOM_CM   15.5f
+// SUA NGAY 23/09 tu 15,5 len 17,5 cm.
+//
+// Nguoi dung do bang thuoc: nuoc that 9 cm, nhung giao dien bao 7 cm.
+// Kiem chung o CA HAI dau thang do thay chi co mot nguyen nhan khop:
+//    nuoc 9 cm  ->  khoang cach do duoc 17,5 - 9 = 8,5 cm
+//                   cong thuc cu: 15,5 - 8,5 = 7,0 cm   <- dung so bao sai
+//    bon can    ->  khoang cach 17,5 cm
+//                   cong thuc cu: 15,5 - 17,5 = -2 -> ep ve 0  <- van dung
+//
+// Mot so bu cong thang (LEVEL_CAL_B) chi khop o diem 9 cm roi lam lech diem 0.
+// Sua dung con so hinh hoc thi khop ca hai, VA cac cong loc hinh hoc — dMin,
+// dMax, waterTooClose — cung tu dong dich theo. Do la ly do khong dung bias.
+#define TANK_SENSOR_TO_BOTTOM_CM   17.5f
 #define TANK_MAX_LEVEL_CM          10.0f
 #define TANK_AREA_CM2             100.0f
 
@@ -229,7 +241,9 @@
 // Muc cao nhat 10 cm thi khoang cach con 15,5 - 10 = 5,5 cm.
 // Dat chan cung o 4,5 cm: gan hon the la nuoc da vuot muc lam viec 1 cm,
 // va cung da cham nguong so doc khong con dang tin cua HC-SR04.
-#define LEVEL_MIN_DISTANCE_CM   4.5f
+// Dich theo TANK_SENSOR_TO_BOTTOM_CM. Chan cung dat o muc 11 cm, tuc cao hon
+// muc lam viec 10 cm dung 1 cm: khoang cach con 17,5 - 11 = 6,5 cm.
+#define LEVEL_MIN_DISTANCE_CM   6.5f
 
 // Bao nhieu lan phat LIEN TIEP duoi nguong tren thi moi coi la nuoc that su
 // da len qua cao. Mot lan duy nhat khong du: do that cho thay cam bien thinh
