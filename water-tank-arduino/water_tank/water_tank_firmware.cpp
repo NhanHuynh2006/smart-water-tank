@@ -5,6 +5,7 @@
 // ============================================================
 #include <Arduino.h>
 #include <WiFi.h>
+#include <ESPmDNS.h>
 #include <PubSubClient.h>
 #include <ArduinoJson.h>
 #include <Preferences.h>
@@ -176,6 +177,15 @@ static uint8_t levelWinCount = 0, levelWinHead = 0, levelFailStreak = 0;
 static float   lastRawDistCm = -1.0f;
 // Dau ra cua bo loc mu. Am nghia la chua co mau nao de khoi tao.
 static float   levelEmaCm    = -1.0f;
+
+// ------------------------------------------------------------
+//  DEM LY DO LOAI SO DOC MUC NUOC
+//  Khong the sua cai gi minh chua do duoc. Moi cong loc co mot o dem rieng,
+//  cong bo ra telemetry, de biet CONG NAO dang loai va loai bao nhieu.
+// ------------------------------------------------------------
+enum { RJ_ECHO, RJ_GATE, RJ_FEW, RJ_SPREAD, RJ_RANGE, RJ_RATE, RJ_FALL, RJ_REJOIN, RJ_N };
+static uint16_t rej[RJ_N] = {0};
+static uint16_t levelTries = 0, levelGood = 0;
 // Toc do doi muc, cm moi giay. Duong = dang day, am = dang can.
 static float   levelRateCmS  = 0.0f;
 static float   lastRateLevelCm = -1.0f;
@@ -210,6 +220,9 @@ float medianOf5() {
 
   float d = readDistanceOnce();
   lastRawDistCm = d;
+  levelTries++;
+  if (d < 0) rej[RJ_ECHO]++;
+  else if (d < dMin || d > dMax) rej[RJ_GATE]++;
   // Chi dem khi CO tieng doi. Lan phat khong co tieng doi khong noi len dieu
   // gi ve muc nuoc, va khong duoc phep lam dut chuoi lan cung khong.
   if (d > 0) {
@@ -232,7 +245,7 @@ float medianOf5() {
   }
   // Can it nhat mot nua cua so truoc khi dam lay trung vi. Voi cua so 9 mau
   // la 5 mau: du de 4 mau hong lien tiep khong lam lech ket qua.
-  if (levelWinCount < (LEVEL_MEDIAN_WINDOW + 1) / 2) return -1;
+  if (levelWinCount < (LEVEL_MEDIAN_WINDOW + 1) / 2) { rej[RJ_FEW]++; return -1; }
 
   // Chep levelWinCount mau MOI NHAT, di nguoc tu dau ghi. Chep tu chi so 0
   // la sai khi vong dem da quay vong: cac o dau khong con la mau moi nhat.
@@ -248,7 +261,7 @@ float medianOf5() {
   // Tra ve -1 de bao KHONG DOC DUOC, chu khong dam lay trung vi cua hai nhom
   // xap xi bang nhau — trung vi luc do chi la mot lan tung dong xu.
 #if !LEVEL_TRUST_ALWAYS
-  if (v[levelWinCount - 1] - v[0] > LEVEL_SPREAD_MAX_CM) return -1;
+  if (v[levelWinCount - 1] - v[0] > LEVEL_SPREAD_MAX_CM) { rej[RJ_SPREAD]++; return -1; }
 #endif
 
   return v[levelWinCount / 2];
@@ -273,7 +286,7 @@ void readLevel() {
   h = LEVEL_CAL_A * h + LEVEL_CAL_B;
 
   // Loc so doc phi vat ly ngay tai nguon
-  if (h < -LEVEL_GATE_MARGIN_CM || h > TANK_MAX_LEVEL_CM + 2.0f) { markLevelStale(); return; }
+  if (h < -LEVEL_GATE_MARGIN_CM || h > TANK_MAX_LEVEL_CM + 2.0f) { rej[RJ_RANGE]++; markLevelStale(); return; }
 
   // Tieng doi tro ve tu DAY bon hoac xa hon nghia la KHONG CO NUOC, chu khong
   // phai la phep do hong. Thung 10 x 10 cm hep hon chum song 15 do cua
@@ -297,14 +310,14 @@ void readLevel() {
     // hieu nham la cam bien hong.
     float allowed = MAX_LEVEL_RATE_CMS * dt + LEVEL_NOISE_CM;
     if (dt > 0.05f && fabs(h - lastGoodLevelCm) > allowed) {
-      markLevelStale(); return;
+      rej[RJ_RATE]++; markLevelStale(); return;
     }
     // Cong khong doi xung khi dang bom. Bom day 0,36 L/phut con xa trong luc
     // chi 0,147 L/phut, nen muc BAT BUOC phai len — moi so doc tut xuong deu
     // la sai. Cong doi xung o tren khong bat duoc chuoi truot dan cua cam
     // bien, vi tung buoc mot deu nam duoi gioi han cua no.
     if (pumpOn && dt > 0.05f && (lastGoodLevelCm - h) > LEVEL_FALL_PUMPING_CM) {
-      markLevelStale(); return;
+      rej[RJ_FALL]++; markLevelStale(); return;
     }
   }
 
@@ -313,7 +326,7 @@ void readLevel() {
   // bua so doc dau tien quay ve thi chinh mo hinh bi keo sup theo.
   if (blindSinceMs != 0 && levelModelCm >= 0 &&
       fabs(h - levelModelCm) > MODEL_REJOIN_CM) {
-    markLevelStale(); return;
+    rej[RJ_REJOIN]++; markLevelStale(); return;
   }
 
   {
@@ -326,6 +339,7 @@ void readLevel() {
   lastGoodLevelCm  = h;
   lastValidLevelMs = millis();
   levelOk  = true;
+  levelGood++;
 
   // Trung vi loai dot bien nhung KHONG lam muot. Trung binh truot mu moi lam
   // muot. Mau dau tien nhay thang vao, khong co gi de trung binh voi no.
@@ -786,7 +800,7 @@ size_t buildTelemetry(char* buf, size_t cap, const Sample* s) {
   // ma su co dai toi 15 ky tu, nen 512 chi con thua vai chuc byte. Them hai
   // truong flow_ok la tran, va ArduinoJson CAT CUT AM THAM: no van tra ve
   // mot chuoi, chi la chuoi JSON hong.
-  StaticJsonDocument<640> doc;
+  StaticJsonDocument<1024> doc;
   doc["dev"] = DEVICE_ID;
   if (s) {
     doc["ts"]  = s->ts;
@@ -817,6 +831,12 @@ size_t buildTelemetry(char* buf, size_t cap, const Sample* s) {
     doc["level_rate_cms"]     = levelRateCmS;
     doc["level_model_cm"]     = levelModelCm;
     doc["blind_ms"]           = blindSinceMs ? (millis() - blindSinceMs) : 0;
+    // Dem cong don ly do loai so doc, de biet cong nao dang chan.
+    doc["lv_try"]  = levelTries;  doc["lv_ok"]   = levelGood;
+    doc["rj_echo"] = rej[RJ_ECHO];   doc["rj_gate"]   = rej[RJ_GATE];
+    doc["rj_few"]  = rej[RJ_FEW];    doc["rj_spread"] = rej[RJ_SPREAD];
+    doc["rj_rng"]  = rej[RJ_RANGE];  doc["rj_rate"]   = rej[RJ_RATE];
+    doc["rj_fall"] = rej[RJ_FALL];   doc["rj_join"]   = rej[RJ_REJOIN];
     doc["flow_src"]           = FLOW_FROM_LEVEL ? "level" : "sensor";
     doc["volume_out_l"]       = volumeOutL;
     doc["volume_out_today_l"] = volumeOutTodayL;
@@ -845,7 +865,7 @@ void publishTelemetry() {
   // Da tung dat 448 va bi cat cut. Hau qua rat kho tim: thiet bi van gui,
   // broker van chuyen, backend van song — nhung json.loads hong nen moi ban
   // tin bi vut lang le, va dashboard dung yen o so cu hang phut.
-  char buf[640];
+  char buf[1024];
   size_t n = buildTelemetry(buf, sizeof(buf), nullptr);
 
   if (mqtt.connected()) {
@@ -870,7 +890,7 @@ void flushRing() {
   if (ringCount == 0) return;
   Serial.printf("[MQTT] phat lai %u ban tin da dem\n", ringCount);
   uint16_t idx = (ringHead + OFFLINE_BUFFER_SIZE - ringCount) % OFFLINE_BUFFER_SIZE;
-  char buf[640];
+  char buf[1024];
   for (uint16_t i = 0; i < ringCount; i++) {
     size_t n = buildTelemetry(buf, sizeof(buf), &ring[idx]);
     mqtt.publish(topicTelemetry, (uint8_t*)buf, n, false);
@@ -956,6 +976,10 @@ void onMessage(char* topic, byte* payload, unsigned int len) {
 // ------------------------------------------------------------
 //  Ket noi khong chan
 // ------------------------------------------------------------
+// Mat Wi-Fi thi xoa dia chi broker da phan giai: mang moi thi IP moi.
+static bool  wifiLost = false;
+static void  wifiAnnouncedReset(){ wifiLost = true; }
+
 // Ma trang thai cua WiFi.status() doi ra chu, de doc man hinh biet hong o dau
 static const char* wifiStatusText(int st) {
   switch (st) {
@@ -977,10 +1001,18 @@ void mqttTryConnect() {
     static uint32_t lastWifiMsgMs = 0;
     if (millis() - lastWifiMsgMs > 5000) {
       lastWifiMsgMs = millis();
-      Serial.printf("[WIFI] chua noi duoc '%s' — %s (ma %d)\n",
-                    WIFI_SSID, wifiStatusText(WiFi.status()), WiFi.status());
+        Serial.printf("[WIFI] chua noi duoc — %s (ma %d)\n",
+                    wifiStatusText(WiFi.status()), WiFi.status());
     }
-    WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
+    // Thu lan luot cac mang da khai bao. Moi lan vao day thi doi sang mang
+    // ke tiep, nen neu mot mang bien mat thiet bi tu chuyen sang mang khac
+    // thay vi nam cho mai mot cai khong con ton tai.
+    wifiAnnouncedReset();
+    static uint8_t netIdx = 0;
+    const char* ssids[] = { WIFI_SSID, WIFI_SSID_2, WIFI_SSID_3 };
+    const char* pwds[]  = { WIFI_PASSWORD, WIFI_PASSWORD_2, WIFI_PASSWORD_3 };
+    do { netIdx = (netIdx + 1) % 3; } while (ssids[netIdx][0] == '\0' && netIdx != 0);
+    WiFi.begin(ssids[netIdx], pwds[netIdx]);
     nextReconnectMs = millis() + RECONNECT_BASE_MS;
     return;
   }
@@ -988,9 +1020,29 @@ void mqttTryConnect() {
   if (!wifiAnnounced) {
     wifiAnnounced = true;
     Serial.printf("[WIFI] da noi '%s' · IP %s · RSSI %d dBm\n",
-                  WIFI_SSID, WiFi.localIP().toString().c_str(), WiFi.RSSI());
+                  WiFi.SSID().c_str(), WiFi.localIP().toString().c_str(), WiFi.RSSI());
   }
-  Serial.printf("[MQTT] dang ket noi %s:%d... ", MQTT_HOST, MQTT_PORT);
+
+  // Hoi mang xem may chay broker dang o IP nao. Chi hoi mot lan cho moi lan
+  // noi lai Wi-Fi; khong tra loi thi dung dia chi du phong trong config.
+  static String brokerAddr;
+  if (wifiLost) { wifiLost = false; brokerAddr = ""; wifiAnnounced = false; }
+  if (brokerAddr.isEmpty()) {
+    brokerAddr = MQTT_HOST;
+    if (MQTT_HOST_NAME[0] != '\0') {
+      MDNS.begin("watertank");
+      IPAddress ip = MDNS.queryHost(MQTT_HOST_NAME, 2000);
+      if (ip != IPAddress((uint32_t)0)) {
+        brokerAddr = ip.toString();
+        Serial.printf("[mDNS] %s.local -> %s\n", MQTT_HOST_NAME, brokerAddr.c_str());
+      } else {
+        Serial.printf("[mDNS] khong thay %s.local, dung dia chi du phong %s\n",
+                      MQTT_HOST_NAME, MQTT_HOST);
+      }
+    }
+    mqtt.setServer(brokerAddr.c_str(), MQTT_PORT);
+  }
+  Serial.printf("[MQTT] dang ket noi %s:%d... ", brokerAddr.c_str(), MQTT_PORT);
   bool ok = mqtt.connect(DEVICE_ID, MQTT_USER, MQTT_PASS,
                          topicStatus, 1, true, "{\"online\":false}");
   if (ok) {
@@ -1082,7 +1134,7 @@ void setup() {
   // PubSubClient::publish tra ve false MA KHONG BAO GI neu goi tin dai hon
   // bo dem cua no. Hai con so nay phai di cung nhau, neu khong thiet bi se
   // im lang dung luc no tuong minh dang gui.
-  mqtt.setBufferSize(768);
+  mqtt.setBufferSize(1200);
 
   lastValidLevelMs = millis();
   Serial.println("[BOOT] san sang");
