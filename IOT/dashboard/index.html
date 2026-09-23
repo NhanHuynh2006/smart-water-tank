@@ -232,6 +232,19 @@ async function tickState(){
   } else {
     foEl.textContent = (d.flow_out_lpm ?? 0).toFixed(2) + " L/ph"; foEl.className = "v";
   }
+  // Noi ro luu luong den tu dau. Suy tu muc nuoc va do bang cam bien la hai
+  // thu khac han nhau, va nguoi doc so lieu can biet minh dang xem cai nao.
+  if (d.flow_src === "level") {
+    for (const [el, nhan] of [[fEl, "suy từ mức nước"], [foEl, "suy từ mức nước"]]) {
+      if (!el.dataset.src) {
+        el.dataset.src = "1";
+        const s = document.createElement("div");
+        s.textContent = nhan;
+        s.style.cssText = "font-size:10px;opacity:.55;margin-top:2px;letter-spacing:.02em";
+        el.parentNode.appendChild(s);
+      }
+    }
+  }
   document.getElementById("volOut").textContent  = (d.volume_out_l ?? 0).toFixed(1) + " L";
   document.getElementById("vol").textContent  = (d.volume_l ?? 0).toFixed(1) + " L";
   document.getElementById("pump").textContent = d.pump ? "ĐANG CHẠY" : "tắt";

@@ -182,6 +182,37 @@
 // "khong tin duoc" dung trong khoang bom chay, nen bat cam bien la an toan.
 #define FLOW_SENSOR_ENABLED   1
 
+// ---------- SUY LUU LUONG TU MUC NUOC ----------
+// Dat 1 de BO HAN hai cam bien luu luong va tinh moi thu tu toc do doi muc.
+//
+// Ly do: do ngay 22/09, luu luong xa that la 0,147 L/phut, trong khi dai lam
+// viec cua YF-S401 la 0,30 - 6,00 L/phut. Luu luong that nam duoi day dai hai
+// lan nen canh quat khong quay, va cam bien dau ra doc 0 mai mai. Khong phai
+// hong, chi la sai dai do.
+//
+// Muc nuoc sau khi loc thi du muot de lam viec nay: chinh con so 0,147 L/phut
+// o tren duoc tinh ra tu muc nuoc, va no dang tin hon cam bien dang lap.
+//
+//    luu luong rong = toc do doi muc (cm/s) x tiet dien (cm2) x 60 / 1000
+//    dau ra         = luu luong bom - luu luong rong
+//    dau vao        = luu luong bom khi bom chay, bang 0 khi bom tat
+//
+// Cai gia phai tra: dau vao thanh mot hang so hieu chuan chu khong con la
+// phep do doc lap, nen luat DRY_RUN mat y nghia va bi tat theo. Chay kho van
+// duoc bat bang NO_CURRENT va NO_PROGRESS.
+#define FLOW_FROM_LEVEL       1
+
+// Luu luong bom, DO TREN MACH THAT ngay 21/09 bang toc do doi muc nuoc:
+// muc len 1,2 cm trong 20 giay tren tiet dien 100 cm2 = 0,36 L/phut.
+// Datasheet JT-DC3L ghi 1,67 L/phut o cot nuoc bang 0; chenh gan nam lan
+// la do cot nuoc va suc can duong ong. Dung so DO DUOC, khong dung datasheet.
+#define PUMP_FILL_LPM       0.36f
+
+// He so lam muot cho toc do doi muc. Toc do la dao ham nen no khuech dai
+// nhieu; can lam muot manh hon ca ban than muc nuoc. 0,02 o chu ky 200 ms
+// cho hang so thoi gian khoang 10 giay.
+#define LEVEL_RATE_ALPHA    0.02f
+
 // ---------- Tham so dieu khien ----------
 #define LEVEL_LOW_PCT       30.0f
 // Ha tu 80 xuong 70 va tu 95 xuong 85 de mat nuoc dung xa mat cam bien hon.
@@ -337,6 +368,23 @@
 // 10 giay o luu luong do duoc 0,36 L/phut la them 0,06 lit, tuc 6 phan tram
 // cua bon 1 lit. Cong voi LEVEL_STALE_MS thi toi da 13 giay khong co so doc.
 #define FILL_LEVEL_GRACE_MS 10000UL
+
+// ---------- MO HINH MUC NUOC CHAY SONG SONG ----------
+// Bai toan: cam bien sieu am thinh thoang mat han vai chuc giay giua lan bom.
+// Do that: 75 giay dau sach, muc len muot 2,91 -> 5,42 cm, roi cam bien sap
+// khoang 80 giay va tu hoi lai. Moi lan nhu vay bom bi ngat o khoang 50 phan
+// tram va khong bao gio len duoc toi nguong 70.
+//
+// Cach chua: chay mot mo hinh muc nuoc song song. Khi co so do that thi mo
+// hinh duoc keo dan ve so do; khi mat cam bien thi mo hinh tu chay tiep bang
+// phep tich phan, va may trang thai dieu khien theo no.
+//
+// Mo hinh KHONG duoc phep thay the cam bien lau dai: sau
+// MODEL_MAX_BLIND_MS ma van khong co so do that nao thi ngat bom va bao loi.
+// 60 giay chay mu them 0,36 lit vao bon 1 lit. Chan waterTooClose doc thang
+// khoang cach tho, phao muc cao, MAX_FILL_MS va PUMP_HARD_LIMIT_MS deu van canh.
+#define MODEL_CORRECT_ALPHA 0.05f
+#define MODEL_MAX_BLIND_MS  60000UL
 // Ha 5 -> 2,5 giay. Doi 5 giay LIEN TUC khong rot lan nao la qua kho voi cam
 // bien nay, nen thiet bi ket lai o nhom su co lau hon han thoi gian no that
 // su hong. levelOk gio da co san 5 giay du tru ben trong roi.

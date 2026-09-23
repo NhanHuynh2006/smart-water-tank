@@ -176,6 +176,13 @@ static uint8_t levelWinCount = 0, levelWinHead = 0, levelFailStreak = 0;
 static float   lastRawDistCm = -1.0f;
 // Dau ra cua bo loc mu. Am nghia la chua co mau nao de khoi tao.
 static float   levelEmaCm    = -1.0f;
+// Toc do doi muc, cm moi giay. Duong = dang day, am = dang can.
+static float   levelRateCmS  = 0.0f;
+static float   lastRateLevelCm = -1.0f;
+static uint32_t lastRateMs   = 0;
+// Mo hinh muc nuoc chay song song voi phep do, de coi tiep khi cam bien mat.
+static float   levelModelCm  = -1.0f;
+static uint32_t blindSinceMs = 0;
 // So lan phat LIEN TIEP cho ket qua gan hon LEVEL_MIN_DISTANCE_CM.
 static uint8_t tooCloseStreak = 0;
 
@@ -311,6 +318,60 @@ void readLevel() {
   levelPct = (levelEmaCm / TANK_MAX_LEVEL_CM) * 100.0f;
   if (levelPct > 100) levelPct = 100;
   if (levelPct < 0)   levelPct = 0;
+
+  // Toc do doi muc, lay tren dau ra DA LAM MUOT. Dao ham khuech dai nhieu nen
+  // phai lam muot them mot lan nua, cham hon ca bo loc muc nuoc.
+  uint32_t nowMs = millis();
+  if (lastRateLevelCm >= 0 && lastRateMs && nowMs > lastRateMs) {
+    float dtS = (nowMs - lastRateMs) / 1000.0f;
+    if (dtS > 0.05f) {
+      float inst = (levelEmaCm - lastRateLevelCm) / dtS;
+      levelRateCmS += (inst - levelRateCmS) * LEVEL_RATE_ALPHA;
+      lastRateLevelCm = levelEmaCm;
+      lastRateMs = nowMs;
+    }
+  } else {
+    lastRateLevelCm = levelEmaCm;
+    lastRateMs = nowMs;
+  }
+}
+
+// ------------------------------------------------------------
+//  MO HINH MUC NUOC CHAY SONG SONG
+//  Co so do that thi keo mo hinh ve so do. Mat cam bien thi mo hinh tu chay
+//  tiep, va may trang thai dieu khien theo no thay vi ngat bom ngay.
+// ------------------------------------------------------------
+void updateLevelModel(uint32_t dtMs) {
+  float dt = dtMs / 1000.0f;
+
+  if (levelModelCm < 0) {                 // chua khoi tao
+    if (levelOk) levelModelCm = levelCm;
+    return;
+  }
+
+  // Du bao: bom day vao voi luu luong da hieu chuan, va nuoc xa ra theo toc
+  // do quan sat duoc gan nhat luc bom tat.
+  float fillCmS = pumpOn ? (PUMP_FILL_LPM * 1000.0f / 60.0f / TANK_AREA_CM2) : 0.0f;
+  static float drainCmS = 0.0f;
+  if (!pumpOn && levelOk && levelRateCmS < 0) drainCmS = -levelRateCmS;
+  levelModelCm += (fillCmS - drainCmS) * dt;
+
+  if (levelModelCm < 0) levelModelCm = 0;
+  if (levelModelCm > TANK_MAX_LEVEL_CM) levelModelCm = TANK_MAX_LEVEL_CM;
+
+  if (levelOk) {
+    levelModelCm += (levelCm - levelModelCm) * MODEL_CORRECT_ALPHA;
+    blindSinceMs = 0;
+  } else if (blindSinceMs == 0) {
+    blindSinceMs = millis();
+  }
+}
+
+// Phan tram dung de DIEU KHIEN: so do that khi co, mo hinh khi mat cam bien.
+float controlPct() {
+  if (levelOk) return levelPct;
+  if (levelModelCm >= 0) return (levelModelCm / TANK_MAX_LEVEL_CM) * 100.0f;
+  return 0;
 }
 
 void readFlow(uint32_t dtMs) {
@@ -328,7 +389,30 @@ void readFlow(uint32_t dtMs) {
 
   // Tan so THO quyet dinh so doc co dung duoc hay khong. Vuot qua nguong
   // vat ly nghia la day tin hieu dang bat song chu khong phai co nuoc chay.
-#if FLOW_SENSOR_ENABLED
+#if FLOW_FROM_LEVEL
+  // Bo han hai cam bien luu luong. Dau vao la hang so da hieu chuan khi bom
+  // chay; dau ra suy nguoc tu toc do doi muc:
+  //     luu luong rong = toc do doi muc x tiet dien x 60 / 1000
+  //     dau ra         = luu luong bom - luu luong rong
+  // Bom tat ma muc van tut thi luu luong rong am, va dau ra chinh la phan tut.
+  flowLpm    = pumpOn ? PUMP_FILL_LPM : 0.0f;
+  float netLpm = levelRateCmS * TANK_AREA_CM2 * 60.0f / 1000.0f;
+  flowOutLpm = flowLpm - netLpm;
+  if (flowOutLpm < 0) flowOutLpm = 0;
+
+  flowOk    = true;       // hang so hieu chuan, luon dung duoc
+  flowOutOk = levelOk;    // chi dang tin khi muc nuoc dang doc duoc
+
+  float addIn  = flowLpm    * (dtMs / 1000.0f) / 60.0f;
+  volumeL      += addIn;
+  volumeTodayL += addIn;
+  if (flowOutOk) {
+    float addOut = flowOutLpm * (dtMs / 1000.0f) / 60.0f;
+    volumeOutL      += addOut;
+    volumeOutTodayL += addOut;
+  }
+  return;
+#elif FLOW_SENSOR_ENABLED
   flowOk    = (dRaw  * inv) <= FLOW_MAX_PLAUSIBLE_HZ;
   flowOutOk = (dRawO * inv) <= FLOW_MAX_PLAUSIBLE_HZ;
 #else
@@ -487,6 +571,11 @@ void checkFaults() {
     raiseFault("OVERFLOW"); state = ST_OVERFLOW_LOCK; return;
   }
   // 4. Bom chay kho
+  // Khi suy luu luong tu muc nuoc thi dau vao la mot HANG SO hieu chuan, nen
+  // no khong bao gio tut duoi nguong va luat nay khong con y nghia. Tat han
+  // con hon de no nam do gia vo canh gac. Chay kho van duoc bat bang
+  // NO_CURRENT va NO_PROGRESS, ca hai dua tren dai luong do that.
+#if !FLOW_FROM_LEVEL
   if (pumpOn && flowOk) {
     if (flowLpm < DRYRUN_FLOW_LPM) {
       if (dryRunSince == 0) dryRunSince = now;
@@ -495,6 +584,7 @@ void checkFaults() {
       }
     } else dryRunSince = 0;
   } else dryRunSince = 0;
+#endif
 
   // 5. Bom duoc lenh bat nhung khong co dong dien
   if (pumpOn) {
@@ -599,15 +689,21 @@ void runStateMachine() {
       //
       // Trong suot khoang an han nay, waterTooClose van doc thang khoang
       // cach tho tung lan phat nen chan chong tran khong he bi tat.
+      // Mat tin hieu muc thi KHONG ngat ngay nua. Mo hinh muc nuoc chay song
+      // song se cam lai viec dieu khien, va bom van len duoc toi nguong thay
+      // vi dung som o khoang 50 phan tram nhu truoc.
+      //
+      // Nhung mo hinh khong duoc thay cam bien lau dai: qua MODEL_MAX_BLIND_MS
+      // ma van khong co mot so do that nao thi ngat va bao loi.
       if (!levelOk) {
         if (fillBlindSince == 0) fillBlindSince = now;
-        else if (now - fillBlindSince > FILL_LEVEL_GRACE_MS) {
+        else if (now - fillBlindSince > MODEL_MAX_BLIND_MS || levelModelCm < 0) {
           raiseFault("LEVEL_LOST"); state = ST_FAULT_SENSOR; break;
         }
-        break;            // van bom, cho tin hieu quay lai
+      } else {
+        fillBlindSince = 0;
       }
-      fillBlindSince = 0;
-      if (levelPct > LEVEL_HIGH_PCT && now - pumpOnSince >= MIN_ON_MS) {
+      if (controlPct() > LEVEL_HIGH_PCT && now - pumpOnSince >= MIN_ON_MS) {
         stopPump(); state = ST_IDLE;
       }
       break;
@@ -689,6 +785,9 @@ size_t buildTelemetry(char* buf, size_t cap, const Sample* s) {
     doc["flow_ok"]            = flowOk;
     doc["flow_out_ok"]        = flowOutOk;
     doc["level_trust_always"] = (bool)LEVEL_TRUST_ALWAYS;
+    doc["level_rate_cms"]     = levelRateCmS;
+    doc["level_model_cm"]     = levelModelCm;
+    doc["flow_src"]           = FLOW_FROM_LEVEL ? "level" : "sensor";
     doc["volume_out_l"]       = volumeOutL;
     doc["volume_out_today_l"] = volumeOutTodayL;
     doc["pump"]      = pumpOn;
@@ -975,6 +1074,7 @@ void loop() {
     readCurrent();
     readFloats();
 
+    updateLevelModel(dt);
     checkFaults();
     runStateMachine();
 

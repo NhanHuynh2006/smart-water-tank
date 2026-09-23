@@ -153,6 +153,53 @@ Hiện `0%` trong tình huống đó là nói dối: người vận hành nhìn 
 
 Điều này cũng có nghĩa là **đừng dùng số đo mức làm trọng tài** khi nó mâu thuẫn với thứ quan sát trực tiếp được. Trong ba cảm biến của hệ, HC-SR04 là cái kém tin cậy nhất: chùm sóng 15° rộng hơn lòng thùng 10×10 cm, mặt nước gợn làm tán tiếng dội, và lớp đáy thì nằm dưới ngưỡng.
 
+## HC-SR04 chết hẳn: 0 tiếng dội trên 242 lần phát
+
+Đo ngày 23/09, ba đoạn liên tiếp — bồn cạn, bơm 90 giây thêm 0,54 lít, rồi bơm tắt:
+
+| Đoạn | Số lần phát | Có tiếng dội |
+|---|---|---|
+| Bơm tắt, bồn cạn | 14 | **0** |
+| Bơm chạy 90 giây | 205 | **0** |
+| Bơm tắt, đã có nước | 23 | **0** |
+
+`pulseIn` hết hạn ở **mọi** lần phát. Đây khác hẳn với "đọc sai khoảng cách": khi bồn cạn trước đây cảm biến vẫn trả về 16–21 cm. Im hoàn toàn nghĩa là **nó không phát được sóng**.
+
+Chân ECHO đo ra bị giữ ở mức thấp ở cả ba kiểu kéo, tức có nguồn thật đang giữ nó — dây nối vẫn còn, không đứt.
+
+Kiểm tra theo đúng thứ tự này:
+
+1. **Đo điện áp chân VCC của HC-SR04 so với GND.** Phải là 5 V. Dưới 4,5 V là không đủ điện để phát.
+2. **Dây TRIG có đúng ở GPIO 5 không.**
+3. **Cầu chia áp trên ECHO**: chỉ **điểm giữa** hai điện trở mới được đi vào GPIO 18, không phải đầu trên hay đầu dưới.
+4. Ba mục trên đều đúng mà vẫn im thì **cảm biến đã hỏng**. Nước bắn vào mặt cảm biến là nguyên nhân phổ biến nhất, và nó khớp với việc trước đó nó cứ sập từng đợt rồi tự hồi.
+
+Chạy lại bất cứ lúc nào bằng `pio run -e test_echocheck -t upload -t monitor`, hoặc `test_fillwatch` để vừa bơm vừa theo dõi từng lần phát.
+
+## Suy lưu lượng từ mức nước thay vì đo bằng cảm biến
+
+Bật bằng `FLOW_FROM_LEVEL = 1` trong `config.h`. Khi bật, hai cảm biến lưu lượng bị bỏ hẳn và mọi con số được tính từ tốc độ đổi mức nước:
+
+```
+lưu lượng ròng = tốc độ đổi mức (cm/s) × tiết diện (cm²) × 60 ÷ 1000
+đầu ra         = lưu lượng bơm − lưu lượng ròng
+đầu vào        = lưu lượng bơm khi bơm chạy, 0 khi bơm tắt
+```
+
+`PUMP_FILL_LPM` = 0,36 L/phút, **đo trên mạch thật** chứ không lấy từ datasheet (datasheet ghi 1,67 L/phút ở cột nước bằng 0, chênh gần năm lần).
+
+Cái giá phải trả, nói thẳng: **đầu vào trở thành một hằng số hiệu chuẩn chứ không còn là phép đo độc lập**. Vì vậy luật `DRY_RUN` mất ý nghĩa và đã bị tắt theo — để nó nằm đó giả vờ canh gác thì tệ hơn là tắt hẳn. Chạy khô vẫn được bắt bằng `NO_CURRENT` và `NO_PROGRESS`, cả hai dựa trên đại lượng đo thật.
+
+Dashboard ghi rõ **"suy từ mức nước"** dưới hai ô lưu lượng, để không ai nhầm nó với số đo của cảm biến.
+
+## Mô hình mức nước chạy song song
+
+Bài toán: cảm biến siêu âm sập từng đợt vài chục giây giữa lần bơm, nên bơm bị ngắt ở khoảng 50% và không bao giờ lên tới ngưỡng 70%.
+
+Cách chữa: chạy một mô hình mức nước song song với phép đo. Có số đo thật thì mô hình được kéo dần về số đo; mất cảm biến thì mô hình tự chạy tiếp bằng phép tích phân, và máy trạng thái điều khiển theo nó.
+
+Mô hình **không được phép thay cảm biến lâu dài**: quá `MODEL_MAX_BLIND_MS` = 60 giây mà vẫn không có một số đo thật nào thì ngắt bơm và báo `LEVEL_LOST`. Sáu mươi giây chạy mù thêm 0,36 lít vào bồn 1 lít, và chặn `waterTooClose`, phao mức cao, `MAX_FILL_MS`, `PUMP_HARD_LIMIT_MS` đều vẫn canh.
+
 ## Vì sao cảm biến lưu lượng đầu ra luôn đọc 0 dù van xả luôn mở
 
 Đây **không phải** lỗi đấu dây, không phải đấu ngược, và không phải cảm biến hỏng. Đo ngày 22/09, bơm tắt, van xả mở:
