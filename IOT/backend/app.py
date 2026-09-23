@@ -117,8 +117,8 @@ DEFAULT_CONFIG = {
     "level_overflow_pct": "85", # LEVEL_OVERFLOW_PCT
     "min_on_s": "3",            # MIN_ON_MS
     "min_off_s": "20",          # MIN_OFF_MS
-    "tank_max_level_cm": "10",  # TANK_MAX_LEVEL_CM
-    "tank_volume_l": "1.0",     # TANK_AREA_CM2 x TANK_MAX_LEVEL_CM
+    "tank_max_level_cm": "14",  # TANK_MAX_LEVEL_CM
+    "tank_volume_l": "1.4",     # TANK_AREA_CM2 x TANK_MAX_LEVEL_CM
 }
 
 

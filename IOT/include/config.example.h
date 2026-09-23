@@ -98,7 +98,20 @@
 // Sua dung con so hinh hoc thi khop ca hai, VA cac cong loc hinh hoc — dMin,
 // dMax, waterTooClose — cung tu dong dich theo. Do la ly do khong dung bias.
 #define TANK_SENSOR_TO_BOTTOM_CM   17.5f
-#define TANK_MAX_LEVEL_CM          10.0f
+// SUA NGAY 23/09 tu 10 len 14 cm — dung chieu cao THAT cua thung.
+//
+// Vi sao lay ca 14 chu khong tru bot: de 100 phan tram tren giao dien la 100
+// phan tram cua cai thung nguoi dung nhin thay. Truoc day toi dat 10 cm, nen
+// web bao 70 phan tram trong khi mat chi thay 7/14 = 50 phan tram chieu cao
+// thung — hai ben noi ve hai thang do khac nhau va khong cach nao khop.
+//
+// An toan khong mat gi, vi cac nguong deu la phan tram cua con so nay:
+//    dung bom   70%  = 9,8 cm   con cach mieng thung 4,2 cm
+//    khoa tran  85%  = 11,9 cm  con cach mieng thung 2,1 cm
+//    chan cung        = 13,0 cm con cach mieng thung 1,0 cm
+// Khoang cach cam bien o muc khoa tran la 17,5 - 11,9 = 5,6 cm, van nam trong
+// dai do duoc cua HC-SR04. Khong bao gio chay toi vung mu 2 cm.
+#define TANK_MAX_LEVEL_CM          14.0f
 #define TANK_AREA_CM2             100.0f
 
 // ---------- Hieu chuan (lay tu thi nghiem E1 va E2) ----------
@@ -243,7 +256,9 @@
 // va cung da cham nguong so doc khong con dang tin cua HC-SR04.
 // Dich theo TANK_SENSOR_TO_BOTTOM_CM. Chan cung dat o muc 11 cm, tuc cao hon
 // muc lam viec 10 cm dung 1 cm: khoang cach con 17,5 - 11 = 6,5 cm.
-#define LEVEL_MIN_DISTANCE_CM   6.5f
+// Chan cung dat o muc nuoc 13 cm, tuc con cach mieng thung 1 cm:
+// khoang cach cam bien 17,5 - 13 = 4,5 cm.
+#define LEVEL_MIN_DISTANCE_CM   4.5f
 
 // Bao nhieu lan phat LIEN TIEP duoi nguong tren thi moi coi la nuoc that su
 // da len qua cao. Mot lan duy nhat khong du: do that cho thay cam bien thinh
@@ -280,12 +295,18 @@
 //    day tu can len 70 phan tram = 7 cm -> 117 giay
 // Dat 200 giay, rong gan gap doi. Gia tri cu 90 giay se bao FILL_TIMEOUT
 // ngay giua mot lan bom hoan toan binh thuong.
-#define MAX_FILL_MS         200000UL
+// TINH LAI theo muc lam viec 14 cm va toc do RONG do duoc 0,032 cm/s
+// (van xa luon mo): day tu 30 phan tram len 70 phan tram la 5,6 cm, het 175
+// giay. Gia tri cu 200 giay sat qua, se bao FILL_TIMEOUT ngay giua lan bom
+// binh thuong. Dat 240 giay: vua du, va den luc do neu cam bien con tot thi
+// khoa chong tran o 85 phan tram cung da chan truoc roi.
+#define MAX_FILL_MS         240000UL
 
 // ---------- Ba chan an toan KHONG phu thuoc cam bien sieu am ----------
 // Bon 10 lit. Bom them qua so nay trong MOT lan bom la chac chan co van de:
 // hoac cam bien muc sai, hoac nuoc dang chay di dau do.
-#define MAX_FILL_VOLUME_L    2.0f
+// The tich lam viec gio la 100 cm2 x 14 cm = 1,4 lit.
+#define MAX_FILL_VOLUME_L    2.5f
 
 // Bom chay ma muc nuoc khong nhich len duoc NO_PROGRESS_CM trong
 // NO_PROGRESS_MS thi ngat. Bom that day 1,67 L/phut vao tiet dien 400 cm2
@@ -329,7 +350,7 @@
 
 // Tran cuoi cung. Khong dieu kien, khong ngoai le, khong tu phuc hoi.
 // Bom khong duoc phep chay lien tuc lau hon so nay du bat ky ly do gi.
-#define PUMP_HARD_LIMIT_MS  240000UL
+#define PUMP_HARD_LIMIT_MS  300000UL
 
 // ---------- Nguong phat hien su co ----------
 #define DRYRUN_MS           6000UL
