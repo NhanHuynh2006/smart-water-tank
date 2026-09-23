@@ -2,10 +2,10 @@
 # ============================================================
 #  Bat toan bo he thong bon nuoc va mo dashboard.
 #
-#    ./start.sh            bat broker + backend, mo trinh duyet
+#    ./start.sh            bat broker + backend + duong ra Internet
 #    ./start.sh sim        bat them ESP32 ao (khi chua cam mach that)
 #    ./start.sh sim 30     ESP32 ao chay nhanh 30 lan
-#    ./start.sh public     dua dashboard ra Internet qua Cloudflare Tunnel
+#    ./start.sh local      KHONG mo duong ra Internet, chi dung trong may
 #    ./stop.sh             tat tat ca
 # ============================================================
 set -u
@@ -13,27 +13,16 @@ cd "$(dirname "$0")/IOT" || exit 1
 
 export PATH="$HOME/.local/bin:$PATH"
 
-# ---------- Che do cong khai ----------
-# Dashboard co nut BAT BOM. Dua no ra Internet nghia la ai co duong link
-# cung bat duoc bom that. Vi vay che do nay LUON sinh mot ma dieu khien va
-# bat backend doi ma do o moi lenh. Xem thi tu do, dieu khien thi phai co ma.
-if [ "${1:-}" = "public" ]; then
-  TOKFILE="$HOME/.cache/water-tank/token"
-  mkdir -p "$(dirname "$TOKFILE")"
-  [ -s "$TOKFILE" ] || head -c 18 /dev/urandom | base64 | tr -d "/+=" > "$TOKFILE"
-  export WT_TOKEN="$(cat "$TOKFILE")"
-  echo "  ma dieu khien: $WT_TOKEN"
-  echo "                 (trang se hoi ma nay khi ban bam nut bat tat bom)"
-  if ! command -v cloudflared > /dev/null; then
-    echo
-    echo "  CHUA CO cloudflared. Cai mot lan bang:"
-    echo "    curl -L -o ~/.local/bin/cloudflared \\"
-    echo "      https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64"
-    echo "    chmod +x ~/.local/bin/cloudflared"
-    echo
-    echo "  Chua co thi van chay duoc trong cung Wi-Fi qua dia chi IP ben duoi."
-  fi
+# ---------- Mat khau quan tri ----------
+# Xem dashboard thi ai cung duoc; bat tat bom thi phai dang nhap bang mat khau
+# nay, ke ca tren chinh may chu. File nam NGOAI kho ma nen khong bao gio len
+# GitHub. Chua co thi sinh ngau nhien; muon doi thi sua noi dung file.
+PWFILE="$HOME/.cache/water-tank/admin_password"
+mkdir -p "$(dirname "$PWFILE")"
+if [ ! -s "$PWFILE" ]; then
+  head -c 12 /dev/urandom | base64 | tr -d "/+=" | cut -c1-12 > "$PWFILE"
 fi
+chmod 600 "$PWFILE"
 PY="backend/.venv/bin/python"
 LOG="$HOME/.cache/water-tank"
 mkdir -p "$LOG"
@@ -92,19 +81,36 @@ except Exception:
 
 echo
 echo "  Dashboard   : http://localhost:8000/"
-IP="$(hostname -I 2>/dev/null | awk "{print \$1}")"
-[ -n "$IP" ] && echo "  Trong Wi-Fi : http://$IP:8000/"
-if [ "${1:-}" = "public" ] && command -v cloudflared > /dev/null; then
-  echo "  Dang mo duong ra Internet, cho dia chi ben duoi..."
-  nohup cloudflared tunnel --url http://localhost:8000 > "$LOG/tunnel.log" 2>&1 &
-  for _ in $(seq 40); do
-    URL="$(grep -o "https://[a-z0-9-]*\.trycloudflare\.com" "$LOG/tunnel.log" 2>/dev/null | head -1)"
-    [ -n "$URL" ] && break
-    sleep 0.5
-  done
-  [ -n "$URL" ] && echo "  Cong khai   : $URL" \
-                || echo "  Cong khai   : chua mo duoc, xem $LOG/tunnel.log"
+echo "  Mat khau    : $(cat "$PWFILE")   (doi bang cach sua $PWFILE)"
+
+# ---------- Duong ra Internet ----------
+# Cloudflare Quick Tunnel: khong can tai khoan, khong mo cong tren router.
+# Moi lan chay lai thi dia chi DOI — gui lai dia chi moi cho nguoi xem.
+if [ "${1:-}" != "local" ]; then
+  if ! command -v cloudflared > /dev/null; then
+    echo "  Cong khai   : CHUA CO cloudflared — xem LENH.md muc 2"
+  else
+    if pgrep -f "cloudflared tunnel --url http://localhost:8000" > /dev/null; then
+      URL="$(grep -o "https://[a-z0-9-]*\.trycloudflare\.com" "$LOG/tunnel.log" 2>/dev/null | tail -1)"
+    else
+      : > "$LOG/tunnel.log"
+      nohup cloudflared tunnel --no-autoupdate --url http://localhost:8000 \
+            > "$LOG/tunnel.log" 2>&1 &
+      URL=""
+      for _ in $(seq 60); do
+        URL="$(grep -o "https://[a-z0-9-]*\.trycloudflare\.com" "$LOG/tunnel.log" | head -1)"
+        [ -n "$URL" ] && break
+        sleep 0.5
+      done
+    fi
+    if [ -n "$URL" ]; then
+      echo "$URL" > "$LOG/public_url"
+      echo "  Cong khai   : $URL"
+      echo "                gui link nay cho bat ky ai — ho xem duoc, khong dieu khien duoc"
+    else
+      echo "  Cong khai   : chua mo duoc, xem $LOG/tunnel.log"
+    fi
+  fi
 fi
 echo "  Tai lieu API: http://localhost:8000/docs"
-command -v xdg-open > /dev/null && nohup xdg-open http://localhost:8000/ > /dev/null 2>&1 &
 exit 0

@@ -400,6 +400,12 @@
 // Kiem chung mot lan bang dong ho van nang mac noi tiep voi bom.
 #define CURRENT_MA_PER_MV   10.81f
 
+// Nen nhieu cua phep do dong. Do ngay 23/09, bom TAT, 40 mau: 0 .. 2,7 mV,
+// tuc 0 .. 29 mA — chi la nhieu cua bo ADC ESP32 (mot nac da la 0,8 mV).
+// Bom CHAY cho tu 20 mV tro len. Duoi 4 mV thi bao 0 mA: phep do nay khong
+// phan giai duoc dong nho hon khoang 40 mA, bao so le duoi muc do la bao sai.
+#define CURRENT_NOISE_MV     4.0f
+
 // Toc do bam theo diem nghi khi bom dang tat. 0,02 voi chu ky 200 ms cho
 // hang so thoi gian khoang 10 giay: du nhanh de theo kip troi nhiet, du
 // cham de khong bi mot xung nhieu keo di.

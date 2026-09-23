@@ -6,6 +6,7 @@ if [ "${1:-}" = "sim" ]; then
   kill_by "simulator\.py" "ESP32 ao"
 else
   kill_by "simulator\.py" "ESP32 ao"
+  kill_by "cloudflared tunnel --no-autoupdate --url" "duong ra Internet"
   kill_by "\.venv/bin/python app\.py" "backend"
   kill_by "opt/mosquitto/sbin/mosquitto" "broker"
 fi

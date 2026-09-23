@@ -215,6 +215,12 @@ Adding two validity fields to the telemetry payload pushed its length past the 4
 
 The lesson the group takes is that a serialiser which truncates silently and a callback which swallows exceptions are individually defensible and jointly produce a failure with no symptom at the point of failure. Both ends now report the condition explicitly, and the buffer carries margin above the maximum payload rather than matching it.
 
+\subsection{A command that worked but was never confirmed}
+
+Manual pump commands were executed by the device, yet the command log kept them as pending indefinitely, while mode commands were confirmed normally. The broker log showed the difference: acknowledgements of mode commands were 118 bytes long, acknowledgements of pump commands exactly 256 bytes, the size of the acknowledgement buffer.
+
+The cause was an interaction between two libraries. The MQTT client delivers an incoming message as a pointer into its internal buffer, and the same buffer is reused for outgoing messages. The JSON parser, handed a non-constant pointer, parses in place and returns string references into that buffer rather than copies. A pump command starts the pump, which publishes the new pump state before the acknowledgement is sent; that publish overwrote the buffer, so the command identifier being echoed back had already become arbitrary bytes. Mode commands publish nothing in between and were unaffected. The fix copies the incoming message into a buffer owned by the handler before parsing. The general point is that a zero-copy parser makes the lifetime of the input part of the program's correctness, and that lifetime is decided by another library.
+
 \subsection{A robust filter gated by a fragile statistic}
 
 After the level filter was widened to a fifteen sample median, the group counted, for every ping, which validation stage rejected it. In one ordinary fill of 605 pings, 244 were rejected, and 98 percent of those rejections came from a single stage: the check that the spread of the window stayed below a limit. Missing echoes accounted for only 2 percent. The sensor was answering almost every time.

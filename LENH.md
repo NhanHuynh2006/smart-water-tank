@@ -103,17 +103,19 @@ cd ~/Documents/IOT
 
 Dashboard: **http://localhost:8000/** · Tài liệu API: **http://localhost:8000/docs**
 
-### Cho người khác cùng xem
+### Cho người khác xem từ bất cứ đâu
 
-Người trong cùng Wi-Fi mở **`http://<IP máy chủ>:8000/`** — `./start.sh` in sẵn địa chỉ này ở dòng *Trong Wi-Fi*.
+`./start.sh` tự mở một đường hầm Cloudflare và in ra dòng **Công khai** dạng `https://….trycloudflare.com`. Gửi link đó cho ai cũng được, họ không cần vào Wi-Fi của bạn.
 
 | Ai | Làm được gì |
 |---|---|
-| Chính máy chủ (máy chạy backend) | xem **và** điều khiển |
-| Mọi máy khác trong mạng | **chỉ xem** — không thấy nút bấm, gửi lệnh thẳng cũng bị từ chối 403 |
-| Ai có mã, qua `./start.sh public` | điều khiển từ xa qua Internet |
+| Bất kỳ ai có link | **xem**: sơ đồ, số đo, biểu đồ, nhật ký |
+| Ai đăng nhập bằng mật khẩu quản trị | xem **và** bật tắt bơm, kể cả trên chính máy chủ |
 
-Máy chủ được nhận ra bằng địa chỉ IP của chính nó, nên đổi Wi-Fi hay đổi IP vẫn đúng mà không phải cấu hình gì.
+- Mật khẩu nằm trong `~/.cache/water-tank/admin_password`, ngoài thư mục mã nguồn nên không bao giờ lên GitHub. Muốn đổi thì sửa file đó, không cần khởi động lại.
+- Nhập sai 5 lần trong 5 phút thì IP đó bị khoá 5 phút.
+- **Link đổi mỗi lần chạy lại `start.sh`.** Muốn link cố định thì cần tài khoản Cloudflare và một tên miền.
+- Chỉ dùng trong máy, không mở ra Internet: `./start.sh local`.
 
 Log nằm ở `~/.cache/water-tank/`.
 

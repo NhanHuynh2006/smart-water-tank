@@ -98,9 +98,11 @@ body{
 .rows{display:flex;flex-direction:column;gap:12px}
 .row{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
 .row > span{font-size:12.5px;color:var(--ink-3);min-width:92px}
-.viewer{font-size:13px;color:var(--ink-2);background:var(--recess);
-        border:1px solid var(--edge);border-left:3px solid var(--water);
-        border-radius:3px;padding:11px 14px;line-height:1.5}
+.login p{font-size:13px;color:var(--ink-2);margin:0 0 12px;line-height:1.5}
+.login input{font:400 13px var(--sans);color:var(--ink);background:var(--recess);
+  border:1px solid var(--edge);border-radius:3px;padding:9px 12px;min-width:220px}
+.login input:focus{outline:2px solid var(--water);outline-offset:1px}
+.login .err{color:var(--crit);font-size:12.5px;margin:8px 0 0;min-height:1em}
 button{
   font:500 13px/1 var(--sans);color:var(--ink);background:var(--recess);
   border:1px solid var(--edge);border-radius:3px;padding:9px 15px;cursor:pointer;
@@ -247,10 +249,15 @@ td.num{font-family:var(--mono);font-variant-numeric:tabular-nums;white-space:now
       <section class="desk">
         <h2>Điều khiển</h2>
         <p class="hint" id="deskHint">Nút gửi lệnh đi. Sơ đồ chỉ đổi sau khi thiết bị xác nhận.</p>
-        <div class="viewer" id="viewer" hidden>
-          Bạn đang xem từ máy khác. Chỉ máy chủ mới bật tắt được bơm,
-          để nhiều người không cùng bấm một lúc.
-        </div>
+        <form class="login" id="login" hidden>
+          <p>Ai cũng xem được trang này. Muốn bật tắt bơm thì đăng nhập bằng mật khẩu quản trị.</p>
+          <div class="row">
+            <input type="password" id="pw" placeholder="Mật khẩu quản trị"
+                   autocomplete="current-password" aria-label="Mật khẩu quản trị">
+            <button type="submit">Đăng nhập</button>
+          </div>
+          <p class="err" id="pwErr" role="alert"></p>
+        </form>
         <div class="rows" id="rows">
           <div class="row"><span>Chế độ</span>
             <button id="bAuto" aria-pressed="false">Tự động</button>
@@ -261,6 +268,8 @@ td.num{font-family:var(--mono);font-variant-numeric:tabular-nums;white-space:now
           <div class="row"><span>Khác</span>
             <button id="bClear" class="warn">Xóa lỗi</button>
             <button id="bReset" class="warn">Đặt lại thể tích</button></div>
+          <div class="row"><span>Phiên</span>
+            <button id="bLogout">Đăng xuất</button></div>
         </div>
       </section>
     </div>
@@ -547,46 +556,41 @@ async function books(){
 /* Khi trang duoc dua ra Internet, backend doi token o header cho moi lenh
    dieu khien. Xem thi khong can gi; bat bom thi can. Token luu trong trinh
    duyet nay thoi, khong gui di dau khac. */
-let TOKEN = null;
-try { TOKEN = localStorage.getItem("wt_token"); } catch {}
-let CAN = false, NEED_TOKEN = false;
+/* Xem thi ai cung duoc. Dieu khien thi phai dang nhap: backend giu phien
+   trong cookie HttpOnly, trang nay khong bao gio cam mat khau hay ma phien. */
+let CAN = false;
 
 async function checkAuth(){
-  try {
-    const r = await fetch("/api/auth", { headers: TOKEN ? {"X-Auth-Token":TOKEN} : {} });
-    const a = await r.json();
-    CAN = !!a.can_control; NEED_TOKEN = !!a.token_required;
-  } catch { CAN = false; }
-  // Nguoi xem: an ca khoi nut, thay bang mot dong giai thich. Van giu nut
-  // khi can token de quan tri tu xa co cho nhap ma.
-  const view = !CAN && !NEED_TOKEN;
-  $("viewer").hidden = !view;
-  $("rows").hidden = view;
-  $("deskHint").hidden = view;
+  try { CAN = !!(await (await fetch("/api/auth",{cache:"no-store"})).json()).can_control; }
+  catch { CAN = false; }
+  $("login").hidden = CAN;
+  $("rows").hidden = !CAN;
+  $("deskHint").hidden = !CAN;
 }
+
+$("login").addEventListener("submit", async e => {
+  e.preventDefault();
+  $("pwErr").textContent = "";
+  const r = await fetch("/api/login", {
+    method:"POST", headers:{"Content-Type":"application/json"},
+    body: JSON.stringify({ password: $("pw").value })
+  });
+  $("pw").value = "";
+  if (r.ok) { await checkAuth(); return; }
+  $("pwErr").textContent = r.status === 429
+    ? "Nhập sai quá nhiều lần. Thử lại sau 5 phút."
+    : "Sai mật khẩu.";
+});
 
 async function send(action, value){
-  const body = JSON.stringify(value === undefined ? {action} : {action, value});
-  const call = t => fetch("/api/command", {
-    method:"POST",
-    headers:{ "Content-Type":"application/json", ...(t ? {"X-Auth-Token":t} : {}) },
-    body
+  const r = await fetch("/api/command", {
+    method:"POST", headers:{"Content-Type":"application/json"},
+    body: JSON.stringify(value === undefined ? {action} : {action, value})
   });
-
-  let r = await call(TOKEN);
-  if (r.status === 403 && !NEED_TOKEN){ await checkAuth(); return; }
-  if ((r.status === 401 || r.status === 403) && NEED_TOKEN){
-    const t = prompt("Trang này đang mở ra ngoài mạng nội bộ.\n"
-                   + "Nhập mã điều khiển để bật tắt bơm:");
-    if (!t) return;
-    r = await call(t.trim());
-    if (r.status === 401 || r.status === 403){ alert("Mã không đúng. Lệnh chưa được gửi."); return; }
-    TOKEN = t.trim();
-    try { localStorage.setItem("wt_token", TOKEN); } catch {}
-    await checkAuth();
-  }
+  if (r.status === 401) { await checkAuth(); return; }   // phien het han
   setTimeout(books, 400);
 }
+$("bLogout").onclick = async () => { await fetch("/api/logout",{method:"POST"}); checkAuth(); };
 $("bAuto").onclick=()=>send("mode",true);   $("bManual").onclick=()=>send("mode",false);
 $("bOn").onclick=()=>send("pump",true);     $("bOff").onclick=()=>send("pump",false);
 $("bClear").onclick=()=>send("clear_fault");$("bReset").onclick=()=>send("reset_volume");

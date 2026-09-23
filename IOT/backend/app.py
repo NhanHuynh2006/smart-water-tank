@@ -436,83 +436,109 @@ def get_commands(limit: int = 30):
 
 
 # ============================================================
-#  KHOA LENH DIEU KHIEN
+#  QUYEN: XEM THI AI CUNG DUOC, DIEU KHIEN THI PHAI CO MAT KHAU
 #
-#  Cac endpoint CHI DOC de mo: xem muc nuoc hay bieu do thi khong hai ai.
-#  Nhung /api/command BAT DUOC BOM. Khi dashboard duoc dua ra Internet thi
-#  bat ky ai co duong link deu bat duoc bom that ngoai doi.
+#  Dashboard duoc dua ra Internet qua duong ham Cloudflare de ai co mang
+#  cung xem duoc tu xa. Nhung nut BAT BOM dieu khien mot cai bom that ngoai
+#  doi, nen chi ai biet mat khau quan tri moi bam duoc — ke ca tren chinh
+#  may chu. Cach cu nhan quan tri theo dia chi IP da sai tu goc: qua duong
+#  ham, MOI yeu cau deu den tu 127.0.0.1, nen ai tren Internet cung thanh
+#  "may chu".
 #
-#  Dat bien moi truong WT_TOKEN thi moi lenh dieu khien phai kem dung token
-#  do o header X-Auth-Token. Khong dat thi khong doi gi ca — chay o may nha
-#  nhu cu. start.sh o che do cong khai tu sinh token va in ra man hinh.
+#  Mat khau nam o ~/.cache/water-tank/admin_password, NGOAI kho ma nen khong
+#  bao gio len GitHub. start.sh tu sinh neu chua co; sua file do de doi.
+#  Dang nhap dung thi nhan cookie phien HttpOnly, SameSite=Strict, Secure
+#  khi di qua HTTPS. Sai 5 lan trong 5 phut tu mot IP thi bi chan 5 phut.
 # ============================================================
-TOKEN = os.environ.get("WT_TOKEN", "").strip()
+import hmac
+import secrets
+from fastapi import Response
 
-# ============================================================
-#  PHAN QUYEN: QUAN TRI VA NGUOI XEM
-#
-#  Ai trong mang cung mo duoc dashboard de XEM. Nhung chi chinh may chu —
-#  may dang chay backend nay — moi DIEU KHIEN duoc bom. Nhieu nguoi cung bam
-#  bat tat mot luc thi bom dong cat loan xa, va nguoi xem khong can quyen do.
-#
-#  Cach biet mot IP co phai cua chinh may nay khong: thu gan mot socket vao
-#  IP do. He dieu hanh chi cho gan vao dia chi cua CHINH NO, nen gan duoc la
-#  may nay, bao loi la may khac. Khong can thu vien ngoai, va tu dong dung
-#  khi may doi mang doi IP.
-#
-#  Ngoai le: ai co dung token (che do ./start.sh public) cung dieu khien
-#  duoc, de quan tri tu xa qua duong ham Cloudflare van lam viec.
-# ============================================================
-import socket
-_local_cache: dict[str, tuple[bool, float]] = {}
+ADMIN_PW_FILE = os.environ.get(
+    "WT_ADMIN_PASSWORD_FILE", os.path.expanduser("~/.cache/water-tank/admin_password"))
+SESSION_TTL_S = 7 * 24 * 3600
+FAIL_WINDOW_S, FAIL_MAX = 300, 5
+_sessions: dict[str, float] = {}          # ma phien -> thoi diem het han
+_fails: dict[str, list[float]] = {}       # IP -> cac lan nhap sai gan day
 
 
-def is_local_ip(ip: str | None) -> bool:
-    if not ip:
-        return False
-    if ip in ("127.0.0.1", "::1", "localhost"):
-        return True
-    hit = _local_cache.get(ip)
-    if hit and time.time() - hit[1] < 60:
-        return hit[0]
-    fam = socket.AF_INET6 if ":" in ip else socket.AF_INET
-    ok = False
+def admin_password() -> str:
     try:
-        with socket.socket(fam, socket.SOCK_DGRAM) as so:
-            so.bind((ip, 0))
-            ok = True
+        with open(ADMIN_PW_FILE, encoding="utf-8") as f:
+            return f.read().strip()
     except OSError:
-        ok = False
-    _local_cache[ip] = (ok, time.time())
-    return ok
+        return ""
 
 
-def can_control(request: Request, token: str | None) -> bool:
-    # Qua duong ham Cloudflare thi moi yeu cau deu den tu 127.0.0.1, nen o
-    # che do cong khai KHONG duoc tin dia chi nguon — chi tin token.
-    if TOKEN:
-        import hmac
-        return bool(token) and hmac.compare_digest(token, TOKEN)
-    return is_local_ip(request.client.host if request.client else None)
+def client_ip(request: Request) -> str:
+    ip = request.client.host if request.client else ""
+    # Qua duong ham, ket noi truc tiep luon den tu 127.0.0.1 va IP that nam o
+    # header CF-Connecting-IP. Chi tin header do khi ket noi den tu chinh may
+    # nay; nguoi goi thang tu ngoai thi gia mao header la chuyen de.
+    if ip in ("127.0.0.1", "::1"):
+        ip = request.headers.get("cf-connecting-ip", ip)
+    return ip
 
 
-def require_control(request: Request, token: str | None):
-    if not can_control(request, token):
-        raise HTTPException(403, "chi may chu moi dieu khien duoc; ban dang o che do xem")
+def session_valid(tok: str | None) -> bool:
+    if not tok:
+        return False
+    exp = _sessions.get(tok)
+    if exp is None:
+        return False
+    if exp < time.time():
+        _sessions.pop(tok, None)
+        return False
+    return True
+
+
+def require_control(request: Request):
+    if not session_valid(request.cookies.get("wt_session")):
+        raise HTTPException(401, "can dang nhap de dieu khien")
+
+
+class Login(BaseModel):
+    password: str
+
+
+@app.post("/api/login")
+def login(body: Login, request: Request, response: Response):
+    ip, now = client_ip(request), time.time()
+    recent = [t for t in _fails.get(ip, []) if now - t < FAIL_WINDOW_S]
+    _fails[ip] = recent
+    if len(recent) >= FAIL_MAX:
+        raise HTTPException(429, "sai qua nhieu lan, thu lai sau 5 phut")
+    pw = admin_password()
+    if not pw or not hmac.compare_digest(body.password.encode(), pw.encode()):
+        recent.append(now)
+        raise HTTPException(401, "sai mat khau")
+    _fails.pop(ip, None)
+    tok = secrets.token_urlsafe(32)
+    _sessions[tok] = now + SESSION_TTL_S
+    https = (request.headers.get("x-forwarded-proto") == "https"
+             or request.url.scheme == "https")
+    response.set_cookie("wt_session", tok, max_age=SESSION_TTL_S, httponly=True,
+                        samesite="strict", secure=https, path="/")
+    return {"ok": True}
+
+
+@app.post("/api/logout")
+def logout(request: Request, response: Response):
+    _sessions.pop(request.cookies.get("wt_session", ""), None)
+    response.delete_cookie("wt_session", path="/")
+    return {"ok": True}
 
 
 @app.get("/api/auth")
-def auth_mode(request: Request, x_auth_token: str | None = Header(default=None)):
-    """Dashboard hoi truoc de biet nguoi dang xem co quyen dieu khien khong."""
-    return {"token_required": bool(TOKEN),
-            "can_control": can_control(request, x_auth_token),
-            "client": request.client.host if request.client else None}
+def auth_mode(request: Request):
+    """Dashboard hoi de biet trinh duyet nay da dang nhap chua."""
+    return {"can_control": session_valid(request.cookies.get("wt_session")),
+            "password_set": bool(admin_password())}
 
 
 @app.post("/api/command")
-def post_command(cmd: Command, request: Request,
-                 x_auth_token: str | None = Header(default=None)):
-    require_control(request, x_auth_token)
+def post_command(cmd: Command, request: Request):
+    require_control(request)
     if cmd.action not in ("mode", "pump", "clear_fault", "reset_volume"):
         raise HTTPException(400, "hanh dong khong duoc ho tro")
     cid = uuid.uuid4().hex[:8]
@@ -537,9 +563,8 @@ def get_config():
 
 
 @app.put("/api/config")
-def put_config(cfg: dict, request: Request,
-               x_auth_token: str | None = Header(default=None)):
-    require_control(request, x_auth_token)
+def put_config(cfg: dict, request: Request):
+    require_control(request)
     with _db_lock, db() as c:
         for k, v in cfg.items():
             c.execute("INSERT INTO config(key,value) VALUES(?,?) "

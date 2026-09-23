@@ -881,7 +881,8 @@ size_t buildTelemetry(char* buf, size_t cap, const Sample* s) {
     doc["mode"]      = autoMode ? "AUTO" : "MANUAL";
     doc["current_mv"]= currentMv;
     // Doi ra mA de hien thi. mV la dien ap tho cua cam bien, khong phai dong.
-    doc["current_ma"]= currentMv * CURRENT_MA_PER_MV;
+    doc["current_ma"]= (currentMv < CURRENT_NOISE_MV) ? 0.0f
+                                                       : currentMv * CURRENT_MA_PER_MV;
     doc["float_max"] = floatMax;
     doc["float_min"] = floatMin;
     doc["fault"]     = faultCode;
@@ -940,7 +941,7 @@ void flushRing() {
 }
 
 void sendAck(const char* cmdId, const char* status, const char* reason) {
-  StaticJsonDocument<256> doc;
+  StaticJsonDocument<320> doc;
   doc["dev"]    = DEVICE_ID;
   doc["cmd_id"] = cmdId;
   doc["status"] = status;
@@ -949,7 +950,9 @@ void sendAck(const char* cmdId, const char* status, const char* reason) {
   doc["pump"]   = pumpOn;
   doc["mode"]   = autoMode ? "AUTO" : "MANUAL";
   doc["ts"]     = nowTs();
-  char buf[256]; size_t n = serializeJson(doc, buf);
+  char buf[320]; size_t n = serializeJson(doc, buf);
+  if (n >= sizeof(buf) - 1)
+    Serial.printf("[LOI] xac nhan lenh bi cat o %u byte\n", (unsigned)n);
   mqtt.publish(topicAck, (uint8_t*)buf, n, false);
 }
 
@@ -957,11 +960,30 @@ void sendAck(const char* cmdId, const char* status, const char* reason) {
 //  Xu ly lenh di xuong
 // ------------------------------------------------------------
 void onMessage(char* topic, byte* payload, unsigned int len) {
-  StaticJsonDocument<256> doc;
-  if (deserializeJson(doc, payload, len)) return;
+  // CHEP ban tin ra bo dem rieng TRUOC khi phan tich.
+  //
+  // payload tro vao bo dem noi bo cua PubSubClient, va thu vien dung CHUNG
+  // mot bo dem do cho ca nhan lan gui. deserializeJson voi con tro khong-const
+  // chay che do khong sao chep: cmdId, action chi la con tro vao bo dem ay.
+  // Lenh "pump" goi startPump() -> publishPumpState() -> mqtt.publish(), ghi
+  // de len bo dem, va cmdId bien thanh rac ngay truoc khi gui xac nhan.
+  //
+  // Do that ngay 23/09: xac nhan lenh "mode" dai 118 byte va ve dung, con
+  // xac nhan lenh "pump" dai DUNG 256 byte — bang kich thuoc bo dem gui — vi
+  // cmd_id da thanh rac. JSON bi cat, backend vut di, bang lenh treo mai o
+  // "pending" trong khi bom da chay that.
+  char in[256];
+  if (len >= sizeof(in)) return;
+  memcpy(in, payload, len);
+  in[len] = '\0';
 
-  const char* cmdId  = doc["cmd_id"] | "unknown";
-  const char* action = doc["action"] | "";
+  StaticJsonDocument<256> doc;
+  if (deserializeJson(doc, in)) return;
+
+  // Chep luon hai chuoi can dung ve sau, khong phu thuoc vao song chet cua doc.
+  char cmdId[24], action[20];
+  strlcpy(cmdId,  doc["cmd_id"] | "unknown", sizeof(cmdId));
+  strlcpy(action, doc["action"] | "",        sizeof(action));
 
   if (!strcmp(action, "mode")) {
     bool wantAuto = doc["value"] | true;
