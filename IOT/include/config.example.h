@@ -262,6 +262,22 @@
 // cho hang so thoi gian khoang 10 giay.
 #define LEVEL_RATE_ALPHA    0.02f
 
+// ---------- Uoc luong dong xa ----------
+// Dong xa CHI duoc do khi bom TAT va muc nuoc da on dinh, roi GIU NGUYEN
+// trong luc bom chay — do mo van xa khong doi khi bom bat.
+//
+// Vi sao: cong thuc cu (dau ra = luu luong bom - toc do doi muc) lay mot
+// buoc nhay TUC THI (bom bat, 0 -> 0,36 L/phut) tru di mot uoc luong TRE
+// (bo loc can vai giay moi nhan ra muc da bat dau len). Trong vai giay do dau
+// ra vot len theo bom, luc bom tat thi tut ve 0. Nguoi dung thay duong do
+// nhay len dung luc duong xanh nhay len — van xa khong he biet bom bat.
+//
+// Toc do tu bo loc alpha-beta (alpha 0,03) co hang so thoi gian khoang
+// 0,2 / sqrt(beta) = 9,4 giay, nen doi 20 giay sau khi bom tat moi bat dau do.
+#define DRAIN_SETTLE_MS     20000UL
+// Lam muot rieng cho dong xa: 0,01 o chu ky 200 ms la khoang 20 giay.
+#define DRAIN_EMA_ALPHA     0.01f
+
 // ---------- Tham so dieu khien ----------
 #define LEVEL_LOW_PCT       30.0f
 // Ha tu 80 xuong 70 va tu 95 xuong 85 de mat nuoc dung xa mat cam bien hon.

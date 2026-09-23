@@ -191,6 +191,11 @@ static uint16_t rej[RJ_N] = {0};
 static uint16_t levelTries = 0, levelGood = 0;
 // Toc do doi muc, cm moi giay. Duong = dang day, am = dang can.
 static float   levelRateCmS  = 0.0f;
+// Dong xa uoc luong, L/phut. Chi cap nhat khi bom tat va muc da on dinh,
+// giu nguyen trong luc bom chay. Dung chung cho dashboard va mo hinh muc.
+static float    drainHoldLpm = 0.0f;
+static uint32_t pumpOffAtMs  = 0;
+static bool     prevPumpOn   = false;
 static float   lastRateLevelCm = -1.0f;
 static uint32_t lastRateMs   = 0;
 // Mo hinh muc nuoc chay song song voi phep do, de coi tiep khi cam bien mat.
@@ -409,7 +414,21 @@ void readLevel() {
 //  Co so do that thi keo mo hinh ve so do. Mat cam bien thi mo hinh tu chay
 //  tiep, va may trang thai dieu khien theo no thay vi ngat bom ngay.
 // ------------------------------------------------------------
+void updateDrainEstimate() {
+  uint32_t now = millis();
+  if (prevPumpOn && !pumpOn) pumpOffAtMs = now;          // vua tat bom
+  if (!pumpOn && pumpOffAtMs == 0) pumpOffAtMs = now;     // luc khoi dong
+  prevPumpOn = pumpOn;
+
+  bool settled = !pumpOn && levelOk && (now - pumpOffAtMs > DRAIN_SETTLE_MS);
+  if (!settled) return;                                   // giu so cu
+  float netLpm = levelRateCmS * TANK_AREA_CM2 * 60.0f / 1000.0f;   // am khi xa
+  float inst   = netLpm < 0 ? -netLpm : 0.0f;
+  drainHoldLpm += (inst - drainHoldLpm) * DRAIN_EMA_ALPHA;
+}
+
 void updateLevelModel(uint32_t dtMs) {
+  updateDrainEstimate();
   float dt = dtMs / 1000.0f;
 
   if (levelModelCm < 0) {                 // chua khoi tao
@@ -420,8 +439,8 @@ void updateLevelModel(uint32_t dtMs) {
   // Du bao: bom day vao voi luu luong da hieu chuan, va nuoc xa ra theo toc
   // do quan sat duoc gan nhat luc bom tat.
   float fillCmS = pumpOn ? (PUMP_FILL_LPM * 1000.0f / 60.0f / TANK_AREA_CM2) : 0.0f;
-  static float drainCmS = 0.0f;
-  if (!pumpOn && levelOk && levelRateCmS < 0) drainCmS = -levelRateCmS;
+  // Dung chung uoc luong dong xa voi dashboard, doi ra cm/s.
+  float drainCmS = drainHoldLpm * 1000.0f / 60.0f / TANK_AREA_CM2;
   levelModelCm += (fillCmS - drainCmS) * dt;
 
   if (levelModelCm < 0) levelModelCm = 0;
@@ -464,9 +483,9 @@ void readFlow(uint32_t dtMs) {
   //     dau ra         = luu luong bom - luu luong rong
   // Bom tat ma muc van tut thi luu luong rong am, va dau ra chinh la phan tut.
   flowLpm    = pumpOn ? PUMP_FILL_LPM : 0.0f;
-  float netLpm = levelRateCmS * TANK_AREA_CM2 * 60.0f / 1000.0f;
-  flowOutLpm = flowLpm - netLpm;
-  if (flowOutLpm < 0) flowOutLpm = 0;
+  // Dau ra la dong xa da uoc luong luc bom tat, KHONG phai hieu so tuc thi
+  // giua bom va toc do doi muc. Xem giai thich o DRAIN_SETTLE_MS.
+  flowOutLpm = drainHoldLpm;
 
   flowOk    = true;       // hang so hieu chuan, luon dung duoc
   flowOutOk = levelOk;    // chi dang tin khi muc nuoc dang doc duoc
