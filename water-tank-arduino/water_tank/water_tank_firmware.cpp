@@ -177,6 +177,9 @@ static uint8_t levelWinCount = 0, levelWinHead = 0, levelFailStreak = 0;
 static float   lastRawDistCm = -1.0f;
 // Dau ra cua bo loc mu. Am nghia la chua co mau nao de khoi tao.
 static float   levelEmaCm    = -1.0f;
+// Toc do uoc luong boi bo loc alpha-beta, cm moi giay.
+static float    levelVelCmS  = 0.0f;
+static uint32_t lastFiltMs   = 0;
 
 // ------------------------------------------------------------
 //  DEM LY DO LOAI SO DOC MUC NUOC
@@ -261,7 +264,24 @@ float medianOf5() {
   // Tra ve -1 de bao KHONG DOC DUOC, chu khong dam lay trung vi cua hai nhom
   // xap xi bang nhau — trung vi luc do chi la mot lan tung dong xu.
 #if !LEVEL_TRUST_ALWAYS
-  if (v[levelWinCount - 1] - v[0] > LEVEL_SPREAD_MAX_CM) { rej[RJ_SPREAD]++; return -1; }
+  // Do phan tan bang KHOANG TU PHAN VI, khong bang max - min.
+  //
+  // Do ngay 23/09 trong mot lan bom binh thuong: 605 lan phat, 244 bi loai,
+  // va 98 phan tram so bi loai la do chinh cong nay. Khong co tieng doi chi
+  // chiem 2 phan tram — cam bien tra ve gan nhu moi lan.
+  //
+  // Nguyen nhan: max - min nhay voi DUY NHAT mot tieng doi lac. Mot mau trong
+  // 15 doi tu day thung la du bi vut ca cua so. Dung bo loc trung vi — von de
+  // chiu duoc nhieu le — roi chan no bang thuoc do nhay voi nhieu le nhat la
+  // tu pha chinh minh.
+  //
+  // Khoang tu phan vi bo qua mot phan tu cao nhat va mot phan tu thap nhat.
+  // Vai tieng doi lac khong lam no nhuc nhich. No chi lon ra khi cam bien
+  // that su nhay giua hai che do — mat nuoc va day thung — khoang nua so mau
+  // moi ben, dung truong hop can tu choi.
+  uint8_t q1 = levelWinCount / 4, q3 = (levelWinCount * 3) / 4;
+  if (q3 >= levelWinCount) q3 = levelWinCount - 1;
+  if (v[q3] - v[q1] > LEVEL_SPREAD_MAX_CM) { rej[RJ_SPREAD]++; return -1; }
 #endif
 
   return v[levelWinCount / 2];
@@ -343,29 +363,45 @@ void readLevel() {
 
   // Trung vi loai dot bien nhung KHONG lam muot. Trung binh truot mu moi lam
   // muot. Mau dau tien nhay thang vao, khong co gi de trung binh voi no.
-  if (levelEmaCm < 0) levelEmaCm = h;
-  else                levelEmaCm += (h - levelEmaCm) * LEVEL_EMA_ALPHA;
+  // Bo loc ALPHA-BETA thay cho trung binh truot mu.
+  //
+  // Nguoi dung thay so muc nuoc nhay len roi xuong roi len, ca luc xa lan luc
+  // bom, trong khi nuoc that chi di MOT chieu. Trung binh truot mu chi biet
+  // keo dau ra ve phia so moi, nen moi dot nhieu +-0,3 cm deu day no nguoc
+  // chieu mot chut. Nuoc xa that chi tut 0,12 cm moi 5 giay, nho hon nhieu.
+  //
+  // Alpha-beta theo doi CA muc nuoc LAN toc do. No du bao diem ke tiep theo
+  // xu huong, roi chi sua mot phan nho theo sai lech. Voi muc nuoc doi deu —
+  // dung la luc bom hay xa — no khong bi tre, va nhieu khong day duoc no
+  // nguoc chieu. beta = alpha^2 / (2 - alpha) cho dap ung tat dan toi han.
+  uint32_t nowF = millis();
+  if (levelEmaCm < 0) {
+    levelEmaCm = h; levelVelCmS = 0; lastFiltMs = nowF;
+  } else {
+    float dtF = (nowF - lastFiltMs) / 1000.0f;
+    lastFiltMs = nowF;
+    if (dtF > 2.0f) dtF = 2.0f;
+    if (dtF > 0.01f) {
+      const float a = LEVEL_AB_ALPHA;
+      const float b = a * a / (2.0f - a);
+      float pred = levelEmaCm + levelVelCmS * dtF;
+      float r    = h - pred;
+      levelEmaCm  = pred + a * r;
+      levelVelCmS += (b / dtF) * r;
+      // Toc do that khong the vuot gioi han vat ly cua bom va van xa.
+      if (levelVelCmS >  MAX_LEVEL_RATE_CMS) levelVelCmS =  MAX_LEVEL_RATE_CMS;
+      if (levelVelCmS < -MAX_LEVEL_RATE_CMS) levelVelCmS = -MAX_LEVEL_RATE_CMS;
+    }
+  }
 
   levelCm  = levelEmaCm;
   levelPct = (levelEmaCm / TANK_MAX_LEVEL_CM) * 100.0f;
   if (levelPct > 100) levelPct = 100;
   if (levelPct < 0)   levelPct = 0;
 
-  // Toc do doi muc, lay tren dau ra DA LAM MUOT. Dao ham khuech dai nhieu nen
-  // phai lam muot them mot lan nua, cham hon ca bo loc muc nuoc.
-  uint32_t nowMs = millis();
-  if (lastRateLevelCm >= 0 && lastRateMs && nowMs > lastRateMs) {
-    float dtS = (nowMs - lastRateMs) / 1000.0f;
-    if (dtS > 0.05f) {
-      float inst = (levelEmaCm - lastRateLevelCm) / dtS;
-      levelRateCmS += (inst - levelRateCmS) * LEVEL_RATE_ALPHA;
-      lastRateLevelCm = levelEmaCm;
-      lastRateMs = nowMs;
-    }
-  } else {
-    lastRateLevelCm = levelEmaCm;
-    lastRateMs = nowMs;
-  }
+  // Toc do doi muc lay thang tu bo loc alpha-beta: no da duoc uoc luong cung
+  // voi muc nuoc, khong phai lay hieu hai so doc roi lam muot lai lan nua.
+  levelRateCmS = levelVelCmS;
 }
 
 // ------------------------------------------------------------
@@ -844,6 +880,8 @@ size_t buildTelemetry(char* buf, size_t cap, const Sample* s) {
     doc["state"]     = STATE_NAME[state];
     doc["mode"]      = autoMode ? "AUTO" : "MANUAL";
     doc["current_mv"]= currentMv;
+    // Doi ra mA de hien thi. mV la dien ap tho cua cam bien, khong phai dong.
+    doc["current_ma"]= currentMv * CURRENT_MA_PER_MV;
     doc["float_max"] = floatMax;
     doc["float_min"] = floatMin;
     doc["fault"]     = faultCode;

@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Bồn nước thông minh</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect x='7' y='3' width='18' height='26' rx='3' fill='%230b1116' stroke='%23283b47' stroke-width='2'/%3E%3Crect x='9' y='14' width='14' height='13' rx='1' fill='%233987e5'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
@@ -39,6 +40,9 @@
   --mono:"IBM Plex Mono",ui-monospace,monospace;
 }
 *{box-sizing:border-box}
+/* Thuoc tinh hidden phai thang moi quy tac display cua lop, neu khong
+   .rows{display:flex} se de len va nguoi xem van thay nut bam. */
+[hidden]{display:none !important}
 body{
   margin:0;background:var(--enamel);color:var(--ink);
   font-family:var(--sans);font-size:14px;line-height:1.55;
@@ -94,6 +98,9 @@ body{
 .rows{display:flex;flex-direction:column;gap:12px}
 .row{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
 .row > span{font-size:12.5px;color:var(--ink-3);min-width:92px}
+.viewer{font-size:13px;color:var(--ink-2);background:var(--recess);
+        border:1px solid var(--edge);border-left:3px solid var(--water);
+        border-radius:3px;padding:11px 14px;line-height:1.5}
 button{
   font:500 13px/1 var(--sans);color:var(--ink);background:var(--recess);
   border:1px solid var(--edge);border-radius:3px;padding:9px 15px;cursor:pointer;
@@ -239,8 +246,12 @@ td.num{font-family:var(--mono);font-variant-numeric:tabular-nums;white-space:now
       <!-- ===================== ĐIỀU KHIỂN ===================== -->
       <section class="desk">
         <h2>Điều khiển</h2>
-        <p class="hint">Nút gửi lệnh đi. Sơ đồ chỉ đổi sau khi thiết bị xác nhận.</p>
-        <div class="rows">
+        <p class="hint" id="deskHint">Nút gửi lệnh đi. Sơ đồ chỉ đổi sau khi thiết bị xác nhận.</p>
+        <div class="viewer" id="viewer" hidden>
+          Bạn đang xem từ máy khác. Chỉ máy chủ mới bật tắt được bơm,
+          để nhiều người không cùng bấm một lúc.
+        </div>
+        <div class="rows" id="rows">
           <div class="row"><span>Chế độ</span>
             <button id="bAuto" aria-pressed="false">Tự động</button>
             <button id="bManual" aria-pressed="false">Thủ công</button></div>
@@ -398,7 +409,30 @@ const chFlow = new Chart($("chFlow"), {
 });
 
 /* Ba trạng thái của số đọc mức nước, nói thẳng thay vì gạch ngang con số. */
+/* Mat tin hieu duoi 10 giay la nhip loc binh thuong: bo dieu khien khong
+   bi anh huong gi vi mo hinh cam lai lien mach. Chi bao khi mat that su lau. */
+const LONG_BLIND_MS = 10000;
+/* Vung chet cho SO HIEN THI, khong dung trong dieu khien.
+   Do ngay 23/09 luc xa: sau bo loc alpha-beta, buoc di nguoc chieu lon nhat
+   con 0,11 cm — nho hon sai so cua chinh HC-SR04. Nhung man hinh hien toi
+   0,1 phan tram nen 0,11 cm (0,8 phan tram) van hien ra thanh "tang roi giam".
+   So chi duoc DOI CHIEU khi thay doi vuot 0,25 cm; cung chieu thi di theo
+   ngay. Luc bom bat hay tat, huong thay doi that nen xoa chieu cu. */
+const DEADBAND_CM = 0.25;
+let shownCm = null, trend = 0, lastPump = null;
+function monotone(cm, pump){
+  if (pump !== lastPump){ trend = 0; lastPump = pump; }
+  if (shownCm === null){ shownCm = cm; return cm; }
+  const d = cm - shownCm;
+  if (Math.abs(d) < 0.01) return shownCm;
+  const dir = Math.sign(d);
+  if (trend === 0 || dir === trend){ trend = dir; shownCm = cm; }
+  else if (Math.abs(d) > DEADBAND_CM){ trend = dir; shownCm = cm; }
+  return shownCm;
+}
+
 function levelState(d){
+  if (d.level_ok === false && (d.blind_ms ?? 0) < LONG_BLIND_MS) return {t:"", c:""};
   if (d.level_ok === false && (d.level_model_cm ?? -1) >= 0)
     return {t:"mất tín hiệu · đang chạy theo mô hình", c:"warn"};
   if (d.level_ok === false) return {t:"chưa đọc được", c:"crit"};
@@ -426,8 +460,9 @@ async function tick(){
      NHAY mot phat khi cam bien quay lai — nguoi xem tuong thiet bi treo.
      Dong chu ngay duoi da ghi ro dang chay theo mo hinh. */
   const blind = d.level_ok === false && (d.level_model_cm ?? -1) >= 0;
-  const pct = blind ? (d.level_model_cm / (CFG.cm || 10)) * 100
-                    : (d.level_pct ?? 0);
+  const longBlind = blind && (d.blind_ms ?? 0) >= LONG_BLIND_MS;
+  const rawCm = blind ? d.level_model_cm : (d.level_cm ?? 0);
+  const pct = monotone(rawCm, !!d.pump) / (CFG.cm || 14) * 100;
   ease("pct", pct, v => {
     $("bigPct").textContent = v.toFixed(1);
     $("roPct").textContent  = v.toFixed(1) + " %";
@@ -440,9 +475,9 @@ async function tick(){
   $("whyPct").className = "why" + (ls.c ? " warn" : "");
   // Mat nuoc trong ong thuy chuyen sang vien dut khi so dang den tu mo hinh,
   // de nhin mot cai la biet day la uoc luong chu khong phai phep do.
-  $("water").setAttribute("opacity", blind ? ".45" : ".8");
-  $("meniscus").setAttribute("fill", blind ? "var(--warn)" : "#cde2fb");
-  $("bigPct").setAttribute("fill", blind ? "var(--warn)" : "var(--ink)");
+  $("water").setAttribute("opacity", longBlind ? ".45" : ".8");
+  $("meniscus").setAttribute("fill", longBlind ? "var(--warn)" : "#cde2fb");
+  $("bigPct").setAttribute("fill", longBlind ? "var(--warn)" : "var(--ink)");
 
   // bơm: thân sáng lên và cánh quay khi chạy
   $("pumpBody").setAttribute("stroke", d.pump ? C("--run") : C("--edge"));
@@ -456,11 +491,13 @@ async function tick(){
   ease("fo", d.flow_out_lpm ?? 0, v => {
     $("foTxt").textContent = v.toFixed(2); $("roOut").textContent = v.toFixed(2) + " L/ph"; });
   $("whyIn").textContent = src;
-  $("whyOut").textContent = d.flow_out_ok === false ? "chưa tính được — mất mức nước" : src;
-  $("whyOut").className = "why" + (d.flow_out_ok === false ? " warn" : "");
+  const outLost = d.flow_out_ok === false && (d.blind_ms ?? 0) >= LONG_BLIND_MS;
+  $("whyOut").textContent = outLost ? "chưa tính được — mất mức nước" : src;
+  $("whyOut").className = "why" + (outLost ? " warn" : "");
 
   ease("vol", d.volume_l ?? 0, v => $("roVol").textContent = v.toFixed(2) + " L");
-  ease("cur", d.current_mv ?? 0, v => $("roCur").textContent = v.toFixed(1) + " mV");
+  ease("cur", d.current_ma ?? (d.current_mv ?? 0) * 10.81,
+       v => $("roCur").textContent = Math.round(v) + " mA");
   $("whyCur").textContent = d.pump ? "bơm đang ăn điện" : "bơm tắt";
 
   $("fMax").setAttribute("fill", d.float_max ? C("--crit") : C("--recess"));
@@ -469,7 +506,7 @@ async function tick(){
   const auto = d.mode === "AUTO";
   $("bAuto").setAttribute("aria-pressed", auto);
   $("bManual").setAttribute("aria-pressed", !auto);
-  $("bOn").disabled = auto; $("bOff").disabled = auto;
+  $("bOn").disabled = auto || !CAN; $("bOff").disabled = auto || !CAN;
 }
 
 async function history(){
@@ -512,6 +549,21 @@ async function books(){
    duyet nay thoi, khong gui di dau khac. */
 let TOKEN = null;
 try { TOKEN = localStorage.getItem("wt_token"); } catch {}
+let CAN = false, NEED_TOKEN = false;
+
+async function checkAuth(){
+  try {
+    const r = await fetch("/api/auth", { headers: TOKEN ? {"X-Auth-Token":TOKEN} : {} });
+    const a = await r.json();
+    CAN = !!a.can_control; NEED_TOKEN = !!a.token_required;
+  } catch { CAN = false; }
+  // Nguoi xem: an ca khoi nut, thay bang mot dong giai thich. Van giu nut
+  // khi can token de quan tri tu xa co cho nhap ma.
+  const view = !CAN && !NEED_TOKEN;
+  $("viewer").hidden = !view;
+  $("rows").hidden = view;
+  $("deskHint").hidden = view;
+}
 
 async function send(action, value){
   const body = JSON.stringify(value === undefined ? {action} : {action, value});
@@ -522,14 +574,16 @@ async function send(action, value){
   });
 
   let r = await call(TOKEN);
-  if (r.status === 401){
+  if (r.status === 403 && !NEED_TOKEN){ await checkAuth(); return; }
+  if ((r.status === 401 || r.status === 403) && NEED_TOKEN){
     const t = prompt("Trang này đang mở ra ngoài mạng nội bộ.\n"
                    + "Nhập mã điều khiển để bật tắt bơm:");
     if (!t) return;
     r = await call(t.trim());
-    if (r.status === 401){ alert("Mã không đúng. Lệnh chưa được gửi."); return; }
+    if (r.status === 401 || r.status === 403){ alert("Mã không đúng. Lệnh chưa được gửi."); return; }
     TOKEN = t.trim();
     try { localStorage.setItem("wt_token", TOKEN); } catch {}
+    await checkAuth();
   }
   setTimeout(books, 400);
 }
@@ -568,6 +622,7 @@ $("bClear").onclick=()=>send("clear_fault");$("bReset").onclick=()=>send("reset_
   $("fMax").setAttribute("cy", yOf(CFG.over));
   $("fMin").setAttribute("cy", yOf(CFG.low));
 
+  await checkAuth();
   tick(); history(); books();
   setInterval(tick, 1000); setInterval(history, 3000); setInterval(books, 6000);
 })();

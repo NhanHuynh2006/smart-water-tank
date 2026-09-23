@@ -103,6 +103,18 @@ cd ~/Documents/IOT
 
 Dashboard: **http://localhost:8000/** · Tài liệu API: **http://localhost:8000/docs**
 
+### Cho người khác cùng xem
+
+Người trong cùng Wi-Fi mở **`http://<IP máy chủ>:8000/`** — `./start.sh` in sẵn địa chỉ này ở dòng *Trong Wi-Fi*.
+
+| Ai | Làm được gì |
+|---|---|
+| Chính máy chủ (máy chạy backend) | xem **và** điều khiển |
+| Mọi máy khác trong mạng | **chỉ xem** — không thấy nút bấm, gửi lệnh thẳng cũng bị từ chối 403 |
+| Ai có mã, qua `./start.sh public` | điều khiển từ xa qua Internet |
+
+Máy chủ được nhận ra bằng địa chỉ IP của chính nó, nên đổi Wi-Fi hay đổi IP vẫn đúng mà không phải cấu hình gì.
+
 Log nằm ở `~/.cache/water-tank/`.
 
 ### Nếu muốn chạy tay từng cửa sổ

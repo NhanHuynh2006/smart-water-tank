@@ -18,7 +18,7 @@ import uuid
 from contextlib import contextmanager
 
 import paho.mqtt.client as mqtt
-from fastapi import FastAPI, Header, HTTPException, Query
+from fastapi import FastAPI, Header, HTTPException, Query, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from pydantic import BaseModel
@@ -448,26 +448,71 @@ def get_commands(limit: int = 30):
 # ============================================================
 TOKEN = os.environ.get("WT_TOKEN", "").strip()
 
+# ============================================================
+#  PHAN QUYEN: QUAN TRI VA NGUOI XEM
+#
+#  Ai trong mang cung mo duoc dashboard de XEM. Nhung chi chinh may chu —
+#  may dang chay backend nay — moi DIEU KHIEN duoc bom. Nhieu nguoi cung bam
+#  bat tat mot luc thi bom dong cat loan xa, va nguoi xem khong can quyen do.
+#
+#  Cach biet mot IP co phai cua chinh may nay khong: thu gan mot socket vao
+#  IP do. He dieu hanh chi cho gan vao dia chi cua CHINH NO, nen gan duoc la
+#  may nay, bao loi la may khac. Khong can thu vien ngoai, va tu dong dung
+#  khi may doi mang doi IP.
+#
+#  Ngoai le: ai co dung token (che do ./start.sh public) cung dieu khien
+#  duoc, de quan tri tu xa qua duong ham Cloudflare van lam viec.
+# ============================================================
+import socket
+_local_cache: dict[str, tuple[bool, float]] = {}
 
-def require_token(given: str | None):
-    if not TOKEN:
-        return                                  # chay noi bo, khong khoa
-    # So sanh theo kieu khong ro ri thoi gian, tranh do token bang cach do
-    # tung ky tu mot.
-    import hmac
-    if not given or not hmac.compare_digest(given, TOKEN):
-        raise HTTPException(401, "thieu hoac sai X-Auth-Token")
+
+def is_local_ip(ip: str | None) -> bool:
+    if not ip:
+        return False
+    if ip in ("127.0.0.1", "::1", "localhost"):
+        return True
+    hit = _local_cache.get(ip)
+    if hit and time.time() - hit[1] < 60:
+        return hit[0]
+    fam = socket.AF_INET6 if ":" in ip else socket.AF_INET
+    ok = False
+    try:
+        with socket.socket(fam, socket.SOCK_DGRAM) as so:
+            so.bind((ip, 0))
+            ok = True
+    except OSError:
+        ok = False
+    _local_cache[ip] = (ok, time.time())
+    return ok
+
+
+def can_control(request: Request, token: str | None) -> bool:
+    # Qua duong ham Cloudflare thi moi yeu cau deu den tu 127.0.0.1, nen o
+    # che do cong khai KHONG duoc tin dia chi nguon — chi tin token.
+    if TOKEN:
+        import hmac
+        return bool(token) and hmac.compare_digest(token, TOKEN)
+    return is_local_ip(request.client.host if request.client else None)
+
+
+def require_control(request: Request, token: str | None):
+    if not can_control(request, token):
+        raise HTTPException(403, "chi may chu moi dieu khien duoc; ban dang o che do xem")
 
 
 @app.get("/api/auth")
-def auth_mode():
-    """Dashboard hoi truoc de biet co can xin token hay khong."""
-    return {"token_required": bool(TOKEN)}
+def auth_mode(request: Request, x_auth_token: str | None = Header(default=None)):
+    """Dashboard hoi truoc de biet nguoi dang xem co quyen dieu khien khong."""
+    return {"token_required": bool(TOKEN),
+            "can_control": can_control(request, x_auth_token),
+            "client": request.client.host if request.client else None}
 
 
 @app.post("/api/command")
-def post_command(cmd: Command, x_auth_token: str | None = Header(default=None)):
-    require_token(x_auth_token)
+def post_command(cmd: Command, request: Request,
+                 x_auth_token: str | None = Header(default=None)):
+    require_control(request, x_auth_token)
     if cmd.action not in ("mode", "pump", "clear_fault", "reset_volume"):
         raise HTTPException(400, "hanh dong khong duoc ho tro")
     cid = uuid.uuid4().hex[:8]
@@ -492,8 +537,9 @@ def get_config():
 
 
 @app.put("/api/config")
-def put_config(cfg: dict, x_auth_token: str | None = Header(default=None)):
-    require_token(x_auth_token)
+def put_config(cfg: dict, request: Request,
+               x_auth_token: str | None = Header(default=None)):
+    require_control(request, x_auth_token)
     with _db_lock, db() as c:
         for k, v in cfg.items():
             c.execute("INSERT INTO config(key,value) VALUES(?,?) "

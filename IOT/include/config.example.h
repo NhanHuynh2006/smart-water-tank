@@ -393,6 +393,13 @@
 // Dat 10 mV la khoang mot nua, du xa nhieu nen ma van bat duoc bom chay.
 #define CURRENT_ON_MV       10.0f
 
+// Doi dien ap cam bien dong ra mA. ACS712 ban 5 A: 185 mV moi ampe, qua chia
+// ap 10k/10k con 92,5 mV moi ampe tai chan ESP32, tuc 10,81 mA moi mV.
+// Loai 20 A: 100 mV/A -> 20,0 mA/mV. Loai 30 A: 66 mV/A -> 30,3 mA/mV.
+// Neu KHONG co chia ap thi chia doi cac so tren.
+// Kiem chung mot lan bang dong ho van nang mac noi tiep voi bom.
+#define CURRENT_MA_PER_MV   10.81f
+
 // Toc do bam theo diem nghi khi bom dang tat. 0,02 voi chu ky 200 ms cho
 // hang so thoi gian khoang 10 giay: du nhanh de theo kip troi nhiet, du
 // cham de khong bi mot xung nhieu keo di.
@@ -573,7 +580,12 @@
 // Cai gia phai tra la tre 3,2 giay. Nuoc chay nhanh nhat cung chi 0,06 cm/s,
 // nen tre do tuong duong sai lech 0,19 cm — nho hon ca sai so cua phep do.
 // Chan an toan waterTooClose doc thang khoang cach THO nen khong he bi tre.
-#define LEVEL_EMA_ALPHA     0.06f
+#define LEVEL_EMA_ALPHA     0.06f   // khong con dung, giu cho ban cu doc duoc
+
+// He so bo loc alpha-beta. 0,03 o chu ky 200 ms giam nhieu ngau nhien khoang
+// sau lan (tu +-0,3 xuong +-0,05 cm), trong khi nuoc xa that tut 0,12 cm moi
+// 5 giay — nhieu con lai nho hon han buoc that, nen so hien thi di mot chieu.
+#define LEVEL_AB_ALPHA      0.03f
 // Bien ngoai dai hinh hoc con chap nhan, tinh bang cm. So doc nam ngoai
 // [15,5-10-6 , 15,5+6] = [-0,5 , 21,5] cm bi loai truoc khi vao cua so trung vi.
 #define LEVEL_GATE_MARGIN_CM   6.0f
@@ -590,7 +602,14 @@
 // Noi tu 3,0 len 4,5 cm cho khop cua so 15 mau: cua so dai hon thi trai qua
 // nhieu thoi gian hon nen tu nhien rong hon. Trung vi 15 mau cong bo loc mu
 // da du suc xu ly do phan tan nay.
-#define LEVEL_SPREAD_MAX_CM    4.5f
+// Gio la nguong cho KHOANG TU PHAN VI, khong con la max - min. Nhieu binh
+// thuong cho khoang tu phan vi duoi 0,5 cm. Cam bien nhay giua mat nuoc va day
+// thung cho vai cm. 2,0 cm tach hai truong hop ra ro rang.
+// Do that 23/09 voi 2,0 cm: ty le nhan tang 60 -> 80 phan tram nhung van
+// con chum mau bi loai lien nhau. Khi cam bien that su lan giua mat nuoc va
+// day thung thi hai nhom cach nhau ~9 cm (17,5 cm so voi ~8 cm), con nhieu
+// thuong nho hon 0,5 cm. 3,5 cm van thap hon han khoang cach 9 cm do.
+#define LEVEL_SPREAD_MAX_CM    3.5f
 
 // ---------- CHE DO CHAN DOAN: TIN CAM BIEN MUC VO DIEU KIEN ----------
 // Dat 1 de BO cong xac thuc: bo kiem tra do phan tan cua so, bo cong chan

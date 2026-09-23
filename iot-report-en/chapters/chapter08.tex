@@ -215,6 +215,12 @@ Adding two validity fields to the telemetry payload pushed its length past the 4
 
 The lesson the group takes is that a serialiser which truncates silently and a callback which swallows exceptions are individually defensible and jointly produce a failure with no symptom at the point of failure. Both ends now report the condition explicitly, and the buffer carries margin above the maximum payload rather than matching it.
 
+\subsection{A robust filter gated by a fragile statistic}
+
+After the level filter was widened to a fifteen sample median, the group counted, for every ping, which validation stage rejected it. In one ordinary fill of 605 pings, 244 were rejected, and 98 percent of those rejections came from a single stage: the check that the spread of the window stayed below a limit. Missing echoes accounted for only 2 percent. The sensor was answering almost every time.
+
+The spread had been measured as maximum minus minimum. That statistic is controlled entirely by the single most extreme sample, so one stray echo from the tank floor among fifteen good ones was enough to discard the whole window. The median was chosen precisely because it tolerates isolated outliers; gating it with the statistic most sensitive to isolated outliers undid that choice. Replacing the range with the interquartile range, which ignores the top and bottom quarter of the window, raised the acceptance rate from 60 to 93 percent in otherwise identical conditions. The interquartile range still grows when the sensor genuinely alternates between the water surface and the floor, because then roughly half the samples sit in each group, which is exactly the case the check exists to reject.
+
 \subsection{The level sensor is excellent, and unusable, in the same installation}
 
 With the water still, twenty consecutive samples read between 3.87 and 3.89 centimetres, a standard deviation of 0.010 centimetres. With the pump running, the same sensor collapses to reporting an empty tank while the tank is demonstrably filling. The group verified that the validity gates were not the cause by disabling them: the raw reading itself falls to the empty value, so the gates were reporting the data correctly rather than rejecting it wrongly.
