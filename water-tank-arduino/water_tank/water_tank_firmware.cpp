@@ -65,6 +65,8 @@ float    lastGoodLevelCm  = -1;
 uint32_t pumpOnSince = 0, pumpOffSince = 0;
 uint32_t dryRunSince = 0, noCurrentSince = 0, leakSince = 0;
 uint32_t lastControlMs = 0, lastTelemetryMs = 0, lastNvsMs = 0;
+uint32_t ctlGapMaxMs = 0;     // chu ky dieu khien dai nhat, xem buildTelemetry
+uint32_t ringDropped = 0;     // so mau offline bi ghi de vi bo dem day
 uint32_t seqNo = 0;
 
 // ------------------------------------------------------------
@@ -100,6 +102,7 @@ void ringPush(const Sample& s) {
   ring[ringHead] = s;
   ringHead = (ringHead + 1) % OFFLINE_BUFFER_SIZE;
   if (ringCount < OFFLINE_BUFFER_SIZE) ringCount++;
+  else ringDropped++;          // day: mau cu nhat bi ghi de, dem lai de biet
 }
 
 // ------------------------------------------------------------
@@ -941,6 +944,11 @@ size_t buildTelemetry(char* buf, size_t cap, const Sample* s) {
     doc["float_min"] = floatMin;
     doc["fault"]     = faultCode;
     doc["rssi"]      = WiFi.RSSI();
+    // Chu ky dieu khien dai nhat ke tu ban tin song truoc. Binh thuong ~200.
+    // Ban tin dau tien sau khi mat mang cho biet vong dieu khien co bi mang
+    // lam treo hay khong trong suot thoi gian mat ket noi.
+    doc["ctl_gap_ms"] = ctlGapMaxMs;
+    doc["ring_drop"]  = ringDropped;
   }
   if (doc.overflowed()) {
     Serial.println("[LOI] ban tin telemetry TRAN BO DEM — JSON se hong, "
@@ -962,6 +970,7 @@ void publishTelemetry() {
   size_t n = buildTelemetry(buf, sizeof(buf), nullptr);
 
   if (mqtt.connected()) {
+    ctlGapMaxMs = 0;
     if (!mqtt.publish(topicTelemetry, (uint8_t*)buf, n, false)) {
       Serial.printf("[MQTT] GUI THAT BAI, ban tin %u byte — bo dem qua nho?\n",
                     (unsigned)n);
@@ -1157,7 +1166,13 @@ void mqttTryConnect() {
     mqtt.setServer(brokerAddr.c_str(), MQTT_PORT);
   }
   Serial.printf("[MQTT] dang ket noi %s:%d... ", brokerAddr.c_str(), MQTT_PORT);
-  bool ok = mqtt.connect(DEVICE_ID, MQTT_USER, MQTT_PASS,
+  // Mo TCP truoc voi han 500 ms. Mac dinh WiFiClient cho toi 3 giay, va
+  // trong 3 giay do vong dieu khien DUNG HAN: khong doc muc nuoc, khong xet
+  // chong tran. Khi Wi-Fi con ma broker mat (may chu tat, tuong lua chan)
+  // thi lan thu nao cung ton du 3 giay. PubSubClient thay socket da mo se
+  // dung luon, khong tu mo lai.
+  bool ok = net.connect(brokerAddr.c_str(), MQTT_PORT, 500);
+  if (ok) ok = mqtt.connect(DEVICE_ID, MQTT_USER, MQTT_PASS,
                          topicStatus, 1, true, "{\"online\":false}");
   if (ok) {
     Serial.println("thanh cong");
@@ -1171,6 +1186,7 @@ void mqttTryConnect() {
     uint32_t wait = RECONNECT_BASE_MS * (1UL << reconnectFails);
     if (wait > RECONNECT_MAX_MS) wait = RECONNECT_MAX_MS;
     nextReconnectMs = millis() + wait;
+    net.stop();
     Serial.printf("that bai rc=%d, thu lai sau %lu ms\n", mqtt.state(), wait);
   }
 }
@@ -1249,6 +1265,8 @@ void setup() {
   // bo dem cua no. Hai con so nay phai di cung nhau, neu khong thiet bi se
   // im lang dung luc no tuong minh dang gui.
   mqtt.setBufferSize(1200);
+  // Cho CONNACK toi da 2 giay thay vi 15 (mac dinh = keepalive).
+  mqtt.setSocketTimeout(2);
 
   lastValidLevelMs = millis();
   Serial.println("[BOOT] san sang");
@@ -1264,6 +1282,7 @@ void loop() {
   if (now - lastControlMs >= CONTROL_PERIOD_MS) {
     uint32_t dt = now - lastControlMs;
     lastControlMs = now;
+    if (dt > ctlGapMaxMs) ctlGapMaxMs = dt;
 
     readLevel();
     readFlow(dt);
