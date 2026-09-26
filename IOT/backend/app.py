@@ -347,6 +347,11 @@ def _on_message(cli, userdata, msg):
 
     elif msg.topic == T_STATUS:
         online = bool(d.get("online"))
+        if online and d.get("reset"):
+            # Thiet bi vua noi lai: in ly do khoi dong lan cuoi va thoi gian
+            # da chay, de phan biet nap lai phan sun, mat nguon, sut ap.
+            print(f"[STATUS] truc tuyen · khoi dong do {d['reset']} · "
+                  f"da chay {d.get('up_s', '?')} s", flush=True)
         with _state_lock:
             latest["online"] = online
         with _db_lock, db() as c:

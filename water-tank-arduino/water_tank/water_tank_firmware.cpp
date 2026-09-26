@@ -298,7 +298,13 @@ float medianOf5() {
 // Mot lan phat hong KHONG co nghia la mat cam bien. Giu so doc hop le cuoi
 // them LEVEL_STALE_MS nua roi moi ha co levelOk.
 void markLevelStale() {
-  levelOk = (lastValidLevelMs != 0) &&
+  // lastGoodLevelCm >= 0: da CO it nhat mot so do that. Thieu dieu kien nay
+  // thi ngay sau khi khoi dong levelOk bang true (setup() dat lastValidLevelMs
+  // = millis() de tinh SENSOR_TIMEOUT tu luc bat may) trong khi levelPct van
+  // la 0 — bo dieu khien thay "bon can" va BAT BOM sau moi lan khoi dong, bat
+  // ke bon dang day bao nhieu. Thay trong du lieu 23/09: moi lan khoi dong lai
+  // deu co mot lan bom bat o seq 2 voi muc 0,0 %.
+  levelOk = (lastGoodLevelCm >= 0) && (lastValidLevelMs != 0) &&
             (millis() - lastValidLevelMs <= LEVEL_STALE_MS);
   // Mat han cam bien thi xoa bo loc. Neu khong, luc tin hieu quay lai no se
   // keo dau ra tu gia tri cu sang gia tri moi trong suot ba giay, va muc nuoc
@@ -1099,6 +1105,20 @@ void onMessage(char* topic, byte* payload, unsigned int len) {
 // ------------------------------------------------------------
 //  Ket noi khong chan
 // ------------------------------------------------------------
+static const char* resetReasonText() {
+  switch (esp_reset_reason()) {
+    case ESP_RST_POWERON:  return "power_on";
+    case ESP_RST_SW:       return "software";
+    case ESP_RST_PANIC:    return "panic";
+    case ESP_RST_INT_WDT:
+    case ESP_RST_TASK_WDT:
+    case ESP_RST_WDT:      return "watchdog";
+    case ESP_RST_BROWNOUT: return "brownout";
+    case ESP_RST_EXT:      return "reset_pin";
+    default:               return "other";
+  }
+}
+
 // Mat Wi-Fi thi xoa dia chi broker da phan giai: mang moi thi IP moi.
 static bool  wifiLost = false;
 static void  wifiAnnouncedReset(){ wifiLost = true; }
@@ -1177,7 +1197,12 @@ void mqttTryConnect() {
   if (ok) {
     Serial.println("thanh cong");
     reconnectFails = 0;
-    mqtt.publish(topicStatus, "{\"online\":true}", true);
+    // Kem ly do khoi dong lan cuoi: phan biet nap lai phan sun, mat nguon
+    // va sut ap (brownout) ma khong can cam day serial.
+    char st[96];
+    snprintf(st, sizeof(st), "{\"online\":true,\"reset\":\"%s\",\"up_s\":%lu}",
+             resetReasonText(), (unsigned long)(millis() / 1000));
+    mqtt.publish(topicStatus, st, true);
     mqtt.subscribe(topicCmd, 1);
     publishPumpState();
     flushRing();
