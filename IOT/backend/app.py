@@ -134,6 +134,10 @@ def init_db():
             if col not in cols:
                 c.execute(f"ALTER TABLE telemetry ADD COLUMN {col} REAL")
                 print(f"[DB] da them cot telemetry.{col}")
+        fcols = {r[1] for r in c.execute("PRAGMA table_info(faults)")}
+        if "pump_health" not in fcols:
+            c.execute("ALTER TABLE faults ADD COLUMN pump_health TEXT")
+            print("[DB] da them cot faults.pump_health")
         for col in ("flow_ok", "flow_out_ok", "float_min"):
             if col not in cols:
                 c.execute(f"ALTER TABLE telemetry ADD COLUMN {col} INTEGER")
@@ -153,6 +157,10 @@ class LeakDetector:
     ALPHA = 0.2
     KAPPA = 3.0
     SLOTS = 48
+    # Luong nuoc toi da co the bom trong mot khe 30 phut: 0,36 L/phut x 30.
+    # Khe nao vuot so nay thi chac chan la rac (nhieu cam bien luu luong truoc
+    # day tung cong don hang nghin lit ao) — khong duoc cho duong nen hoc no.
+    MAX_SLOT_L = 0.36 * 30
 
     def __init__(self):
         self.mu = [0.0] * self.SLOTS
@@ -168,8 +176,9 @@ class LeakDetector:
         lt = time.localtime(ts)
         return (lt.tm_hour * 60 + lt.tm_min) // 30
 
-    def update(self, ts: float, volume_l: float):
-        """Goi moi khi co ban tin. Tra ve chuoi canh bao hoac None."""
+    def update(self, ts: float, volume_l: float, quiet: bool = False):
+        """Goi moi khi co ban tin. Tra ve chuoi canh bao hoac None.
+        quiet=True khi dung lai tu lich su: hoc duong nen nhung khong bao dong."""
         slot = self.slot_of(ts)
         if self.current_slot is None:
             self.current_slot = slot
@@ -182,7 +191,14 @@ class LeakDetector:
         k = self.current_slot
         alert = None
 
-        if self.seen[k] >= 3:
+        # Khe khong dang tin: bo dem bi dat lai giua khe (the tich tut), hoac
+        # luong nuoc vuot kha nang vat ly cua bom. Bo qua, khong hoc, khong bao.
+        if volume_l < self.slot_start_volume - 1e-6 or used > self.MAX_SLOT_L:
+            self.current_slot = slot
+            self.slot_start_volume = volume_l
+            return None
+
+        if self.seen[k] >= 3 and not quiet:
             sigma = math.sqrt(max(self.var[k], 1e-9))
             if used > self.mu[k] + self.KAPPA * sigma:
                 self.consecutive += 1
@@ -204,6 +220,33 @@ class LeakDetector:
 
 
 leak = LeakDetector()
+
+
+def rebuild_leak_baseline():
+    """Dung lai duong nen ro ri tu du lieu da luu.
+
+    Duong nen nam trong bo nho, nen truoc day moi lan backend khoi dong lai la
+    mat sach. No can it nhat 3 ngay cho moi khe 30 phut moi bat dau canh bao,
+    trong khi backend duoc khoi dong lai lien tuc — nghia la tinh nang nay
+    thuc te chua bao gio chay duoc. Nay moi lan khoi dong, cho toan bo lich su
+    chay qua bo phat hien o che do im lang de no hoc lai.
+    """
+    with db() as c:
+        rows = c.execute("""SELECT recv_ts, volume_l FROM telemetry
+                            WHERE replay=0 AND volume_l IS NOT NULL
+                            ORDER BY recv_ts""").fetchall()
+    for r in rows:
+        leak.update(r["recv_ts"], float(r["volume_l"]), quiet=True)
+    # Bat dau dong truc tiep tu mot khe moi, khong noi voi dong lich su cuoi.
+    leak.current_slot = None
+    leak.slot_start_volume = None
+    ready = sum(1 for n in leak.seen if n >= 3)
+    print(f"[LEAK] dung lai duong nen tu {len(rows)} ban tin: "
+          f"{ready}/{leak.SLOTS} khe da du 3 ngay de canh bao", flush=True)
+    return ready
+
+
+
 
 # ----------------------------------------------------------------------
 # Trang thai moi nhat giu trong bo nho
@@ -295,12 +338,12 @@ def _on_message(cli, userdata, msg):
                           (d.get("dev"), p, d.get("state"), d.get("ts"), now))
 
     elif msg.topic == T_FAULT:
-        print(f"[FAULT] {d.get('code')}")
+        print(f"[FAULT] {d.get('code')} · bom {d.get('pump_health', '?')}")
         with _db_lock, db() as c:
-            c.execute("INSERT INTO faults(dev,code,ts,recv_ts,level_pct,flow_lpm)"
-                      " VALUES(?,?,?,?,?,?)",
+            c.execute("INSERT INTO faults(dev,code,ts,recv_ts,level_pct,flow_lpm,pump_health)"
+                      " VALUES(?,?,?,?,?,?,?)",
                       (d.get("dev"), d.get("code"), d.get("ts"), now,
-                       d.get("level_pct"), d.get("flow_lpm")))
+                       d.get("level_pct"), d.get("flow_lpm"), d.get("pump_health")))
 
     elif msg.topic == T_STATUS:
         online = bool(d.get("online"))
@@ -401,14 +444,48 @@ def get_telemetry(minutes: int = Query(10, ge=1, le=1440),
 
 @app.get("/api/volume/daily")
 def volume_daily(days: int = Query(7, ge=1, le=90)):
+    """The tich theo ngay: nuoc bom vao va nuoc tieu thu.
+
+    Cong DON CAC BUOC TANG cua bo dem, khong lay lon nhat tru nho nhat. Ban
+    cu lay MAX - MIN trong ngay, nen chi can mot lan bam "Dat lai the tich"
+    la bo dem tut ve 0 va phep tru tra ve nguyen gia tri truoc luc dat lai.
+    Buoc tut (do dat lai) bi bo qua. Buoc tang lon hon 2 lit cung bi bo —
+    bon chi 1,4 lit va bom day toi da 0,006 lit moi giay, nen do la rac do
+    nhieu cua cam bien luu luong truoc day, khong phai nuoc that.
+    """
     since = time.time() - days * 86400
     with db() as c:
         rows = c.execute(
-            """SELECT date(recv_ts,'unixepoch','localtime') AS day,
-                      MAX(volume_l)-MIN(volume_l) AS used_l
-               FROM telemetry WHERE recv_ts>=? GROUP BY day ORDER BY day""",
+            """SELECT day,
+                      -- Bom tat thi khong the co nuoc bom vao: moi buoc tang
+                      -- luc do la nuoc AO tu nhieu cam bien luu luong truoc day.
+                      SUM(CASE WHEN pump_prev = 1 AND di > 0 AND di < 2 THEN di ELSE 0 END) AS in_l,
+                      SUM(CASE WHEN do_ > 0 AND do_ < 2 THEN do_ ELSE 0 END) AS out_l
+               FROM (
+                 -- Ban tin gui luc thiet bi vua khoi dong, chua dong bo NTP, mang
+                 -- ts gan 0 (nam 1970). Nhung ban tin do dung gio may chu.
+                 SELECT date(CASE WHEN ts > 1600000000 THEN ts ELSE recv_ts END,
+                             'unixepoch', 'localtime') AS day,
+                        LAG(pump) OVER w AS pump_prev,
+                        volume_l     - LAG(volume_l)     OVER w AS di,
+                        volume_out_l - LAG(volume_out_l) OVER w AS do_
+                 FROM telemetry
+                 WHERE recv_ts >= ?
+                 WINDOW w AS (ORDER BY recv_ts)
+               )
+               GROUP BY day ORDER BY day""",
             (since,)).fetchall()
-    return [dict(r) for r in rows]
+    return [{"day": r["day"], "in_l": round(r["in_l"] or 0, 3),
+             "out_l": round(r["out_l"] or 0, 3)} for r in rows]
+
+
+@app.get("/api/leak/baseline")
+def leak_baseline():
+    """Duong nen tung khe 30 phut, de ve va de kiem tra trong bao cao."""
+    return [{"slot": k, "time": f"{k//2:02d}:{(k%2)*30:02d}",
+             "mean_l": round(leak.mu[k], 4),
+             "limit_l": round(leak.mu[k] + leak.KAPPA * math.sqrt(max(leak.var[k], 1e-9)), 4),
+             "days": leak.seen[k]} for k in range(leak.SLOTS)]
 
 
 @app.get("/api/faults")
@@ -627,6 +704,7 @@ def stats_latency(minutes: int = 10):
 if __name__ == "__main__":
     import uvicorn
     init_db()
+    rebuild_leak_baseline()
     threading.Thread(target=mqtt_thread, daemon=True).start()
     print("Dashboard: http://localhost:8000/   |   API docs: http://localhost:8000/docs")
     uvicorn.run(app, host="0.0.0.0", port=8000, log_level="warning")

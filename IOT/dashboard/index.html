@@ -127,6 +127,8 @@ button.warn:hover:not(:disabled){border-color:var(--crit);color:var(--crit)}
 .key i.band{height:12px;border-radius:2px;opacity:.45}
 .key i.dash{height:0;border-top:2px dashed var(--ink-3);border-radius:0}
 .canvas{position:relative;height:210px}
+.canvas.short{height:170px}
+.today{font-family:var(--mono);font-size:13px;color:var(--ink-2);margin:4px 0 0}
 
 /* ---------- sổ ghi ---------- */
 .book{background:var(--panel);border:1px solid var(--edge);border-radius:4px;padding:18px 20px}
@@ -302,6 +304,16 @@ td.num{font-family:var(--mono);font-variant-numeric:tabular-nums;white-space:now
         <div class="canvas"><canvas id="chFlow"></canvas></div>
       </section>
 
+      <section class="plot">
+        <h2>Thể tích theo ngày</h2>
+        <p class="today" id="today">—</p>
+        <div class="keys">
+          <span class="key"><i style="background:var(--water)"></i>Bơm vào</span>
+          <span class="key"><i style="background:var(--draw)"></i>Tiêu thụ</span>
+        </div>
+        <div class="canvas short"><canvas id="chDay"></canvas></div>
+      </section>
+
     </div>
   </div>
 
@@ -311,7 +323,7 @@ td.num{font-family:var(--mono);font-variant-numeric:tabular-nums;white-space:now
     <section class="book">
         <h2>Sự cố</h2>
         <div class="roll"><table>
-          <thead><tr><th>Lúc</th><th>Mã</th><th>Mức</th></tr></thead>
+          <thead><tr><th>Lúc</th><th>Mã</th><th>Bơm</th><th>Mức</th></tr></thead>
           <tbody id="tFault"></tbody></table></div>
     </section>
 
@@ -512,7 +524,9 @@ async function tick(){
   ease("vol", d.volume_l ?? 0, v => $("roVol").textContent = v.toFixed(2) + " L");
   ease("cur", d.current_ma ?? (d.current_mv ?? 0) * 10.81,
        v => $("roCur").textContent = Math.round(v) + " mA");
-  $("whyCur").textContent = d.pump ? "bơm đang ăn điện" : "bơm tắt";
+  const h = HEALTH[d.pump_health] || { t: d.pump ? "bơm đang chạy" : "bơm tắt" };
+  $("whyCur").textContent = h.t;
+  $("whyCur").className = "why" + (h.bad ? " warn" : "");
 
   $("fMax").setAttribute("fill", d.float_max ? C("--crit") : C("--recess"));
   $("fMin").setAttribute("fill", d.float_min ? C("--water") : C("--recess"));
@@ -545,6 +559,43 @@ async function history(){
 
 const sev = c => /OVERFLOW|HARD_LIMIT|VOLUME/.test(c) ? "crit"
              : /SENSOR|LEVEL_LOST/.test(c) ? "warn" : "warn";
+/* Nhan phan loai suc khoe bom tu phan sun: ket hop dong dien va dong chay. */
+const HEALTH = {
+  idle:       { t: "bơm tắt" },
+  starting:   { t: "đang khởi động" },
+  ok:         { t: "bơm khoẻ · có dòng, có nước" },
+  no_current: { t: "không có dòng · lỗi điện", bad: true },
+  no_flow:    { t: "có dòng, không có nước · chạy khô", bad: true },
+};
+
+/* The tich theo ngay: cot doi, hai chuoi, khe 1 va khe 2 da kiem chung. */
+const chDay = new Chart($("chDay"), {
+  type: "bar",
+  data: { labels: [], datasets: [
+    { label: "Bơm vào", data: [], backgroundColor: C("--water"), borderRadius: 4,
+      borderSkipped: "bottom", barPercentage: .82, categoryPercentage: .7 },
+    { label: "Tiêu thụ", data: [], backgroundColor: C("--draw"), borderRadius: 4,
+      borderSkipped: "bottom", barPercentage: .82, categoryPercentage: .7 } ]},
+  options: { ...base("L"), interaction: { mode: "index", intersect: false },
+    scales: { ...base("L").scales, x: { ...base("L").scales.x, grid: { display: false } } },
+    plugins: { ...base("L").plugins, tooltip: { ...base("L").plugins.tooltip,
+      callbacks: { label: c => ` ${c.dataset.label}: ${c.parsed.y.toFixed(2)} L` } } } }
+});
+
+async function daily(){
+  const r = await get("/api/volume/daily?days=7");
+  const vn = d => { const [y,m,dd] = d.split("-"); return `${dd}/${m}`; };
+  chDay.data.labels = r.map(x => vn(x.day));
+  chDay.data.datasets[0].data = r.map(x => x.in_l);
+  chDay.data.datasets[1].data = r.map(x => x.out_l);
+  chDay.update("none");
+  const t = r[r.length - 1];
+  const todayIso = new Date().toLocaleDateString("sv-SE");
+  $("today").textContent = (t && t.day === todayIso)
+    ? `Hôm nay: bơm vào ${t.in_l.toFixed(2)} L · tiêu thụ ${t.out_l.toFixed(2)} L`
+    : "Hôm nay: chưa có số liệu";
+}
+
 const hhmm = t => new Date(t*1000).toLocaleTimeString("vi-VN",{hour12:false});
 
 async function books(){
@@ -552,8 +603,9 @@ async function books(){
   $("tFault").innerHTML = f.length ? f.map(r=>`
     <tr><td class="num">${hhmm(r.recv_ts)}</td>
         <td><span class="tag ${sev(r.code)}"><i></i>${r.code}</span></td>
+        <td>${r.pump_health ? (HEALTH[r.pump_health]||{t:r.pump_health}).t : "—"}</td>
         <td class="num">${(r.level_pct??0).toFixed(1)}%</td></tr>`).join("")
-    : `<tr><td colspan="3" class="none">Chưa có sự cố nào được ghi.</td></tr>`;
+    : `<tr><td colspan="4" class="none">Chưa có sự cố nào được ghi.</td></tr>`;
 
   const c = await get("/api/commands?limit=25");
   $("tCmd").innerHTML = c.length ? c.map(r=>`
@@ -680,8 +732,8 @@ $("bClear").onclick=()=>send("clear_fault");$("bReset").onclick=()=>send("reset_
     if (ev.length && !ev[0].pump) lastOffAt = ev[0].recv_ts * 1000;
   } catch {}
   await checkAuth();
-  tick(); history(); books();
-  setInterval(tick, 1000); setInterval(history, 3000); setInterval(books, 6000);
+  tick(); history(); books(); daily();
+  setInterval(tick, 1000); setInterval(history, 3000); setInterval(books, 6000); setInterval(daily, 30000);
 })();
 </script>
 </body>

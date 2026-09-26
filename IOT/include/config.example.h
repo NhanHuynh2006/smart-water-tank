@@ -422,6 +422,22 @@
 // phan giai duoc dong nho hon khoang 40 mA, bao so le duoi muc do la bao sai.
 #define CURRENT_NOISE_MV     4.0f
 
+// ---------- Phan loai suc khoe bom ----------
+// Phan nang cao thu hai de bai cho phep: "pump-current/flow consistency to
+// classify pump faults". Ket hop hai bang chung DOC LAP — dong dien qua bom
+// va nuoc co chay vao hay khong — de tach cac kieu hong ra:
+//    co dong, co nuoc     -> ok
+//    khong dong           -> no_current : ro le, day noi, hoac dong co chay
+//    co dong, khong nuoc  -> no_flow    : chay kho, ong hut ho, hoac bi tac
+// Bang chung nuoc chay: muc nuoc dang len (khi suy luu luong tu muc), hoac
+// cam bien luu luong co xung (khi dung cam bien).
+//
+// Muc nuoc len rong 0,032 cm/s do duoc khi van xa mo. Lay mot phan ba lam
+// nguong, va cho 25 giay de bo loc toc do on dinh sau khi bom bat.
+#define PUMP_START_MS        2000UL
+#define FLOW_EVIDENCE_MS    25000UL
+#define FLOW_EVIDENCE_CMS    0.010f
+
 // Toc do bam theo diem nghi khi bom dang tat. 0,02 voi chu ky 200 ms cho
 // hang so thoi gian khoang 10 giay: du nhanh de theo kip troi nhiet, du
 // cham de khong bi mot xung nhieu keo di.

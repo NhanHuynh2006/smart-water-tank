@@ -560,6 +560,35 @@ void readFloats() {
 }
 
 // ------------------------------------------------------------
+//  PHAN LOAI SUC KHOE BOM
+//  Tu tinh nhat quan giua dong dien va dong chay. Chi la NHAN chan doan de
+//  cong bo; viec ngat bom van do cac luat NO_CURRENT, DRY_RUN va NO_PROGRESS
+//  lam. Moi su co cong bo kem nhan nay, nen biet ngay hong phan dien hay
+//  hong phia nuoc.
+// ------------------------------------------------------------
+enum PumpHealth { PH_IDLE, PH_STARTING, PH_OK, PH_NO_CURRENT, PH_NO_FLOW };
+const char* PUMP_HEALTH_NAME[] = { "idle", "starting", "ok", "no_current", "no_flow" };
+
+PumpHealth pumpHealth() {
+  static PumpHealth last = PH_IDLE;
+  if (!pumpOn) return last = PH_IDLE;
+  uint32_t on = millis() - pumpOnSince;
+  if (on < PUMP_START_MS) return last = PH_STARTING;       // xung dong, ro le
+  if (currentMv < CURRENT_ON_MV) return last = PH_NO_CURRENT;
+
+  bool evidence;
+#if FLOW_FROM_LEVEL
+  // Mat muc nuoc thi khong ket luan duoc gi ve dong chay: giu nhan cu.
+  if (!levelOk) return last;
+  evidence = levelRateCmS > FLOW_EVIDENCE_CMS;
+#else
+  evidence = flowOk && flowLpm >= DRYRUN_FLOW_LPM;
+#endif
+  if (on < FLOW_EVIDENCE_MS) return last = (evidence ? PH_OK : PH_STARTING);
+  return last = (evidence ? PH_OK : PH_NO_FLOW);
+}
+
+// ------------------------------------------------------------
 //  CHAN AN TOAN CUNG
 //  Chay MOI chu ky, truoc may trang thai, va khong dua vao levelOk,
 //  vao trung vi hay vao phao. Chi can MOT trong cac dieu kien nay dung
@@ -614,15 +643,20 @@ void stopPump() {
 void raiseFault(const char* code) {
   if (strcmp(faultCode, code) == 0) return;
   strncpy(faultCode, code, sizeof(faultCode) - 1);
+  // Chup nhan suc khoe bom TRUOC khi ngat: sau stopPump() nhan chi con "idle".
+  const char* health = PUMP_HEALTH_NAME[pumpHealth()];
   stopPump();
 
-  StaticJsonDocument<192> doc;
+  StaticJsonDocument<256> doc;
   doc["dev"]  = DEVICE_ID;
   doc["code"] = code;
+  doc["pump_health"] = health;
+  doc["current_ma"]  = (currentMv < CURRENT_NOISE_MV) ? 0.0f : currentMv * CURRENT_MA_PER_MV;
   doc["ts"]   = nowTs();
   doc["level_pct"] = levelPct;
   doc["flow_lpm"]  = flowLpm;
-  char buf[192]; size_t n = serializeJson(doc, buf);
+  char buf[256]; size_t n = serializeJson(doc, buf);
+  if (n >= sizeof(buf) - 1) Serial.println("[LOI] ban tin su co bi cat");
   if (mqtt.connected()) mqtt.publish(topicFault, (uint8_t*)buf, n, false);
 
   digitalWrite(PIN_LED_FAULT, HIGH);
@@ -900,6 +934,7 @@ size_t buildTelemetry(char* buf, size_t cap, const Sample* s) {
     doc["mode"]      = autoMode ? "AUTO" : "MANUAL";
     doc["current_mv"]= currentMv;
     // Doi ra mA de hien thi. mV la dien ap tho cua cam bien, khong phai dong.
+    doc["pump_health"] = PUMP_HEALTH_NAME[pumpHealth()];
     doc["current_ma"]= (currentMv < CURRENT_NOISE_MV) ? 0.0f
                                                        : currentMv * CURRENT_MA_PER_MV;
     doc["float_max"] = floatMax;
