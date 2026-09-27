@@ -35,17 +35,21 @@ The design respects all three naming pitfalls listed in the lectures \cite{slide
 
 Payloads use JSON built with a statically allocated document, following the rule that forbids dynamic allocation inside the loop \cite{slide05, arduinojson}.
 
-\begin{lstlisting}[caption={Telemetry message payload.},label={lst:telemetry}]
-{ "dev":"esp32-01", "ts":1735689600, "ts_ms":1735689600123, "seq":10421,
-  "level_pct":62.4, "level_cm":15.6, "level_ok":true,
-  "flow_lpm":1.28, "volume_l":143.62, "volume_today_l":12.40,
+\begin{lstlisting}[caption={Telemetry message payload, abridged.},label={lst:telemetry}]
+{ "dev":"esp32-01", "ts":1790160600, "ts_ms":1790160600123, "seq":10421,
+  "level_pct":62.4, "level_cm":8.74, "level_ok":true,
+  "level_rate_cms":0.036, "level_model_cm":8.71, "blind_ms":0,
+  "flow_lpm":0.36, "volume_l":143.62, "volume_today_l":12.40,
+  "flow_out_lpm":0.16, "volume_out_l":98.10, "flow_src":"level",
   "pump":true, "state":"FILLING", "mode":"AUTO",
-  "current_mv":38.2, "float_max":false, "float_min":true, "rssi":-55 }
+  "current_mv":36.1, "current_ma":390.2, "pump_health":"ok",
+  "float_max":false, "float_min":false, "fault":"", "rssi":-55,
+  "lv_try":605, "lv_ok":563, "rj_spread":31, "ctl_gap_ms":201 }
 \end{lstlisting}
 
-The \texttt{seq} field is a monotonically increasing counter allowing lost messages to be counted exactly in Section 8.4. The \texttt{ts} field is produced by the device after time synchronisation and supports latency measurement. The \texttt{level\_ok} field states whether the reading can be trusted, letting the interface distinguish a genuinely low tank from a broken sensor. Messages replayed after reconnection carry a \texttt{replay} flag and are excluded from latency statistics.
+The \texttt{seq} field is a monotonically increasing counter allowing lost messages to be counted exactly in Section 8.5. The \texttt{ts\_ms} field is produced by the device after time synchronisation and supports latency measurement. The \texttt{level\_ok} field states whether the reading can be trusted, letting the interface distinguish a genuinely low tank from a broken sensor. The \texttt{flow\_src} field states whether the flow figures come from the pulse sensors or are derived from the level, so no consumer can mistake one for the other. The \texttt{lv\_try}, \texttt{lv\_ok} and \texttt{rj\_*} counters record how many level pings were attempted, accepted and rejected at each filter stage; they turned out to be the most useful diagnostic in the project, as Section 8.8 shows. The \texttt{ctl\_gap\_ms} field reports the longest control period since the previous live message, so the first message after an outage proves whether the control loop was ever stalled by the network. Messages replayed after reconnection carry a \texttt{replay} flag and a reduced field set, and are excluded from latency statistics. The full message runs to several hundred bytes, so the serialisation buffer is 1024 bytes and the MQTT client buffer 1200 bytes; Section 8.8 explains why both margins are explicit.
 
-Eight fault codes are defined and fall into two groups. The non self clearing group, made of \texttt{DRY\_RUN}, \texttt{NO\_CURRENT}, \texttt{FILL\_TIMEOUT} and \texttt{OVERFLOW}, requires the operator to confirm that the physical cause has been dealt with before the fault can be cleared. The self clearing group, made of \texttt{SENSOR\_TIMEOUT} and \texttt{SENSOR\_CONFLICT}, concerns signal quality and resolves on its own once the signal has been valid for long enough. The remaining two, \texttt{LEAK\_SUSPECTED} and \texttt{LEAK\_BASELINE}, raise a warning without locking the pump. Trigger conditions for each code are given in Section 6.4.
+Eleven fault codes are generated on the device and one on the backend. They fall into three groups. The self clearing group, \texttt{SENSOR\_TIMEOUT}, \texttt{SENSOR\_CONFLICT} and \texttt{LEVEL\_LOST}, concerns signal quality and resolves on its own once the signal has been valid for long enough. The latching group, \texttt{OVERFLOW}, \texttt{NO\_CURRENT}, \texttt{DRY\_RUN}, \texttt{NO\_PROGRESS}, \texttt{FILL\_TIMEOUT}, \texttt{HARD\_LIMIT} and \texttt{VOLUME\_LIMIT}, requires the operator to confirm that the physical cause has been dealt with before the fault can be cleared. The warning group, \texttt{LEAK\_SUSPECTED} on the device and \texttt{LEAK\_BASELINE} on the backend, raises an alert without locking the pump. Every fault message also carries the pump health label and the pump current at the instant of the fault, captured before the pump is stopped, so the record states not only that something failed but which side of the pump failed. Trigger conditions are given in Section 6.4.
 
 \section{Command and acknowledgement mechanism}
 
@@ -59,12 +63,14 @@ This section implements the feedback sync principle of Section 2.5 and satisfies
  "reason":"overflow_guard","state":"OVERFLOW_LOCK","pump":false}
 \end{lstlisting}
 
-The acknowledgement reports not only the outcome but also the actual device state after processing, so the dashboard always displays a state the device has confirmed rather than one the user has just requested. Four actions are supported: change mode, switch the pump, clear a fault and reset the daily volume counter. Ten rejection reasons are defined, including \texttt{auto\_mode\_active}, \texttt{fault\_active}, \texttt{overflow\_guard}, \texttt{float\_max\_triggered}, \texttt{level\_sensor\_invalid} and \texttt{min\_off\_time}.
+The acknowledgement reports not only the outcome but also the actual device state after processing, so the dashboard always displays a state the device has confirmed rather than one the user has just requested. Four actions are supported: change mode, switch the pump, clear a fault and reset the volume counters. Ten rejection reasons are defined: \texttt{auto\_mode\_active}, \texttt{fault\_active}, \texttt{overflow\_guard}, \texttt{float\_max\_triggered}, \texttt{water\_too\_close}, \texttt{level\_sensor\_invalid}, \texttt{min\_off\_time}, \texttt{no\_active\_fault}, \texttt{condition\_still\_present} and \texttt{unknown\_action}. The dashboard translates each into a plain sentence, and for \texttt{min\_off\_time} it shows a countdown on the pump button until a start will be accepted.
 
 The rejection table is worth more than a debugging aid: during the demonstration, pressing the pump on button while a fault is active and seeing an explicit rejection with a named reason is visible proof that manual mode cannot override the interlocks.
 
 \section{Connection lifecycle and availability monitoring}
 
 The firmware implements the four state connection machine described in the lectures. The critical point is the accompanying design note: connection logic must never sit inside a blocking wait loop, because that stalls the processor and suspends both analog sampling and safety checks for the whole outage \cite{slide03}. Our reconnection routine therefore never blocks, retries only once its interval has elapsed, and the control loop runs independently of network state. The retry interval grows exponentially with an upper bound, $T_{retry} = \min(T_{max}, T_{base} \cdot 2^{n})$ with $T_{base}$ of 1 second and $T_{max}$ of 30 seconds \cite{slide06}.
+
+A non blocking design still has to account for the calls it cannot avoid. Opening a TCP connection to an unreachable broker blocks inside the network stack, and the default timeout of the ESP32 client is three seconds, during which the control loop does not run. The firmware therefore opens the socket itself with a 500 millisecond limit before handing it to the MQTT client, and bounds the wait for the broker's connection acknowledgement to two seconds. After a Wi-Fi reconnection the device also resolves the broker's host name over multicast DNS, because a laptop that moves between networks receives a different address on each; a fixed fallback address is used if the name does not resolve.
 
 On connecting, the device pre registers a last will message announcing that it is offline, then overwrites it with an online message once the session is established. Should the node suffer an abrupt loss of power, the broker keep alive supervisor publishes the stored will by itself \cite{slide03}, so the interface switches to a disconnected state with no polling logic on the application side. A second backend check treats the device as offline when the newest telemetry message is older than 5 seconds. The two complement each other, since the will reacts quickly to a total power loss while the freshness check also catches a live session whose data stream has stopped.
