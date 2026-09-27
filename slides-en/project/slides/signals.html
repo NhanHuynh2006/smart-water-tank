@@ -1,0 +1,26 @@
+<section id="signals" style="background:#F7F8F5; color:#14213D; font-family:'IBM Plex Sans', Arial, sans-serif; padding:128px 128px 160px; display:flex; flex-direction:column; gap:48px">
+<div style="display:flex; flex-direction:column; gap:16px">
+<p style="font-size:24px; color:#1F63B8; letter-spacing:3px; text-transform:uppercase; font-weight:600">Signal conditioning</p>
+<h2 style="font-size:64px; font-weight:600">Three wiring lessons, each found by measuring</h2>
+</div>
+<div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:32px">
+<div style="display:flex; flex-direction:column; gap:16px; background:#FFFFFF; padding:40px; border:1px solid #DDE3EA; border-radius:16px">
+<p style="font-size:64px; font-weight:600; color:#B8471A; font-family:'JetBrains Mono', 'Courier New', monospace">30 % → 0</p>
+<h3 style="font-size:32px; font-weight:600">Echo loss</h3>
+<p style="font-size:28px; color:#4A5568; line-height:1.4">A TXS0108E level shifter distorted the echo pulse. A plain resistor divider fixed it: 0 misses in 179 pings.</p>
+</div>
+<div style="display:flex; flex-direction:column; gap:16px; background:#FFFFFF; padding:40px; border:1px solid #DDE3EA; border-radius:16px">
+<p style="font-size:64px; font-weight:600; color:#B8471A; font-family:'JetBrains Mono', 'Courier New', monospace">50.00 Hz</p>
+<h3 style="font-size:32px; font-weight:600">Mains pickup</h3>
+<p style="font-size:28px; color:#4A5568; line-height:1.4">Flow read 0.3 L/min with the valve shut. The internal 45 kΩ pull up was an antenna; 4.7 kΩ gave 0 Hz.</p>
+</div>
+<div style="display:flex; flex-direction:column; gap:16px; background:#FFFFFF; padding:40px; border:1px solid #DDE3EA; border-radius:16px">
+<p style="font-size:64px; font-weight:600; color:#B8471A; font-family:'JetBrains Mono', 'Courier New', monospace">1500 Hz</p>
+<h3 style="font-size:32px; font-weight:600">Pump noise</h3>
+<p style="font-size:28px; color:#4A5568; line-height:1.4">With the pump on, both flow lines read 40× the real 35 Hz. Diode and rerouting changed nothing: it is conducted.</p>
+</div>
+</div>
+<p style="font-size:32px; color:#14213D; line-height:1.4">So flow for control is <b>derived from the level</b>, and the dashboard says so.</p>
+<p style="position:absolute; left:128px; bottom:64px; width:1664px; font-size:24px; color:#6B7280">Project 08 · Smart Water Tank · 7</p>
+<aside>These three are in the report's "Faults found on the bench" section. The third one is why we do not trust the YF-S401 readings: 1474 and 1548 Hz while the pump runs, before and after the flyback diode, versus about 35 Hz for real water. The outlet draw of 0.1 to 0.2 L/min is also below the sensor's 0.3 L/min start. We state this openly rather than show numbers we know are wrong.</aside>
+</section>

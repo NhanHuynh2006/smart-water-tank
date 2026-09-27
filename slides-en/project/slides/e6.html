@@ -1,0 +1,18 @@
+<section id="e6" style="background:#F7F8F5; color:#14213D; font-family:'IBM Plex Sans', Arial, sans-serif; padding:128px 128px 160px; display:flex; flex-direction:column; gap:48px">
+<div style="display:flex; flex-direction:column; gap:16px">
+<p style="font-size:24px; color:#1F63B8; letter-spacing:3px; text-transform:uppercase; font-weight:600">E5 · E6 · faults and outage</p>
+<h2 style="font-size:64px; font-weight:600">The device was cut off for 60 s and lost only the keep-alive window</h2>
+</div>
+<div style="display:grid; grid-template-columns:1fr 1fr 1fr 1fr; gap:32px">
+<div style="display:flex; flex-direction:column; gap:4px"><p style="font-size:72px; font-weight:600; color:#1F63B8; font-family:'JetBrains Mono', 'Courier New', monospace">32</p><p style="font-size:26px; color:#4A5568">messages buffered and replayed</p></div>
+<div style="display:flex; flex-direction:column; gap:4px"><p style="font-size:72px; font-weight:600; color:#B8471A; font-family:'JetBrains Mono', 'Courier New', monospace">10</p><p style="font-size:26px; color:#4A5568">lost before the 15 s keep alive noticed</p></div>
+<div style="display:flex; flex-direction:column; gap:4px"><p style="font-size:72px; font-weight:600; color:#1F63B8; font-family:'JetBrains Mono', 'Courier New', monospace">0</p><p style="font-size:26px; color:#4A5568">unintended pump starts</p></div>
+<div style="display:flex; flex-direction:column; gap:4px"><p style="font-size:72px; font-weight:600; color:#1F63B8; font-family:'JetBrains Mono', 'Courier New', monospace">40 s</p><p style="font-size:26px; color:#4A5568">SENSOR_TIMEOUT after last trusted reading, n = 9</p></div>
+</div>
+<div style="display:flex; flex-direction:column; gap:16px; background:#FFFFFF; padding:40px; border:1px solid #DDE3EA; border-radius:16px">
+<p style="font-size:30px; color:#4A5568; line-height:1.4">Lost messages were written into a socket the client still thought was open. Isolate the <b style="color:#14213D">device</b>, not the broker: stopping the broker made the replay arrive before the backend resubscribed.</p>
+<p style="font-size:30px; color:#4A5568; line-height:1.4">To run on the final firmware: <span style="font-family:'JetBrains Mono', 'Courier New', monospace; color:#1F63B8">bench.py outage</span> with the pump running at the cut, plus float, suction and wire injections via <span style="font-family:'JetBrains Mono', 'Courier New', monospace; color:#1F63B8">bench.py fault</span>.</p>
+</div>
+<p style="position:absolute; left:128px; bottom:64px; width:1664px; font-size:24px; color:#6B7280">Project 08 · Smart Water Tank · 25</p>
+<aside>Sequence numbers 598 to 629 were replayed; 588 to 597 were lost inside the keep-alive detection window. The buffer was 13 percent full, so four minutes are within capacity. SENSOR_TIMEOUT arrives about 40 s after the last trusted message because the level is marked untrusted 5 s after the last accepted reading and the 45 s timeout counts from that same reading. Update this slide with the bench.py results from the final run.</aside>
+</section>

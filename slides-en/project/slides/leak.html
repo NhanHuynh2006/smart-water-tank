@@ -1,0 +1,15 @@
+<section id="leak" style="background:#F7F8F5; color:#14213D; font-family:'IBM Plex Sans', Arial, sans-serif; padding:128px 128px 160px; display:grid; grid-template-columns:1fr 820px; gap:64px; align-items:center">
+<div style="display:flex; flex-direction:column; gap:32px">
+<p style="font-size:24px; color:#1F63B8; letter-spacing:3px; text-transform:uppercase; font-weight:600">Advanced · rolling baseline</p>
+<h2 style="font-size:56px; font-weight:600; line-height:1.15">What is normal at 7 pm is not normal at 3 am</h2>
+<p style="font-size:30px; color:#4A5568; line-height:1.45">48 slots of 30 min, each with an EWMA mean and variance (α = 0.2). Alarm when use &gt; μ + 3σ in two slots in a row.</p>
+<p style="font-size:30px; color:#4A5568; line-height:1.45">Skips slots with a counter reset or more water than the pump can deliver. Rebuilt from history at every start.</p>
+<p style="font-size:30px; color:#B8471A; line-height:1.45">Honest status: needs 3 days per slot; 0 of 48 slots qualify yet.</p>
+</div>
+<div style="display:flex; flex-direction:column; gap:16px">
+<img src="/_blob/f2771c801b57a8f8128459abf07ac2fa" alt="Bar chart of litres pumped in and drawn out per day for 21, 22 and 23 September" style="width:820px; height:460px; object-fit:contain; background:#FFFFFF; border-radius:16px">
+<p style="font-size:24px; color:#6B7280">Daily volume from /api/volume/daily: sums per row increments, so a reset adds nothing</p>
+</div>
+<p style="position:absolute; left:128px; bottom:64px; width:1664px; font-size:24px; color:#6B7280">Project 08 · Smart Water Tank · 16</p>
+<aside>The baseline runs on the backend because it needs days of memory. Early noisy flow readings had accumulated thousands of phantom litres, so slots with impossible volumes are skipped rather than learned. The daily volume query was also rewritten: max minus min per day broke on every counter reset; summing increments between consecutive rows is robust. We are honest that the detector has not yet converged on three bench days.</aside>
+</section>

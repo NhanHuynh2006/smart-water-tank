@@ -157,7 +157,7 @@ Kịch bản dự phòng: quay video toàn bộ các bước trên một lần t
 
 - [ ] Nguyên mẫu + mã nguồn (repo GitHub)
 - [ ] Báo cáo (`iot-report-en/main.pdf`) — còn điền tên, MSSV, bảng đóng góp
-- [ ] Slide 60 phút (35–40 phút kỹ thuật + 10–15 phút demo)
+- [x] Slide tiếng Anh 30 trang (`slides-en/`, bản trình chiếu trên claude.ai) — còn điền tên nhóm
 - [ ] Sơ đồ kiến trúc (`docs/architecture.html`) và sơ đồ đấu dây (`docs/wiring.md`)
 - [ ] Đặc tả MQTT/API (`docs/protocol.md`, FastAPI `/docs`)
 - [ ] Lược đồ CSDL (báo cáo chương 5)

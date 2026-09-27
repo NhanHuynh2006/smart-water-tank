@@ -1,0 +1,21 @@
+<section id="reqmap" style="background:#F7F8F5; color:#14213D; font-family:'IBM Plex Sans', Arial, sans-serif; padding:128px 128px 160px; display:flex; flex-direction:column; gap:40px">
+<div style="display:flex; flex-direction:column; gap:16px">
+<p style="font-size:24px; color:#1F63B8; letter-spacing:3px; text-transform:uppercase; font-weight:600">The brief, requirement by requirement</p>
+<h2 style="font-size:64px; font-weight:600">Every requirement has a place and a status</h2>
+</div>
+<table style="font-size:26px; color:#14213D">
+<tr><th style="width:52%">Requirement</th><th style="width:28%">How</th><th style="width:20%">Status</th></tr>
+<tr><td>ESP32, level + flow sensors</td><td>HC-SR04, 2 × YF-S401, ACS712</td><td>Met, flow from level</td></tr>
+<tr><td>Relay with inductive protection</td><td>Relay + 1N4007 + 100 nF</td><td>Met</td></tr>
+<tr><td>No overflow, safe on bad sensors</td><td>6 independent layers</td><td>Met</td></tr>
+<tr><td>Flow and accumulated volume</td><td>On device, saved to flash</td><td>Met, −5 % error</td></tr>
+<tr><td>MQTT telemetry, state, faults, availability</td><td>6 topics, LWT</td><td>Met</td></tr>
+<tr><td>Storage, REST API, dashboard</td><td>SQLite, FastAPI, web page</td><td>Met</td></tr>
+<tr><td>Hysteresis / FSM + fault rule</td><td>30–70 %, 7 states, 11 rules</td><td>Met</td></tr>
+<tr><td>Manual cannot bypass safety; acks</td><td>One guard function; cmd/ack</td><td>Met</td></tr>
+<tr><td>Local control during outage</td><td>Loop on ESP32, ring buffer</td><td>Met</td></tr>
+<tr><td>Advanced: baseline or current/flow</td><td>Both built</td><td>Baseline converging</td></tr>
+</table>
+<p style="position:absolute; left:128px; bottom:64px; width:1664px; font-size:24px; color:#6B7280">Project 08 · Smart Water Tank · 3</p>
+<aside>This is the requirement table from chapter 2 of the report. Be upfront about the two partial items: the flow sensors are fitted but the numbers used for control come from the level, and the rolling baseline has not yet seen enough days to alarm. Both are explained later with measurements.</aside>
+</section>

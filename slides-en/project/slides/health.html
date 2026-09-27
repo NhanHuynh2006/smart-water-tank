@@ -1,0 +1,19 @@
+<section id="health" style="background:#F7F8F5; color:#14213D; font-family:'IBM Plex Sans', Arial, sans-serif; padding:128px 128px 160px; display:flex; flex-direction:column; gap:48px">
+<div style="display:flex; flex-direction:column; gap:16px">
+<p style="font-size:24px; color:#1F63B8; letter-spacing:3px; text-transform:uppercase; font-weight:600">Advanced · pump current vs flow</p>
+<h2 style="font-size:64px; font-weight:600">Same symptom, two causes, two places to look</h2>
+</div>
+<table style="font-size:30px; color:#14213D">
+<tr><th style="width:22%">Label</th><th style="width:20%">Current</th><th style="width:22%">Water moving</th><th style="width:36%">Meaning</th></tr>
+<tr><td style="font-family:'JetBrains Mono', 'Courier New', monospace">ok</td><td>yes</td><td>yes</td><td>Healthy pump</td></tr>
+<tr style="background:#FFF3EC"><td style="font-family:'JetBrains Mono', 'Courier New', monospace">no_flow</td><td>yes</td><td>no, after 25 s</td><td>Hydraulic: dry, blocked, detached pipe</td></tr>
+<tr style="background:#FFF3EC"><td style="font-family:'JetBrains Mono', 'Courier New', monospace">no_current</td><td>no</td><td>no</td><td>Electrical: open wire, relay, motor</td></tr>
+<tr><td style="font-family:'JetBrains Mono', 'Courier New', monospace">starting · idle</td><td>any</td><td>not judged</td><td>First 2 to 25 s · pump off</td></tr>
+</table>
+<div style="display:grid; grid-template-columns:1fr 1fr; gap:48px">
+<p style="font-size:30px; color:#4A5568; line-height:1.4"><b style="color:#14213D">Evidence of water:</b> level rate above 0.010 cm/s. At the real 0.036 cm/s, 25 s gives 0.9 cm, well above noise.</p>
+<p style="font-size:30px; color:#4A5568; line-height:1.4"><b style="color:#14213D">Captured at the fault:</b> the label and current go into every fault record, taken before the pump is stopped.</p>
+</div>
+<p style="position:absolute; left:128px; bottom:64px; width:1664px; font-size:24px; color:#6B7280">Project 08 · Smart Water Tank · 15</p>
+<aside>This is the second advanced option of the brief. The classifier is diagnostic, not protective: NO_CURRENT and NO_PROGRESS stop the pump. Its value is telling the operator whether to check the wiring or the plumbing. The dashboard shows the label under the current tile and in a column of the fault table. In the demo we lift the suction out of the water and watch it change to no_flow.</aside>
+</section>

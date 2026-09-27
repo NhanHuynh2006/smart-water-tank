@@ -1,0 +1,26 @@
+<section id="fsm" style="background:#F7F8F5; color:#14213D; font-family:'IBM Plex Sans', Arial, sans-serif; padding:128px 128px 160px; display:flex; flex-direction:column; gap:40px">
+<div style="display:flex; flex-direction:column; gap:16px">
+<p style="font-size:24px; color:#1F63B8; letter-spacing:3px; text-transform:uppercase; font-weight:600">State machine and hysteresis</p>
+<h2 style="font-size:64px; font-weight:600">Start below 30 %, stop above 70 %, faults are sticky</h2>
+</div>
+<div style="position:relative; height:520px">
+<div style="position:absolute; left:0px; top:40px; width:300px; height:120px; background:#FFFFFF; border:2px solid #3987E5; border-radius:16px; display:flex; align-items:center; justify-content:center"><p style="font-size:32px; font-weight:600; font-family:'JetBrains Mono', 'Courier New', monospace">IDLE</p></div>
+<div style="position:absolute; left:680px; top:40px; width:300px; height:120px; background:#3987E5; border-radius:16px; display:flex; align-items:center; justify-content:center"><p style="font-size:32px; font-weight:600; color:#FFFFFF; font-family:'JetBrains Mono', 'Courier New', monospace">FILLING</p></div>
+<div style="position:absolute; left:1360px; top:40px; width:300px; height:120px; background:#FFFFFF; border:2px solid #3987E5; border-radius:16px; display:flex; align-items:center; justify-content:center"><p style="font-size:32px; font-weight:600; font-family:'JetBrains Mono', 'Courier New', monospace">MANUAL_ON</p></div>
+<div style="position:absolute; left:0px; top:380px; width:420px; height:120px; background:#FFF3EC; border:2px solid #D95926; border-radius:16px; display:flex; align-items:center; justify-content:center"><p style="font-size:30px; font-weight:600; font-family:'JetBrains Mono', 'Courier New', monospace">FAULT_SENSOR</p></div>
+<div style="position:absolute; left:620px; top:380px; width:420px; height:120px; background:#FFF3EC; border:2px solid #D95926; border-radius:16px; display:flex; align-items:center; justify-content:center"><p style="font-size:30px; font-weight:600; font-family:'JetBrains Mono', 'Courier New', monospace">FAULT_DRYRUN</p></div>
+<div style="position:absolute; left:1240px; top:380px; width:420px; height:120px; background:#FFF3EC; border:2px solid #D95926; border-radius:16px; display:flex; align-items:center; justify-content:center"><p style="font-size:30px; font-weight:600; font-family:'JetBrains Mono', 'Courier New', monospace">OVERFLOW_LOCK</p></div>
+<x-connector x1="300" y1="80" x2="680" y2="80" head="end" style="color:#3987E5; border-width:3px"></x-connector>
+<x-connector x1="680" y1="130" x2="300" y2="130" head="end" style="color:#3987E5; border-width:3px"></x-connector>
+<p style="position:absolute; left:320px; top:10px; width:340px; font-size:24px; color:#1F63B8">&lt; 30 % or low float</p>
+<p style="position:absolute; left:320px; top:140px; width:340px; font-size:24px; color:#1F63B8">&gt; 70 %, on ≥ 3 s</p>
+<x-connector x1="1360" y1="100" x2="980" y2="100" head="none" style="color:#8A97A8; border-width:2px; border-style:dashed"></x-connector>
+<x-connector x1="830" y1="160" x2="830" y2="380" head="end" style="color:#D95926; border-width:3px"></x-connector>
+<x-connector x1="700" y1="160" x2="210" y2="380" head="end" style="color:#D95926; border-width:3px"></x-connector>
+<x-connector x1="960" y1="160" x2="1450" y2="380" head="end" style="color:#D95926; border-width:3px"></x-connector>
+<p style="position:absolute; left:860px; top:250px; width:300px; font-size:24px; color:#B8471A">fault rule fires</p>
+</div>
+<p style="font-size:28px; color:#4A5568; line-height:1.4">Sensor faults clear themselves after 2.5 s of good signal. Pump and overflow faults wait for an operator. Minimum off time 20 s.</p>
+<p style="position:absolute; left:128px; bottom:64px; width:1664px; font-size:24px; color:#6B7280">Project 08 · Smart Water Tank · 12</p>
+<aside>Seven states. The hysteresis band is 30 to 70 percent with 15 percent margin to the overflow limit. Why a state machine instead of an if statement: fault states must be sticky, otherwise a pump that sucked air restarts the moment the tube touches water again. One invariant is enforced every cycle: if a fault code is set, the state must be a fault state. An early version broke this and looked idle while refusing every start.</aside>
+</section>

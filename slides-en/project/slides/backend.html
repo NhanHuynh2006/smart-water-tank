@@ -1,0 +1,22 @@
+<section id="backend" data-section="Backend, dashboard, security and outage behaviour" style="background:#F7F8F5; color:#14213D; font-family:'IBM Plex Sans', Arial, sans-serif; padding:128px 128px 160px; display:grid; grid-template-columns:1fr 1fr; gap:64px">
+<div style="display:flex; flex-direction:column; gap:32px">
+<p style="font-size:24px; color:#1F63B8; letter-spacing:3px; text-transform:uppercase; font-weight:600">Backend and data</p>
+<h2 style="font-size:56px; font-weight:600; line-height:1.15">One Python process, six tables, one row per second</h2>
+<p style="font-size:30px; color:#4A5568; line-height:1.45">SQLite is enough: one node writes 1 row/s, three orders of magnitude below where a relational store struggles.</p>
+<p style="font-size:30px; color:#4A5568; line-height:1.45">Tag vs field: timestamp indexed, <span style="font-family:'JetBrains Mono', 'Courier New', monospace">seq</span> deliberately not.</p>
+</div>
+<table style="font-size:24px; color:#14213D">
+<tr><th style="width:18%">Verb</th><th style="width:48%">Path</th><th style="width:34%">Purpose</th></tr>
+<tr><td>GET</td><td style="font-family:'JetBrains Mono', 'Courier New', monospace">/api/latest</td><td>State + freshness</td></tr>
+<tr><td>GET</td><td style="font-family:'JetBrains Mono', 'Courier New', monospace">/api/telemetry</td><td>Time series</td></tr>
+<tr><td>GET</td><td style="font-family:'JetBrains Mono', 'Courier New', monospace">/api/volume/daily</td><td>In / out per day</td></tr>
+<tr><td>GET</td><td style="font-family:'JetBrains Mono', 'Courier New', monospace">/api/faults · events</td><td>Logs</td></tr>
+<tr><td>GET</td><td style="font-family:'JetBrains Mono', 'Courier New', monospace">/api/commands</td><td>Acks + RTT</td></tr>
+<tr><td>GET</td><td style="font-family:'JetBrains Mono', 'Courier New', monospace">/api/leak/baseline</td><td>Slots learned</td></tr>
+<tr><td>POST</td><td style="font-family:'JetBrains Mono', 'Courier New', monospace">/api/login · logout</td><td>Admin session</td></tr>
+<tr><td>POST</td><td style="font-family:'JetBrains Mono', 'Courier New', monospace">/api/command</td><td>Session required</td></tr>
+<tr><td>PUT</td><td style="font-family:'JetBrains Mono', 'Courier New', monospace">/api/config</td><td>Session required</td></tr>
+</table>
+<p style="position:absolute; left:128px; bottom:64px; width:1664px; font-size:24px; color:#6B7280">Project 08 · Smart Water Tank · 17</p>
+<aside>Tables: telemetry, faults, pump_events, commands, availability, config. GET for reads because they are safe; PUT for config because replacing the threshold set is idempotent; POST for commands because each creates a new record. A lesson recorded in the report: a telemetry message outgrew its buffer, ArduinoJson truncated silently, and paho swallowed the parse exception. Everything looked alive and nothing was stored. Both ends now report the condition loudly.</aside>
+</section>

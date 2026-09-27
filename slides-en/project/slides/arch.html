@@ -1,0 +1,10 @@
+<section id="arch" data-section="Architecture, hardware and the edge autonomy decision" style="background:#F7F8F5; color:#14213D; font-family:'IBM Plex Sans', Arial, sans-serif; padding:96px 128px 128px; display:grid; grid-template-columns:560px 1fr; gap:64px; align-items:center">
+<div style="display:flex; flex-direction:column; gap:32px">
+<p style="font-size:24px; color:#1F63B8; letter-spacing:3px; text-transform:uppercase; font-weight:600">Architecture</p>
+<h2 style="font-size:64px; font-weight:600; line-height:1.1">Four blocks in series, one loop at the edge</h2>
+<p style="font-size:32px; color:#4A5568; line-height:1.4">Perception: ESP32 and sensors. Transport: Mosquitto over Wi-Fi. Processing: FastAPI and SQLite. Application: the dashboard.</p>
+<p style="font-size:32px; color:#4A5568; line-height:1.4">A Cloudflare tunnel publishes the dashboard over HTTPS, without opening an inbound port.</p>
+</div>
+<img src="/_blob/76291f42659bd68f756becf7bed48900" alt="Architecture diagram: sensors feed the ESP32 control loop, which publishes over MQTT to Mosquitto, FastAPI backend, SQLite and the web dashboard" style="width:1040px; height:856px; object-fit:contain; background:#FFFFFF; border-radius:16px">
+<aside>Walk the diagram top to bottom. Physical process at the top, the ESP32 in the middle running the closed loop every 200 ms, the laptop at the bottom with broker, backend, database and dashboard. Point out that the only arrow from the server to the pump goes through the ESP32's own checks: the server can request, never force.</aside>
+</section>

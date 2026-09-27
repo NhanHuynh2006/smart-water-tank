@@ -1,0 +1,17 @@
+<section id="security" style="background:#F7F8F5; color:#14213D; font-family:'IBM Plex Sans', Arial, sans-serif; padding:128px 128px 160px; display:flex; flex-direction:column; gap:48px">
+<div style="display:flex; flex-direction:column; gap:16px">
+<p style="font-size:24px; color:#1F63B8; letter-spacing:3px; text-transform:uppercase; font-weight:600">Security</p>
+<h2 style="font-size:64px; font-weight:600">Two threats are stopped by physics, not cryptography</h2>
+</div>
+<table style="font-size:28px; color:#14213D">
+<tr><th style="width:38%">Attack</th><th style="width:62%">Mitigation</th></tr>
+<tr><td>Publish a pump command to the broker</td><td>Password + ACL; device account cannot write cmd</td></tr>
+<tr><td>Call the API directly</td><td>Session cookie: HttpOnly, SameSite Strict, Secure</td></tr>
+<tr><td>Guess the admin password online</td><td>5 failures in 5 min lock that address</td></tr>
+<tr style="background:#EAF2FC"><td>Forge telemetry to fake a low level</td><td>The float and the raw guard sit on the device</td></tr>
+<tr style="background:#EAF2FC"><td>Spam commands to wear the pump</td><td>Minimum on 3 s, off 20 s, enforced in firmware</td></tr>
+</table>
+<p style="font-size:30px; color:#4A5568; line-height:1.4">Password lives outside the repository, compared in constant time; tokens are 256-bit random.</p>
+<p style="position:absolute; left:128px; bottom:64px; width:1664px; font-size:24px; color:#6B7280">Project 08 · Smart Water Tank · 19</p>
+<aside>Security is cross cutting in ITU-T Y.2060, so it appears at every layer. The two highlighted rows are the interesting ones: no network message can override a mechanical float, and an attacker can send any number of commands without making the relay switch faster than the firmware allows. Known gaps, stated in the report: broker traffic inside the lab is not TLS, one shared admin password, sessions in memory.</aside>
+</section>

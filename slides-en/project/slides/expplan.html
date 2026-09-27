@@ -1,0 +1,20 @@
+<section id="expplan" data-section="Experiments and results measured on the bench" style="background:#F7F8F5; color:#14213D; font-family:'IBM Plex Sans', Arial, sans-serif; padding:128px 128px 160px; display:flex; flex-direction:column; gap:40px">
+<div style="display:flex; flex-direction:column; gap:16px">
+<p style="font-size:24px; color:#1F63B8; letter-spacing:3px; text-transform:uppercase; font-weight:600">Experiments</p>
+<h2 style="font-size:64px; font-weight:600">Every number comes from the database, by script</h2>
+</div>
+<table style="font-size:26px; color:#14213D">
+<tr><th style="width:8%">ID</th><th style="width:34%">Subject</th><th style="width:34%">Reference</th><th style="width:24%">Status</th></tr>
+<tr><td>E1</td><td>Level calibration</td><td>Scale in the tank</td><td>[pending run]</td></tr>
+<tr><td>E2</td><td>Flow, volume error</td><td>Tank geometry, drain slope</td><td>6 cycles</td></tr>
+<tr><td>E3</td><td>Control response</td><td>Thresholds</td><td>6 cycles</td></tr>
+<tr><td>E4</td><td>Switching frequency</td><td>Pump event log</td><td>84 min</td></tr>
+<tr><td>E5</td><td>Fault detection delay</td><td>Timestamped mark</td><td>Timeout done</td></tr>
+<tr><td>E6</td><td>Outage and recovery</td><td>Sequence numbers</td><td>60 s test</td></tr>
+<tr><td>E7</td><td>Latency</td><td>One server clock</td><td>n = 75</td></tr>
+<tr><td>E9</td><td>Wi-Fi power saving</td><td>One server clock</td><td>n = 12 + 12</td></tr>
+</table>
+<p style="font-size:28px; color:#4A5568">Session 23 Sep 16:48 to 18:12 · 4870 messages · level trusted 99.5 % · 0 faults</p>
+<p style="position:absolute; left:128px; bottom:64px; width:1664px; font-size:24px; color:#6B7280">Project 08 · Smart Water Tank · 21</p>
+<aside>Tools in the repository: analyze_experiments.py for cycles, switching and latency; bench.py for level calibration, fault injection with a timestamped Enter key, and the outage test. docs/TESTING.md has the step by step procedures. Fill in E1 and the remaining E5 rows after the final bench run and update this slide.</aside>
+</section>

@@ -1,0 +1,9 @@
+<section id="qa" style="background:#14213D; color:#F7F8F5; font-family:'IBM Plex Sans', Arial, sans-serif; padding:128px; display:flex; flex-direction:column; justify-content:space-between">
+<p style="font-size:32px; color:#6FA8F0; letter-spacing:4px; text-transform:uppercase">Project 08 · Smart Water Tank</p>
+<h1 style="font-size:120px; font-weight:600; color:#F7F8F5">Questions</h1>
+<div style="display:flex; flex-direction:column; gap:16px">
+<p style="font-size:32px; color:#BFD0E6; font-family:'JetBrains Mono', 'Courier New', monospace">github.com/NhanHuynh2006/smart-water-tank</p>
+<p style="font-size:28px; color:#BFD0E6">Report · code guide · test procedures in the repository</p>
+</div>
+<aside>Likely questions: why not a MOSFET (two-state, low switching rate, relay isolates the load supply); why SQLite (1 row per second); why polling (matches the publish rate); why flow from level (measured interference, sensor range); what happens if the ESP32 itself hangs (relay defaults off at boot; float is still wired to the ESP32, so a hardware float cut-off in series with the pump would be the next step).</aside>
+</section>

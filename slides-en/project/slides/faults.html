@@ -1,0 +1,21 @@
+<section id="faults" style="background:#F7F8F5; color:#14213D; font-family:'IBM Plex Sans', Arial, sans-serif; padding:112px 128px 160px; display:flex; flex-direction:column; gap:32px">
+<div style="display:flex; flex-direction:column; gap:12px">
+<p style="font-size:24px; color:#1F63B8; letter-spacing:3px; text-transform:uppercase; font-weight:600">Fault detection</p>
+<h2 style="font-size:60px; font-weight:600">Eleven rules where the brief asks for one</h2>
+</div>
+<table style="font-size:24px; color:#14213D">
+<tr><th style="width:28%">Code</th><th style="width:54%">Trigger</th><th style="width:18%">Action</th></tr>
+<tr><td style="font-family:'JetBrains Mono', 'Courier New', monospace">SENSOR_TIMEOUT</td><td>No accepted level for 45 s</td><td>Self clears</td></tr>
+<tr><td style="font-family:'JetBrains Mono', 'Courier New', monospace">SENSOR_CONFLICT</td><td>Float disagrees with ultrasonic</td><td>Self clears</td></tr>
+<tr><td style="font-family:'JetBrains Mono', 'Courier New', monospace">LEVEL_LOST</td><td>Filling blind on the model &gt; 45 s</td><td>Self clears</td></tr>
+<tr><td style="font-family:'JetBrains Mono', 'Courier New', monospace">OVERFLOW</td><td>Upper float, raw &lt; 4.5 cm, or ≥ 85 %</td><td>Lock</td></tr>
+<tr><td style="font-family:'JetBrains Mono', 'Courier New', monospace">NO_PROGRESS</td><td>Pump on 90 s, level up &lt; 1.5 cm</td><td>Lock</td></tr>
+<tr><td style="font-family:'JetBrains Mono', 'Courier New', monospace">NO_CURRENT</td><td>Relay on, no current for 2 s</td><td>Lock</td></tr>
+<tr><td style="font-family:'JetBrains Mono', 'Courier New', monospace">DRY_RUN</td><td>Turbine flow &lt; 0.25 L/min for 6 s</td><td>Lock</td></tr>
+<tr><td style="font-family:'JetBrains Mono', 'Courier New', monospace">FILL_TIMEOUT · HARD_LIMIT</td><td>One run &gt; 240 s · &gt; 300 s</td><td>Lock</td></tr>
+<tr><td style="font-family:'JetBrains Mono', 'Courier New', monospace">VOLUME_LIMIT</td><td>More than 2.5 L in one run</td><td>Lock</td></tr>
+<tr><td style="font-family:'JetBrains Mono', 'Courier New', monospace">LEAK_SUSPECTED</td><td>Pump off, inflow &gt; 0.2 L/min for 60 s</td><td>Warn</td></tr>
+</table>
+<p style="position:absolute; left:128px; bottom:64px; width:1664px; font-size:24px; color:#6B7280">Project 08 · Smart Water Tank · 13</p>
+<aside>The brief's example, pump on with near zero flow, is DRY_RUN on the turbine signal. With flow derived from level it is disabled, because a constant can never fall below a threshold, and a guard that cannot fire is worse than none. NO_PROGRESS carries the same physical idea on a measured quantity: current flows but the level does not rise. The 45 s sensor timeout is long on purpose: the sensor drops out for tens of seconds during normal fills and the model covers that; with a 4 s timeout the first version stopped every fill early.</aside>
+</section>

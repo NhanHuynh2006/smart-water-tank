@@ -1,0 +1,39 @@
+<section id="levelpipe" data-section="Control and intelligence on the ESP32" style="background:#F7F8F5; color:#14213D; font-family:'IBM Plex Sans', Arial, sans-serif; padding:128px 128px 160px; display:flex; flex-direction:column; gap:48px">
+<div style="display:flex; flex-direction:column; gap:16px">
+<p style="font-size:24px; color:#1F63B8; letter-spacing:3px; text-transform:uppercase; font-weight:600">Level measurement</p>
+<h2 style="font-size:64px; font-weight:600">One ping is never trusted: five gates, each counted</h2>
+</div>
+<div style="display:flex; gap:16px; align-items:stretch">
+<div style="flex:1; display:flex; flex-direction:column; gap:8px; background:#FFFFFF; padding:28px; border:1px solid #DDE3EA; border-radius:16px">
+<p style="font-size:24px; color:#1F63B8; font-weight:600">1</p>
+<h3 style="font-size:30px; font-weight:600">Window</h3>
+<p style="font-size:24px; color:#4A5568; line-height:1.35">Last 15 pings, inside tank geometry</p>
+</div>
+<div style="flex:1; display:flex; flex-direction:column; gap:8px; background:#FFFFFF; padding:28px; border:1px solid #DDE3EA; border-radius:16px">
+<p style="font-size:24px; color:#1F63B8; font-weight:600">2</p>
+<h3 style="font-size:30px; font-weight:600">Spread</h3>
+<p style="font-size:24px; color:#4A5568; line-height:1.35">Interquartile range ≤ 3.5 cm</p>
+</div>
+<div style="flex:1; display:flex; flex-direction:column; gap:8px; background:#FFFFFF; padding:28px; border:1px solid #DDE3EA; border-radius:16px">
+<p style="font-size:24px; color:#1F63B8; font-weight:600">3</p>
+<h3 style="font-size:30px; font-weight:600">Median</h3>
+<p style="font-size:24px; color:#4A5568; line-height:1.35">h = 17.5 − d, then calibration</p>
+</div>
+<div style="flex:1; display:flex; flex-direction:column; gap:8px; background:#FFFFFF; padding:28px; border:1px solid #DDE3EA; border-radius:16px">
+<p style="font-size:24px; color:#1F63B8; font-weight:600">4</p>
+<h3 style="font-size:30px; font-weight:600">Physics</h3>
+<p style="font-size:24px; color:#4A5568; line-height:1.35">Too fast? Falling while pumping?</p>
+</div>
+<div style="flex:1; display:flex; flex-direction:column; gap:8px; background:#14213D; padding:28px; border-radius:16px">
+<p style="font-size:24px; color:#E8894F; font-weight:600">5</p>
+<h3 style="font-size:30px; font-weight:600; color:#F7F8F5">Alpha-beta</h3>
+<p style="font-size:24px; color:#DDE6F2; line-height:1.35">Level and rate, α = 0.03, no lag on a ramp</p>
+</div>
+</div>
+<div style="display:grid; grid-template-columns:1fr 1fr; gap:48px">
+<p style="font-size:30px; color:#4A5568; line-height:1.4"><b style="color:#14213D">Why:</b> the 15° beam is wider than the 10 cm tank, so some echoes come from the wall or the floor.</p>
+<p style="font-size:30px; color:#4A5568; line-height:1.4"><b style="color:#14213D">Bypass:</b> a raw distance guard under 4.5 cm, 3 pings in a row, trips overflow without any filter.</p>
+</div>
+<p style="position:absolute; left:128px; bottom:64px; width:1664px; font-size:24px; color:#6B7280">Project 08 · Smart Water Tank · 10</p>
+<aside>Each gate has a rejection counter published in telemetry (rj_gate, rj_spread, rj_rate, rj_fall). That is how we found that 98 percent of rejections came from one gate, the spread check. It used max minus min, which one stray echo controls completely. Switching to the interquartile range raised acceptance from 60 to 93 percent. The alpha-beta filter tracks level and velocity; the velocity is reused for flow and pump diagnosis.</aside>
+</section>

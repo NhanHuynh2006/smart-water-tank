@@ -1,0 +1,26 @@
+<section id="outage" style="background:#14213D; color:#F7F8F5; font-family:'IBM Plex Sans', Arial, sans-serif; padding:128px 128px 160px; display:flex; flex-direction:column; gap:48px">
+<div style="display:flex; flex-direction:column; gap:16px">
+<p style="font-size:24px; color:#6FA8F0; letter-spacing:3px; text-transform:uppercase; font-weight:600">Network outage</p>
+<h2 style="font-size:64px; font-weight:600; color:#F7F8F5">Lose the network, keep the tank</h2>
+</div>
+<div style="display:grid; grid-template-columns:1fr 1fr; gap:40px">
+<div style="display:flex; flex-direction:column; gap:12px; border-left:4px solid #3987E5; padding:8px 0px 8px 32px">
+<h3 style="font-size:36px; font-weight:600; color:#F7F8F5">Loop never waits</h3>
+<p style="font-size:28px; color:#BFD0E6; line-height:1.4">Socket open capped at 0.5 s (default 3 s), CONNACK at 2 s. Longest control period reported as ctl_gap_ms.</p>
+</div>
+<div style="display:flex; flex-direction:column; gap:12px; border-left:4px solid #3987E5; padding:8px 0px 8px 32px">
+<h3 style="font-size:36px; font-weight:600; color:#F7F8F5">Nothing forgotten</h3>
+<p style="font-size:28px; color:#BFD0E6; line-height:1.4">240-sample ring buffer, 4 min at 1 Hz, replayed with “replay”: true. Volume saved to flash every 60 s.</p>
+</div>
+<div style="display:flex; flex-direction:column; gap:12px; border-left:4px solid #E8894F; padding:8px 0px 8px 32px">
+<h3 style="font-size:36px; font-weight:600; color:#F7F8F5">Everyone knows</h3>
+<p style="font-size:28px; color:#BFD0E6; line-height:1.4">Broker publishes the last will after the 15 s keep alive; the dashboard turns red after 5 s of silence.</p>
+</div>
+<div style="display:flex; flex-direction:column; gap:12px; border-left:4px solid #E8894F; padding:8px 0px 8px 32px">
+<h3 style="font-size:36px; font-weight:600; color:#F7F8F5">Finds its way back</h3>
+<p style="font-size:28px; color:#BFD0E6; line-height:1.4">Backoff 1 to 30 s, up to 3 Wi-Fi networks, broker found again by mDNS name.</p>
+</div>
+</div>
+<p style="position:absolute; left:128px; bottom:64px; width:1664px; font-size:24px; color:#8FA3BF">Project 08 · Smart Water Tank · 20</p>
+<aside>The course warns against connection logic inside a blocking loop. Our reconnection is non blocking, but opening a TCP socket to an unreachable broker still blocks inside the stack, three seconds by default on the ESP32. We cap it at half a second and publish the longest control period in the first message after reconnecting, so the claim that control never stalls can be checked, not just asserted.</aside>
+</section>
