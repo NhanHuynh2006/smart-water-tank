@@ -46,3 +46,7 @@ Thumbs.db
 # anh chup man hinh tam
 dash.png
 .playwright-mcp/
+*.lof
+*.lot
+iot-report-en/bib.txt
+iot-report-en/build.txt
