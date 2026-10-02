@@ -1,15 +1,50 @@
-<section id="leak" style="background:#F7F8F5; color:#14213D; font-family:'IBM Plex Sans', Arial, sans-serif; padding:128px 128px 160px; display:grid; grid-template-columns:1fr 820px; gap:64px; align-items:center">
-<div style="display:flex; flex-direction:column; gap:32px">
-<p style="font-size:24px; color:#1F63B8; letter-spacing:3px; text-transform:uppercase; font-weight:600">Advanced · rolling baseline</p>
-<h2 style="font-size:56px; font-weight:600; line-height:1.15">What is normal at 7 pm is not normal at 3 am</h2>
-<p style="font-size:30px; color:#4A5568; line-height:1.45">48 slots of 30 min, each with an EWMA mean and variance (α = 0.2). Alarm when use &gt; μ + 3σ in two slots in a row.</p>
-<p style="font-size:30px; color:#4A5568; line-height:1.45">Skips slots with a counter reset or more water than the pump can deliver. Rebuilt from history at every start.</p>
-<p style="font-size:30px; color:#B8471A; line-height:1.45">Honest status: needs 3 days per slot; 0 of 48 slots qualify yet.</p>
-</div>
+<section id="leak" style="background:#F4F3EE; color:#0E1A2B; font-family:'IBM Plex Sans', Arial, sans-serif; padding:128px 128px 160px; display:flex; flex-direction:column; gap:48px">
 <div style="display:flex; flex-direction:column; gap:16px">
-<img src="/_blob/f2771c801b57a8f8128459abf07ac2fa" alt="Bar chart of litres pumped in and drawn out per day for 21, 22 and 23 September" style="width:820px; height:460px; object-fit:contain; background:#FFFFFF; border-radius:16px">
-<p style="font-size:24px; color:#6B7280">Daily volume from /api/volume/daily: sums per row increments, so a reset adds nothing</p>
+<p style="font-size:24px; color:#1C5CAB; letter-spacing:3px; text-transform:uppercase; font-family:'IBM Plex Mono', 'Courier New', monospace; font-weight:600">04 · Advanced component B</p>
+<h2 style="font-size:64px; font-weight:600; line-height:1.1; letter-spacing:-1px">Rolling baseline and daily volume</h2>
 </div>
-<p style="position:absolute; left:128px; bottom:64px; width:1664px; font-size:24px; color:#6B7280">Project 08 · Smart Water Tank · 16</p>
-<aside>The baseline runs on the backend because it needs days of memory. Early noisy flow readings had accumulated thousands of phantom litres, so slots with impossible volumes are skipped rather than learned. The daily volume query was also rewritten: max minus min per day broke on every counter reset; summing increments between consecutive rows is robust. We are honest that the detector has not yet converged on three bench days.</aside>
+<div style="display:flex; gap:64px; flex:1">
+<div style="width:840px; display:flex; flex-direction:column; gap:28px">
+<p style="font-size:30px; line-height:1.45">The day is cut into <b>48 slots of 30 minutes</b>. Each slot learns its normal use with an EWMA mean and variance, α = 0.2.</p>
+<p style="font-size:30px; line-height:1.45">Alarm when use exceeds <span style="font-family:'IBM Plex Mono', 'Courier New', monospace">μ + 3σ</span> in two slots in a row.</p>
+<p style="font-size:28px; color:#3D4552; line-height:1.45">Slots with a counter reset or impossible volume are skipped; the baseline is rebuilt from history at every start.</p>
+<div style="flex:1"></div>
+<p style="font-size:28px; line-height:1.45; background:#FBEDE5; padding:24px 28px; border-radius:12px"><b style="color:#B4461A">Status:</b> needs 3 days per slot; none qualifies after 3 bench days.</p>
+</div>
+<div style="flex:1; display:flex; flex-direction:column; gap:16px">
+<div style="display:flex; gap:32px; align-items:center">
+<div style="display:flex; gap:12px; align-items:center"><div style="width:20px; height:20px; background:#2A78D6; border-radius:4px"></div><p style="font-size:24px; color:#3D4552">pumped in (L)</p></div>
+<div style="display:flex; gap:12px; align-items:center"><div style="width:20px; height:20px; background:#EB6834; border-radius:4px"></div><p style="font-size:24px; color:#3D4552">drawn out (L)</p></div>
+</div>
+<div style="position:relative; width:760px; height:460px">
+<svg aria-label="Litres pumped in and drawn out per day: 21 September 16.0 in and 26.0 out, 22 September 9.2 and 18.8, 23 September 21.2 and 18.2" style="position:absolute; left:0px; top:0px" width="760" height="460" viewBox="0 0 760 460">
+<line x1="64" x2="744" y1="277.3" y2="277.3" stroke="#e1e0d9" stroke-width="1"/>
+<line x1="64" x2="744" y1="158.7" y2="158.7" stroke="#e1e0d9" stroke-width="1"/>
+<line x1="64" x2="744" y1="40.0" y2="40.0" stroke="#e1e0d9" stroke-width="1"/>
+<path d="M128.3 396.0 V210.1 Q128.3 206.1 132.3 206.1 H172.3 Q176.3 206.1 176.3 210.1 V396.0 Z" fill="#2a78d6"/>
+<path d="M178.3 396.0 V91.5 Q178.3 87.5 182.3 87.5 H222.3 Q226.3 87.5 226.3 91.5 V396.0 Z" fill="#eb6834"/>
+<path d="M355.0 396.0 V290.8 Q355.0 286.8 359.0 286.8 H399.0 Q403.0 286.8 403.0 290.8 V396.0 Z" fill="#2a78d6"/>
+<path d="M405.0 396.0 V176.9 Q405.0 172.9 409.0 172.9 H449.0 Q453.0 172.9 453.0 176.9 V396.0 Z" fill="#eb6834"/>
+<path d="M581.7 396.0 V148.4 Q581.7 144.4 585.7 144.4 H625.7 Q629.7 144.4 629.7 148.4 V396.0 Z" fill="#2a78d6"/>
+<path d="M631.7 396.0 V184.0 Q631.7 180.0 635.7 180.0 H675.7 Q679.7 180.0 679.7 184.0 V396.0 Z" fill="#eb6834"/>
+<line x1="64" x2="744" y1="396.0" y2="396.0" stroke="#c3c2b7" stroke-width="1"/>
+</svg>
+<p style="position:absolute; left:120px; top:168px; width:64px; font-size:24px; text-align:center; color:#0e1a2b; font-family:'IBM Plex Mono', 'Courier New', monospace">16.0</p>
+<p style="position:absolute; left:170px; top:49px; width:64px; font-size:24px; text-align:center; color:#0e1a2b; font-family:'IBM Plex Mono', 'Courier New', monospace">26.0</p>
+<p style="position:absolute; left:77px; top:410px; width:200px; font-size:24px; text-align:center; color:#3d4552">21 Sep</p>
+<p style="position:absolute; left:347px; top:249px; width:64px; font-size:24px; text-align:center; color:#0e1a2b; font-family:'IBM Plex Mono', 'Courier New', monospace">9.2</p>
+<p style="position:absolute; left:397px; top:135px; width:64px; font-size:24px; text-align:center; color:#0e1a2b; font-family:'IBM Plex Mono', 'Courier New', monospace">18.8</p>
+<p style="position:absolute; left:304px; top:410px; width:200px; font-size:24px; text-align:center; color:#3d4552">22 Sep</p>
+<p style="position:absolute; left:574px; top:106px; width:64px; font-size:24px; text-align:center; color:#0e1a2b; font-family:'IBM Plex Mono', 'Courier New', monospace">21.2</p>
+<p style="position:absolute; left:624px; top:142px; width:64px; font-size:24px; text-align:center; color:#0e1a2b; font-family:'IBM Plex Mono', 'Courier New', monospace">18.2</p>
+<p style="position:absolute; left:531px; top:410px; width:200px; font-size:24px; text-align:center; color:#3d4552">23 Sep</p>
+<p style="position:absolute; left:0px; top:379px; width:52px; font-size:24px; text-align:right; color:#646b76; font-family:'IBM Plex Mono', 'Courier New', monospace">0</p>
+<p style="position:absolute; left:0px; top:260px; width:52px; font-size:24px; text-align:right; color:#646b76; font-family:'IBM Plex Mono', 'Courier New', monospace">10</p>
+<p style="position:absolute; left:0px; top:142px; width:52px; font-size:24px; text-align:right; color:#646b76; font-family:'IBM Plex Mono', 'Courier New', monospace">20</p>
+<p style="position:absolute; left:0px; top:23px; width:52px; font-size:24px; text-align:right; color:#646b76; font-family:'IBM Plex Mono', 'Courier New', monospace">30</p>
+</div>
+</div>
+</div>
+<div style="position:absolute; left:128px; right:128px; bottom:64px; display:flex; justify-content:space-between"><p style="font-size:24px; color:#646B76">Smart Water Tank · Project 08</p><p style="font-size:24px; color:#646B76; font-family:'IBM Plex Mono', 'Courier New', monospace">21</p></div>
+<aside>The second advanced option is anomaly detection with a rolling baseline, which runs on the backend because it needs days of memory. Domestic water use depends strongly on the hour, so a single threshold would be too sensitive at night and too lax in the evening. We cut the day into forty-eight half-hour slots. Each slot learns its own normal consumption with an exponentially weighted mean and variance. An alarm is raised when consumption exceeds the mean plus three standard deviations in two consecutive slots, which suppresses one-off events like washing a motorbike. We learned two safeguards the hard way: early noisy flow readings had accumulated thousands of phantom litres, so slots with a counter reset or a physically impossible volume are skipped, and the baseline is rebuilt from the database whenever the backend restarts. Honest status: a slot needs three days of data before it may alarm, and after three bench days none qualifies yet, so we can show the mechanism but not a real detection. On the right is the daily volume report from the API, pumped in versus drawn out. The query sums the increments between consecutive rows, so a counter reset adds nothing instead of a huge negative step.</aside>
 </section>

@@ -1,0 +1,140 @@
+{
+ "schema_version": 1,
+ "diagram_type": "lifecycle",
+ "meta": {
+  "title": "Controller state machine",
+  "locale": "en",
+  "quality_profile": "showcase",
+  "viewBox": [
+   980,
+   620
+  ]
+ },
+ "lanes": [
+  {
+   "id": "main",
+   "label": "Normal operation"
+  },
+  {
+   "id": "faults",
+   "label": "Fault states"
+  }
+ ],
+ "states": [
+  {
+   "id": "boot",
+   "type": "start",
+   "label": "BOOT",
+   "sublabel": "relay off first",
+   "lane": "main",
+   "col": 0
+  },
+  {
+   "id": "idle",
+   "type": "active",
+   "label": "IDLE",
+   "sublabel": "starts below 30 %",
+   "lane": "main",
+   "col": 1
+  },
+  {
+   "id": "filling",
+   "type": "active",
+   "label": "FILLING",
+   "sublabel": "stops above 70 %",
+   "lane": "main",
+   "col": 2
+  },
+  {
+   "id": "manual",
+   "type": "waiting",
+   "label": "MANUAL_ON",
+   "sublabel": "guard every 200 ms",
+   "lane": "main",
+   "col": 3
+  },
+  {
+   "id": "fsensor",
+   "type": "failure",
+   "label": "FAULT_SENSOR",
+   "sublabel": "self clears 2.5 s",
+   "lane": "faults",
+   "col": 0
+  },
+  {
+   "id": "fpump",
+   "type": "failure",
+   "label": "FAULT_DRYRUN",
+   "sublabel": "operator clears",
+   "lane": "faults",
+   "col": 1
+  },
+  {
+   "id": "flock",
+   "type": "failure",
+   "label": "OVERFLOW_LOCK",
+   "sublabel": "clear when safe",
+   "lane": "faults",
+   "col": 2
+  }
+ ],
+ "transitions": [
+  {
+   "id": "t-ready",
+   "from": "boot",
+   "to": "idle"
+  },
+  {
+   "id": "t-start",
+   "from": "idle",
+   "to": "filling",
+   "variant": "emphasis",
+   "route": "straight",
+   "fromSide": "right",
+   "toSide": "left"
+  },
+  {
+   "id": "t-stop",
+   "from": "filling",
+   "to": "idle",
+   "route": "top-channel",
+   "fromSide": "top",
+   "toSide": "top"
+  },
+  {
+   "id": "t-manual",
+   "from": "filling",
+   "to": "manual"
+  },
+  {
+   "id": "t-sensor",
+   "from": "filling",
+   "to": "fsensor",
+   "label": "sensor",
+   "variant": "security",
+   "labelDy": 30
+  },
+  {
+   "id": "t-pump",
+   "from": "manual",
+   "to": "fpump",
+   "label": "no flow",
+   "variant": "security",
+   "labelDy": 30
+  },
+  {
+   "id": "t-over",
+   "from": "manual",
+   "to": "flock",
+   "label": "overflow",
+   "variant": "security"
+  },
+  {
+   "id": "t-recover",
+   "from": "fsensor",
+   "to": "idle",
+   "label": "recovered",
+   "variant": "dashed"
+  }
+ ]
+}

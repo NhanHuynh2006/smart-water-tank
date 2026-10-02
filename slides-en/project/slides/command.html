@@ -1,33 +1,18 @@
-<section id="command" style="background:#F7F8F5; color:#14213D; font-family:'IBM Plex Sans', Arial, sans-serif; padding:128px 128px 160px; display:flex; flex-direction:column; gap:48px">
+<section id="command" style="background:#F4F3EE; color:#0E1A2B; font-family:'IBM Plex Sans', Arial, sans-serif; padding:128px 128px 160px; display:grid; grid-template-columns:560px 1fr; gap:64px">
+<div style="display:flex; flex-direction:column; gap:32px">
 <div style="display:flex; flex-direction:column; gap:16px">
-<p style="font-size:24px; color:#1F63B8; letter-spacing:3px; text-transform:uppercase; font-weight:600">Command and acknowledgement</p>
-<h2 style="font-size:64px; font-weight:600">The button never lies: it shows what the device confirmed</h2>
+<p style="font-size:24px; color:#1C5CAB; letter-spacing:3px; text-transform:uppercase; font-family:'IBM Plex Mono', 'Courier New', monospace; font-weight:600">03 · Feedback sync</p>
+<h2 style="font-size:64px; font-weight:600; line-height:1.1; letter-spacing:-1px">Commands with acknowledgement</h2>
 </div>
-<div style="display:flex; gap:24px; align-items:stretch">
-<div style="flex:1; display:flex; flex-direction:column; gap:12px; background:#FFFFFF; padding:32px; border:1px solid #DDE3EA; border-radius:16px">
-<p style="font-size:24px; color:#1F63B8; font-weight:600">1 · Dashboard</p>
-<p style="font-size:28px; color:#4A5568; line-height:1.35">POST /api/command with session cookie; shows “sending”</p>
+<p style="font-size:30px; color:#3D4552; line-height:1.45">The button never changes when pressed. The screen shows only what the ESP32 confirmed.</p>
+<div style="flex:1"></div>
+<div style="display:flex; flex-direction:column; gap:12px; background:#0E1A2B; padding:32px; border-radius:12px">
+<p style="font-size:24px; color:#F09A72; font-family:'IBM Plex Mono', 'Courier New', monospace">cmd/ack</p>
+<p style="font-size:24px; color:#DCE4EE; line-height:1.5; font-family:'IBM Plex Mono', 'Courier New', monospace">"status": "rejected",<br>"reason": "min_off_time",<br>"pump": false</p>
 </div>
-<x-connector style="width:48px; color:#8A97A8" from="tl"></x-connector>
-<div style="flex:1; display:flex; flex-direction:column; gap:12px; background:#FFFFFF; padding:32px; border:1px solid #DDE3EA; border-radius:16px">
-<p style="font-size:24px; color:#1F63B8; font-weight:600">2 · Backend</p>
-<p style="font-size:28px; color:#4A5568; line-height:1.35">Checks session, logs cmd_id, publishes on cmd</p>
+<p style="font-size:26px; color:#3D4552; line-height:1.4">10 rejection reasons, each shown as a plain sentence.</p>
 </div>
-<x-connector style="width:48px; color:#8A97A8" from="tl"></x-connector>
-<div style="flex:1; display:flex; flex-direction:column; gap:12px; background:#FFFFFF; padding:32px; border:1px solid #DDE3EA; border-radius:16px">
-<p style="font-size:24px; color:#1F63B8; font-weight:600">3 · ESP32</p>
-<p style="font-size:28px; color:#4A5568; line-height:1.35">Mode, safety guard, minimum off time; then acts or refuses</p>
-</div>
-<x-connector style="width:48px; color:#8A97A8" from="tl"></x-connector>
-<div style="flex:1; display:flex; flex-direction:column; gap:12px; background:#14213D; padding:32px; border-radius:16px">
-<p style="font-size:24px; color:#E8894F; font-weight:600">4 · Ack</p>
-<p style="font-size:28px; color:#DDE6F2; line-height:1.35">status, reason, real pump state; UI explains it in words</p>
-</div>
-</div>
-<div style="display:flex; gap:32px">
-<p style="font-size:28px; background:#FFFFFF; border:1px solid #DDE3EA; border-radius:12px; padding:16px 24px; font-family:'JetBrains Mono', 'Courier New', monospace">{"cmd_id":"a7f3c2e1","status":"rejected","reason":"min_off_time"}</p>
-</div>
-<p style="font-size:30px; color:#4A5568; line-height:1.4">10 rejection reasons. A refused start inside the 20 s rest shows a countdown on the button.</p>
-<p style="position:absolute; left:128px; bottom:64px; width:1664px; font-size:24px; color:#6B7280">Project 08 · Smart Water Tank · 9</p>
-<aside>This is the feedback sync principle from the lectures. A bug we hit: pump commands were executed but never confirmed. Their acks were exactly 256 bytes. PubSubClient shares one buffer for in and out, and ArduinoJson parsed in place, so publishing the pump state overwrote the cmd_id before we echoed it. Fix: copy the payload first. Also a usability lesson: a user said manual mode did not work, when the device was correctly refusing a restart inside the 20 s minimum off time. Now the reason is shown.</aside>
+<img src="/_blob/01761450d2f9d524a3e5f06bf4bfea91" alt="Sequence: operator presses pump on; dashboard posts the command to FastAPI, which publishes it to Mosquitto and returns a pending id; the ESP32 receives the command, decides, and returns an acknowledgement with reason and state; the dashboard polls and shows the confirmed result" style="width:1040px; height:792px; object-fit:contain; background:#FCFCFB; border:1px solid #E1E0D9; border-radius:12px">
+<div style="position:absolute; left:128px; right:128px; bottom:64px; display:flex; justify-content:space-between"><p style="font-size:24px; color:#646B76">Smart Water Tank · Project 08</p><p style="font-size:24px; color:#646B76; font-family:'IBM Plex Mono', 'Courier New', monospace">13</p></div>
+<aside>This diagram follows one press of the Pump ON button. The dashboard posts the command to the backend with the administrator's session cookie. The backend logs it with a fresh command identifier, publishes it on the command topic, and immediately answers "pending". At this point the button has not changed; the screen only says "sending". The ESP32 receives the command and decides: is it in manual mode, does the safety guard allow a start, has the minimum off time elapsed? It then publishes an acknowledgement carrying the outcome, the reason and the real pump state. The dashboard polls the command log and shows the result as a plain sentence, while the pump symbol follows only the telemetry. This is the feedback sync principle from the lectures. Two lessons came from this path. First, a user once reported that manual mode did not work; in fact the device was correctly refusing a restart inside the twenty second rest period, and the interface was silent about it. Now it shows the reason and a countdown. Second, pump commands were executed but never confirmed: the MQTT library reuses one buffer for incoming and outgoing messages, and the JSON parser was reading in place, so publishing the pump state overwrote the command identifier. We now copy the payload before parsing.</aside>
 </section>

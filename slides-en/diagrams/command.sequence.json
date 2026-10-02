@@ -1,0 +1,176 @@
+{
+ "schema_version": 1,
+ "diagram_type": "sequence",
+ "meta": {
+  "title": "Pump command with acknowledgement",
+  "locale": "en",
+  "quality_profile": "showcase",
+  "viewBox": [
+   980,
+   740
+  ],
+  "column_fit": "spread",
+  "legend": {
+   "mode": "auto",
+   "entries": {
+    "dashed": {
+     "label": "poll"
+    },
+    "emphasis": {
+     "label": "command path"
+    }
+   }
+  }
+ },
+ "participants": [
+  {
+   "id": "op",
+   "type": "external",
+   "label": "Operator",
+   "sublabel": "admin session"
+  },
+  {
+   "id": "ui",
+   "type": "frontend",
+   "label": "Dashboard",
+   "sublabel": "browser"
+  },
+  {
+   "id": "api",
+   "type": "backend",
+   "label": "FastAPI",
+   "sublabel": "backend"
+  },
+  {
+   "id": "mq",
+   "type": "messagebus",
+   "label": "Mosquitto",
+   "sublabel": "broker"
+  },
+  {
+   "id": "dev",
+   "type": "backend",
+   "label": "ESP32",
+   "sublabel": "safety guard"
+  }
+ ],
+ "segments": [
+  {
+   "from": 150,
+   "to": 330,
+   "label": "Request"
+  },
+  {
+   "from": 350,
+   "to": 470,
+   "label": "Device decides"
+  },
+  {
+   "from": 490,
+   "to": 640,
+   "label": "Confirmed state"
+  }
+ ],
+ "messages": [
+  {
+   "id": "press",
+   "from": "op",
+   "to": "ui",
+   "y": 185,
+   "label": "press Pump ON",
+   "variant": "default"
+  },
+  {
+   "id": "post",
+   "from": "ui",
+   "to": "api",
+   "y": 225,
+   "label": "POST /api/command",
+   "variant": "emphasis"
+  },
+  {
+   "id": "pub",
+   "from": "api",
+   "to": "mq",
+   "y": 265,
+   "label": "cmd · QoS 1",
+   "variant": "emphasis"
+  },
+  {
+   "id": "pending",
+   "from": "api",
+   "to": "ui",
+   "y": 305,
+   "label": "cmd_id · sending",
+   "variant": "return"
+  },
+  {
+   "id": "deliver",
+   "from": "mq",
+   "to": "dev",
+   "y": 385,
+   "label": "cmd",
+   "variant": "emphasis"
+  },
+  {
+   "id": "ack",
+   "from": "dev",
+   "to": "mq",
+   "y": 435,
+   "label": "ack · reason · state",
+   "variant": "return"
+  },
+  {
+   "id": "ackin",
+   "from": "mq",
+   "to": "api",
+   "y": 520,
+   "label": "ack",
+   "variant": "return"
+  },
+  {
+   "id": "poll",
+   "from": "ui",
+   "to": "api",
+   "y": 560,
+   "label": "GET /api/commands",
+   "variant": "dashed"
+  },
+  {
+   "id": "result",
+   "from": "api",
+   "to": "ui",
+   "y": 595,
+   "label": "accepted or rejected",
+   "variant": "return"
+  },
+  {
+   "id": "show",
+   "from": "ui",
+   "to": "op",
+   "y": 625,
+   "label": "plain sentence",
+   "variant": "return"
+  }
+ ],
+ "activations": [
+  {
+   "participant": "ui",
+   "from": 180,
+   "to": 630,
+   "type": "frontend"
+  },
+  {
+   "participant": "api",
+   "from": 220,
+   "to": 600,
+   "type": "backend"
+  },
+  {
+   "participant": "dev",
+   "from": 380,
+   "to": 440,
+   "type": "backend"
+  }
+ ]
+}

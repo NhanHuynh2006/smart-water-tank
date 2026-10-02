@@ -1,20 +1,21 @@
-<section id="expplan" data-section="Experiments and results measured on the bench" style="background:#F7F8F5; color:#14213D; font-family:'IBM Plex Sans', Arial, sans-serif; padding:128px 128px 160px; display:flex; flex-direction:column; gap:40px">
+<section id="expplan" style="background:#F4F3EE; color:#0E1A2B; font-family:'IBM Plex Sans', Arial, sans-serif; padding:128px 128px 160px; display:flex; flex-direction:column; gap:40px">
 <div style="display:flex; flex-direction:column; gap:16px">
-<p style="font-size:24px; color:#1F63B8; letter-spacing:3px; text-transform:uppercase; font-weight:600">Experiments</p>
-<h2 style="font-size:64px; font-weight:600">Every number comes from the database, by script</h2>
+<p style="font-size:24px; color:#1C5CAB; letter-spacing:3px; text-transform:uppercase; font-family:'IBM Plex Mono', 'Courier New', monospace; font-weight:600">06 · Method</p>
+<h2 style="font-size:64px; font-weight:600; line-height:1.1; letter-spacing:-1px">Experiment plan</h2>
 </div>
-<table style="font-size:26px; color:#14213D">
-<tr><th style="width:8%">ID</th><th style="width:34%">Subject</th><th style="width:34%">Reference</th><th style="width:24%">Status</th></tr>
-<tr><td>E1</td><td>Level calibration</td><td>Scale in the tank</td><td>[pending run]</td></tr>
-<tr><td>E2</td><td>Flow, volume error</td><td>Tank geometry, drain slope</td><td>6 cycles</td></tr>
-<tr><td>E3</td><td>Control response</td><td>Thresholds</td><td>6 cycles</td></tr>
-<tr><td>E4</td><td>Switching frequency</td><td>Pump event log</td><td>84 min</td></tr>
-<tr><td>E5</td><td>Fault detection delay</td><td>Timestamped mark</td><td>Timeout done</td></tr>
+<table style="font-size:26px; color:#0E1A2B">
+<tr style="background:#E9E7DF"><th style="width:8%">ID</th><th style="width:32%">Subject</th><th style="width:36%">Independent reference</th><th style="width:24%">Status</th></tr>
+<tr><td>E1</td><td>Level calibration</td><td>Ruler standing in the tank</td><td>[final run]</td></tr>
+<tr><td>E2</td><td>Volume estimation error</td><td>Tank geometry, drain slope</td><td>6 cycles</td></tr>
+<tr><td>E3</td><td>Control response</td><td>Configured thresholds</td><td>6 cycles</td></tr>
+<tr><td>E4</td><td>Switching frequency</td><td>Pump event log</td><td>84 minutes</td></tr>
+<tr><td>E5</td><td>Fault detection delay</td><td>Timestamped manual mark</td><td>Timeout done</td></tr>
 <tr><td>E6</td><td>Outage and recovery</td><td>Sequence numbers</td><td>60 s test</td></tr>
-<tr><td>E7</td><td>Latency</td><td>One server clock</td><td>n = 75</td></tr>
-<tr><td>E9</td><td>Wi-Fi power saving</td><td>One server clock</td><td>n = 12 + 12</td></tr>
+<tr><td>E7</td><td>Command latency</td><td>One server clock</td><td>n = 75</td></tr>
+<tr><td>E9</td><td>Wi-Fi power saving</td><td>One server clock</td><td>12 + 12</td></tr>
 </table>
-<p style="font-size:28px; color:#4A5568">Session 23 Sep 16:48 to 18:12 · 4870 messages · level trusted 99.5 % · 0 faults</p>
-<p style="position:absolute; left:128px; bottom:64px; width:1664px; font-size:24px; color:#6B7280">Project 08 · Smart Water Tank · 21</p>
-<aside>Tools in the repository: analyze_experiments.py for cycles, switching and latency; bench.py for level calibration, fault injection with a timestamped Enter key, and the outage test. docs/TESTING.md has the step by step procedures. Fill in E1 and the remaining E5 rows after the final bench run and update this slide.</aside>
+<div style="flex:1"></div>
+<p style="font-size:28px; color:#3D4552; line-height:1.4">Session analysed: 23 Sep, 16:48 to 18:12 · <b style="color:#0E1A2B">4870 messages</b> · level trusted <b style="color:#0E1A2B">99.5 %</b> · <b style="color:#0E1A2B">0 faults</b></p>
+<div style="position:absolute; left:128px; right:128px; bottom:64px; display:flex; justify-content:space-between"><p style="font-size:24px; color:#646B76">Smart Water Tank · Project 08</p><p style="font-size:24px; color:#646B76; font-family:'IBM Plex Mono', 'Courier New', monospace">28</p></div>
+<aside>Our experimental rule was simple: every measurement needs a reference that is independent of the system being measured, and every number must come from the database by a script that anyone can rerun. The scripts are in the repository: analyze_experiments for cycles, switching and latency, and bench for calibration, fault injection with a timestamped key press, and outage tests. This table lists the experiments, the independent reference for each, and the status. The main session we analyse is September 23rd, an hour and twenty-four minutes of operation on the final filter configuration: 4870 messages, 99.5 percent of them with a trusted level, and not a single fault raised. The level calibration with a ruler is the one experiment we still run on the final installation before the defence.</aside>
 </section>

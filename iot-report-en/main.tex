@@ -117,7 +117,7 @@
             \textbf{[FULL NAME OF MEMBER 4]} \\[0.15em] Student ID: [ID] \\[0.4em]
             \textbf{[FULL NAME OF MEMBER 5]} \\[0.15em] Student ID: [ID]}
 \csSupervise{\textbf{Dr. HUYNH THE THIEN}}
-\cttime{09/2026}
+\cttime{10/2026}
 
 \setstretch{1.5}
 
@@ -191,11 +191,11 @@ We declare that the entire content presented in this report is the result of our
 \begin{abstract}
 \sloppy
 
-This project builds a closed loop water management system able to measure water level and flow rate, drive a pump automatically, estimate consumed volume and detect abnormal hydraulic operating states. The system is implemented across the full layered model of the Internet of Things, from the perception layer on an ESP32 microcontroller, through a transport layer based on MQTT, a processing layer consisting of an ingestion service and a time series store, up to an application layer in the form of a real time monitoring dashboard.
+This project builds a closed loop smart water tank for Project 08: it measures water level and flow, drives a pump automatically, accumulates consumed volume, detects and classifies faults, and can be supervised from anywhere on the Internet. The system spans the layered model of the Internet of Things: an ESP32 with an ultrasonic level sensor, two turbine flow sensors, a Hall current sensor and two float switches; MQTT over Wi-Fi to a Mosquitto broker; a FastAPI service with a SQLite time series store; and a web dashboard published through an HTTPS tunnel, where anyone may watch and only a password authenticated administrator may control.
 
-The central design decision is to place the entire control law and the entire fault detection logic inside the edge microcontroller rather than on the server. As a result, level regulation and every safety constraint keep working while the network link is down. The controller is built as a finite state machine combining a hysteresis band with minimum on and off times, which removes the rapid switching behaviour that shortens pump life.
+The central design decision is to place the entire control law and every safety rule inside the edge microcontroller. Level regulation therefore keeps working while the network is down, and a ring buffer replays telemetry when it returns. The controller is a seven state machine with a 30 to 70 percent hysteresis band and minimum on and off times; eleven fault rules, a single guard function through which every pump start must pass, and independent overflow layers ensure that manual commands cannot bypass safety. Level readings pass a robust filter chain (median window, interquartile spread gate, physical rate checks and an alpha-beta filter), and a pump health classifier separates hydraulic from electrical pump faults using current and level evidence. A rolling baseline over 48 half hour slots detects abnormal consumption on the backend.
 
-The evaluation covers calibration of the two main sensors against physical reference instruments, measurement of the closed loop response, a quantitative comparison between a single threshold policy and the proposed hysteresis policy, end to end latency measurement, and verification of system behaviour during a network outage.
+On the bench, every automatic fill stopped between 70.1 and 70.8 percent with at most 1.85 percent overshoot, the pump started 12.9 times per hour with no relay chatter, no false alarm was raised in 84 minutes, pumped volume was estimated with a mean error of $-5.2$ percent against a geometric reference, and commands were confirmed with a median round trip of 42 milliseconds. The report states openly where the prototype falls short, chiefly that conducted interference from the pump makes the turbine flow sensors unusable in this installation, so flow is derived from the level.
 
 \end{abstract}
 \newpage
@@ -226,7 +226,10 @@ TLS   & Transport Layer Security \\
 REST  & Representational State Transfer \\
 API   & Application Programming Interface \\
 JSON  & JavaScript Object Notation \\
-JWT   & JSON Web Token \\
+IQR   & Interquartile Range \\
+mDNS  & Multicast Domain Name System \\
+RTT   & Round Trip Time \\
+HTTPS & Hypertext Transfer Protocol Secure \\
 TSDB  & Time Series Database \\
 ADC   & Analog to Digital Converter \\
 SAR   & Successive Approximation Register \\

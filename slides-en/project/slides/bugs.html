@@ -1,26 +1,30 @@
-<section id="bugs" data-section="What went wrong, what is left, and the live demo" style="background:#F7F8F5; color:#14213D; font-family:'IBM Plex Sans', Arial, sans-serif; padding:128px 128px 160px; display:flex; flex-direction:column; gap:48px">
+<section id="bugs" style="background:#F4F3EE; color:#0E1A2B; font-family:'IBM Plex Sans', Arial, sans-serif; padding:128px 128px 160px; display:flex; flex-direction:column; gap:48px">
 <div style="display:flex; flex-direction:column; gap:16px">
-<p style="font-size:24px; color:#1F63B8; letter-spacing:3px; text-transform:uppercase; font-weight:600">Faults found on the bench</p>
-<h2 style="font-size:64px; font-weight:600">Each one was invisible in the code and found by counting</h2>
+<p style="font-size:24px; color:#1C5CAB; letter-spacing:3px; text-transform:uppercase; font-family:'IBM Plex Mono', 'Courier New', monospace; font-weight:600">07 · Lessons</p>
+<h2 style="font-size:64px; font-weight:600; line-height:1.1; letter-spacing:-1px">Bugs found on the bench</h2>
 </div>
-<div style="display:grid; grid-template-columns:1fr 1fr; gap:32px">
-<div style="display:flex; flex-direction:column; gap:12px; background:#FFFFFF; padding:36px; border:1px solid #DDE3EA; border-radius:16px">
-<h3 style="font-size:34px; font-weight:600">Inverted relay</h3>
-<p style="font-size:26px; color:#4A5568; line-height:1.4">Every stop started the pump while telemetry said off. Found by current ripple: 27 vs 4.5 mV.</p>
+<div style="display:grid; grid-template-columns:repeat(2, 1fr); gap:24px; flex:1">
+<div style="display:flex; flex-direction:column; gap:12px; background:#FCFCFB; padding:40px; border:1px solid #E1E0D9; border-radius:12px">
+<p style="font-size:24px; color:#646B76; font-family:'IBM Plex Mono', 'Courier New', monospace">FOUND BY · CURRENT RIPPLE</p>
+<p style="font-size:34px; font-weight:600">Inverted relay</p>
+<p style="font-size:26px; color:#3D4552; line-height:1.45">Every stop command started the pump while telemetry said “off”. Ripple 27 mV versus 4.5 mV proved which state was real.</p>
 </div>
-<div style="display:flex; flex-direction:column; gap:12px; background:#FFFFFF; padding:36px; border:1px solid #DDE3EA; border-radius:16px">
-<h3 style="font-size:34px; font-weight:600">Pump started at every boot</h3>
-<p style="font-size:26px; color:#4A5568; line-height:1.4">Level flagged valid before any reading, value 0 %: the tank looked empty. Found in replayed history, fixed.</p>
+<div style="display:flex; flex-direction:column; gap:12px; background:#FCFCFB; padding:40px; border:1px solid #E1E0D9; border-radius:12px">
+<p style="font-size:24px; color:#646B76; font-family:'IBM Plex Mono', 'Courier New', monospace">FOUND BY · REPLAYED HISTORY</p>
+<p style="font-size:34px; font-weight:600">Pump started at every boot</p>
+<p style="font-size:26px; color:#3D4552; line-height:1.45">The level was flagged valid before any reading, at 0 %. Starts at 38–51 % lined up with seq restarting at 1.</p>
 </div>
-<div style="display:flex; flex-direction:column; gap:12px; background:#FFFFFF; padding:36px; border:1px solid #DDE3EA; border-radius:16px">
-<h3 style="font-size:34px; font-weight:600">Fragile statistic</h3>
-<p style="font-size:26px; color:#4A5568; line-height:1.4">Max minus min let one echo reject a whole window. IQR: acceptance 60 → 93 %.</p>
+<div style="display:flex; flex-direction:column; gap:12px; background:#FCFCFB; padding:40px; border:1px solid #E1E0D9; border-radius:12px">
+<p style="font-size:24px; color:#646B76; font-family:'IBM Plex Mono', 'Courier New', monospace">FOUND BY · REJECTION COUNTERS</p>
+<p style="font-size:34px; font-weight:600">A fragile statistic</p>
+<p style="font-size:26px; color:#3D4552; line-height:1.45">Max minus min let one stray echo reject a whole window. The IQR raised acceptance from 60 to 93 %.</p>
 </div>
-<div style="display:flex; flex-direction:column; gap:12px; background:#FFFFFF; padding:36px; border:1px solid #DDE3EA; border-radius:16px">
-<h3 style="font-size:34px; font-weight:600">Silent truncation</h3>
-<p style="font-size:26px; color:#4A5568; line-height:1.4">JSON cut at the buffer, exception swallowed by the MQTT callback: all green, nothing stored.</p>
+<div style="display:flex; flex-direction:column; gap:12px; background:#FCFCFB; padding:40px; border:1px solid #E1E0D9; border-radius:12px">
+<p style="font-size:24px; color:#646B76; font-family:'IBM Plex Mono', 'Courier New', monospace">FOUND BY · BROKER LOG</p>
+<p style="font-size:34px; font-weight:600">Silent truncation</p>
+<p style="font-size:26px; color:#3D4552; line-height:1.45">JSON cut at the buffer and an exception swallowed by the callback: everything green, nothing stored.</p>
 </div>
 </div>
-<p style="position:absolute; left:128px; bottom:64px; width:1664px; font-size:24px; color:#6B7280">Project 08 · Smart Water Tank · 26</p>
-<aside>Pick two to tell in detail depending on time. The boot bug is the newest: setup() set the last-valid timestamp to now so the sensor timeout counts from power up, but the validity flag was derived from that timestamp, so for a few seconds after every restart the level was "valid" at 0 percent and the controller started the pump. We found it because pump starts at 38, 46 and 51 percent in automatic mode each lined up with the sequence number restarting at 1.</aside>
+<div style="position:absolute; left:128px; right:128px; bottom:64px; display:flex; justify-content:space-between"><p style="font-size:24px; color:#646B76">Smart Water Tank · Project 08</p><p style="font-size:24px; color:#646B76; font-family:'IBM Plex Mono', 'Courier New', monospace">35</p></div>
+<aside>Four bugs taught us the most. Each was invisible in the code and was found by counting something. First, an inverted relay: the configuration assumed the module was active low, it was active high, so every stop command started the pump while the telemetry said "off". We proved the real state from the ripple of the motor current, twenty-seven millivolts when running versus four and a half when stopped. Second, the newest one: the pump started after every reboot. At startup the firmware set the last-valid-reading timestamp to "now" so the sensor timeout counts from power-up, but the validity flag was derived from that same timestamp, so for a few seconds the level was "valid" at zero percent and the controller saw an empty tank. We found it because automatic starts at 38 to 51 percent each lined up with the sequence number restarting at one. Third, the fragile statistic in the level filter, which I mentioned earlier. Fourth, silent truncation: a telemetry message outgrew its buffer, the JSON library cut it without an error, and the MQTT library swallowed the parse exception. Everything looked alive, and nothing was stored. Both ends now report it loudly.</aside>
 </section>

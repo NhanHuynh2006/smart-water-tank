@@ -1,15 +1,15 @@
-<section id="edge" data-transition="fade" style="background:#14213D; color:#F7F8F5; font-family:'IBM Plex Sans', Arial, sans-serif; padding:128px; display:flex; flex-direction:column; justify-content:center; gap:56px">
-<p style="font-size:24px; color:#6FA8F0; letter-spacing:3px; text-transform:uppercase; font-weight:600">The central decision</p>
-<h2 style="font-size:72px; font-weight:600; line-height:1.15; width:1500px">The server never switches the pump. It asks, and the ESP32 decides.</h2>
-<div style="display:flex; gap:48px">
-<div style="flex:1; display:flex; flex-direction:column; gap:12px; border-top:4px solid #3987E5; padding:24px 0px 0px 0px">
-<h3 style="font-size:32px; font-weight:600; color:#F7F8F5">On the ESP32</h3>
-<p style="font-size:28px; color:#BFD0E6; line-height:1.4">Filtering, state machine, 11 fault rules, safety guard, pump health, volume</p>
+<section id="edge" data-transition="fade" style="background:#1C5CAB; color:#FCFCFB; font-family:'IBM Plex Sans', Arial, sans-serif; padding:128px; display:flex; flex-direction:column; justify-content:center; gap:64px">
+<p style="font-size:24px; color:#CDE2FB; letter-spacing:3px; text-transform:uppercase; font-family:'IBM Plex Mono', 'Courier New', monospace; font-weight:600">The central design decision</p>
+<h2 style="font-size:88px; font-weight:600; line-height:1.1; letter-spacing:-2px; color:#FCFCFB; width:1500px">The server never switches the pump. It asks, and the ESP32 decides.</h2>
+<div style="display:flex; gap:64px">
+<div style="flex:1; display:flex; flex-direction:column; gap:12px; border-top:2px solid #9EC5F4; padding:24px 0px 0px 0px">
+<p style="font-size:24px; color:#CDE2FB; font-family:'IBM Plex Mono', 'Courier New', monospace; font-weight:600">ON THE ESP32</p>
+<p style="font-size:32px; color:#FCFCFB; line-height:1.4">Filtering · state machine · 11 fault rules · safety guard · pump health · volume</p>
 </div>
-<div style="flex:1; display:flex; flex-direction:column; gap:12px; border-top:4px solid #E8894F; padding:24px 0px 0px 0px">
-<h3 style="font-size:32px; font-weight:600; color:#F7F8F5">On the server</h3>
-<p style="font-size:28px; color:#BFD0E6; line-height:1.4">History, daily volume report, rolling leak baseline over days</p>
+<div style="flex:1; display:flex; flex-direction:column; gap:12px; border-top:2px solid #9EC5F4; padding:24px 0px 0px 0px">
+<p style="font-size:24px; color:#CDE2FB; font-family:'IBM Plex Mono', 'Courier New', monospace; font-weight:600">ON THE SERVER</p>
+<p style="font-size:32px; color:#FCFCFB; line-height:1.4">History · daily volume report · rolling leak baseline over days</p>
 </div>
 </div>
-<aside>The course rule: anything that needs an immediate safe stop must be computed at the edge. We applied it strictly. Consequence: when the network drops, the user loses visibility and remote commands, but the tank still refills at the right thresholds and every safety rule still applies. The outage requirement becomes a property of the architecture rather than a feature we bolted on.</aside>
+<aside>This is the single most important decision in the project. The lectures give a placement rule: any operation that needs an immediate safe stop must be computed at the edge. We applied it strictly. Everything that needs a deterministic cycle or has to survive an outage lives on the ESP32: filtering, the state machine, all eleven fault rules, the safety guard, the pump health classifier and the volume accumulation. The server keeps only what the microcontroller cannot do well: long history, the daily report, and a leak baseline that needs days of memory. The consequence is graceful degradation. When the network drops, the user loses visibility and remote commands, but the tank still refills at the correct thresholds and every safety rule still applies. The outage requirement becomes a property of the architecture, not a feature we bolted on.</aside>
 </section>

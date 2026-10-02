@@ -1,17 +1,21 @@
-<section id="topics" data-section="Protocol: topics, commands and acknowledgements" style="background:#F7F8F5; color:#14213D; font-family:'IBM Plex Sans', Arial, sans-serif; padding:128px 128px 160px; display:flex; flex-direction:column; gap:48px">
+<section id="topics" style="background:#F4F3EE; color:#0E1A2B; font-family:'IBM Plex Sans', Arial, sans-serif; padding:128px 128px 160px; display:flex; flex-direction:column; gap:40px">
 <div style="display:flex; flex-direction:column; gap:16px">
-<p style="font-size:24px; color:#1F63B8; letter-spacing:3px; text-transform:uppercase; font-weight:600">MQTT topic tree · wt/lab1/esp32-01/…</p>
-<h2 style="font-size:64px; font-weight:600">QoS chosen by the cost of losing one message</h2>
+<p style="font-size:24px; color:#1C5CAB; letter-spacing:3px; text-transform:uppercase; font-family:'IBM Plex Mono', 'Courier New', monospace; font-weight:600">03 · wt/lab1/esp32-01/…</p>
+<h2 style="font-size:64px; font-weight:600; line-height:1.1; letter-spacing:-1px">MQTT topic design</h2>
 </div>
-<table style="font-size:28px; color:#14213D">
-<tr><th style="width:24%">Topic</th><th style="width:10%">QoS</th><th style="width:12%">Retain</th><th style="width:54%">Why</th></tr>
-<tr><td style="font-family:'JetBrains Mono', 'Courier New', monospace">telemetry</td><td>0</td><td>no</td><td>1 Hz stream; one lost sample changes no trend</td></tr>
-<tr><td style="font-family:'JetBrains Mono', 'Courier New', monospace">state/pump</td><td>1</td><td>yes</td><td>Sent only on change; a new viewer gets it at once</td></tr>
-<tr><td style="font-family:'JetBrains Mono', 'Courier New', monospace">event/fault</td><td>1</td><td>no</td><td>A lost alarm is a safety failure</td></tr>
-<tr><td style="font-family:'JetBrains Mono', 'Courier New', monospace">status</td><td>1</td><td>yes</td><td>Last will: broker announces offline by itself</td></tr>
-<tr><td style="font-family:'JetBrains Mono', 'Courier New', monospace">cmd, cmd/ack</td><td>1</td><td>no</td><td>A lost command or ack is a functional failure</td></tr>
+<table style="font-size:28px; color:#0E1A2B">
+<tr style="background:#E9E7DF"><th style="width:24%">Topic</th><th style="width:9%">QoS</th><th style="width:12%">Retain</th><th style="width:55%">Reason</th></tr>
+<tr><td style="font-family:'IBM Plex Mono', 'Courier New', monospace">telemetry</td><td>0</td><td>no</td><td>1 Hz stream; one lost sample changes no trend</td></tr>
+<tr><td style="font-family:'IBM Plex Mono', 'Courier New', monospace">state/pump</td><td>1</td><td>yes</td><td>Sent on change; a new viewer gets it at once</td></tr>
+<tr><td style="font-family:'IBM Plex Mono', 'Courier New', monospace">event/fault</td><td>1</td><td>no</td><td>A lost alarm is a safety failure</td></tr>
+<tr><td style="font-family:'IBM Plex Mono', 'Courier New', monospace">status</td><td>1</td><td>yes</td><td>Last will: the broker announces “offline” itself</td></tr>
+<tr><td style="font-family:'IBM Plex Mono', 'Courier New', monospace">cmd · cmd/ack</td><td>1</td><td>no</td><td>A lost command or ack is a functional failure</td></tr>
 </table>
-<p style="font-size:30px; color:#4A5568; line-height:1.4">No QoS 2: duplicates are handled by the unique <span style="color:#1F63B8">cmd_id</span>. Broker requires a password and an ACL: the device account cannot publish commands.</p>
-<p style="position:absolute; left:128px; bottom:64px; width:1664px; font-size:24px; color:#6B7280">Project 08 · Smart Water Tank · 8</p>
-<aside>Every message carries a device timestamp and a sequence number, which lets us count lost messages exactly during the outage test. The ACL means that even a compromised ESP32 cannot send pump commands to the tank; only the backend account can write the command topic.</aside>
+<div style="display:flex; gap:24px">
+<p style="flex:1; font-size:28px; color:#3D4552; line-height:1.4; border-top:1px solid #D6D4CB; padding:20px 0px 0px 0px"><b style="color:#0E1A2B">No QoS 2.</b> Duplicates are absorbed by the unique cmd_id.</p>
+<p style="flex:1; font-size:28px; color:#3D4552; line-height:1.4; border-top:1px solid #D6D4CB; padding:20px 0px 0px 0px"><b style="color:#0E1A2B">seq + ts_ms</b> in every message count losses exactly.</p>
+<p style="flex:1; font-size:28px; color:#3D4552; line-height:1.4; border-top:1px solid #D6D4CB; padding:20px 0px 0px 0px"><b style="color:#0E1A2B">ACL:</b> the device account cannot publish commands.</p>
+</div>
+<div style="position:absolute; left:128px; right:128px; bottom:64px; display:flex; justify-content:space-between"><p style="font-size:24px; color:#646B76">Smart Water Tank · Project 08</p><p style="font-size:24px; color:#646B76; font-family:'IBM Plex Mono', 'Courier New', monospace">12</p></div>
+<aside>Our topic tree goes from broad to specific: water tank, site, device. We chose the quality of service per topic by asking one question: what does it cost to lose one message? Telemetry is a one hertz stream, so losing one sample changes no conclusion, and it uses QoS zero. The pump state is published only when it changes, so it uses QoS one and is retained, which means a dashboard that opens later immediately receives the current state. Faults, commands and acknowledgements use QoS one because losing any of them is a functional or safety failure. The status topic carries the last will message: if the ESP32 disappears without a clean disconnect, the broker itself publishes "offline". We never use QoS two; duplicate commands are already handled by a unique command identifier, so the device just repeats the same acknowledgement. Every message carries a sequence number and a millisecond timestamp, which is how we count lost messages exactly. And the broker has an access control list: even a compromised ESP32 cannot publish pump commands.</aside>
 </section>

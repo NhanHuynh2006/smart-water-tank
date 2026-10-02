@@ -1,17 +1,17 @@
-<section id="limits" style="background:#F7F8F5; color:#14213D; font-family:'IBM Plex Sans', Arial, sans-serif; padding:128px 128px 160px; display:flex; flex-direction:column; gap:48px">
+<section id="limits" style="background:#F4F3EE; color:#0E1A2B; font-family:'IBM Plex Sans', Arial, sans-serif; padding:128px 128px 160px; display:flex; flex-direction:column; gap:48px">
 <div style="display:flex; flex-direction:column; gap:16px">
-<p style="font-size:24px; color:#1F63B8; letter-spacing:3px; text-transform:uppercase; font-weight:600">Limitations</p>
-<h2 style="font-size:64px; font-weight:600">What we would fix next, in order</h2>
+<p style="font-size:24px; color:#1C5CAB; letter-spacing:3px; text-transform:uppercase; font-family:'IBM Plex Mono', 'Courier New', monospace; font-weight:600">07 · Limitations</p>
+<h2 style="font-size:64px; font-weight:600; line-height:1.1; letter-spacing:-1px">Limitations and next steps</h2>
 </div>
-<table style="font-size:28px; color:#14213D">
-<tr><th style="width:34%">Limitation</th><th style="width:66%">Remedy</th></tr>
-<tr><td>Flow sensors unusable here</td><td>Separate sensor supply; ignore pulses shorter than a few ms (real ones last 14 ms); a 0.05 L/min sensor</td></tr>
-<tr><td>Current scale unverified</td><td>One multimeter reading in series; reads 360–425 mA vs 100–200 rated</td></tr>
-<tr><td>Beam wider than tank</td><td>Stilling tube or wider vessel</td></tr>
-<tr><td>Sensor latch-up</td><td>Power HC-SR04 from a GPIO the firmware can cycle</td></tr>
-<tr><td>Baseline not converged</td><td>Run several days; 3 per slot needed</td></tr>
+<table style="font-size:28px; color:#0E1A2B">
+<tr style="background:#E9E7DF"><th style="width:34%">Limitation</th><th style="width:66%">Next step</th></tr>
+<tr style="background:#FBEDE5"><td>Flow sensors unusable here</td><td>Separate sensor supply; ignore pulses shorter than a few ms; a 0.05 L/min sensor</td></tr>
+<tr><td>Current scale unverified</td><td>One multimeter reading: we read 360–425 mA for a 100–200 mA pump</td></tr>
+<tr><td>Beam wider than the tank</td><td>Stilling tube, or a wider vessel</td></tr>
+<tr><td>Sensor latch-up</td><td>Power the HC-SR04 from a GPIO the firmware can cycle</td></tr>
+<tr><td>Baseline not converged</td><td>Run several days; three per slot are needed</td></tr>
 <tr><td>Operations</td><td>Named tunnel, per-user accounts, TLS broker, OTA updates</td></tr>
 </table>
-<p style="position:absolute; left:128px; bottom:64px; width:1664px; font-size:24px; color:#6B7280">Project 08 · Smart Water Tank · 27</p>
-<aside>The flow measurement is the main open item. The fix is cheap and known. A real pulse at 0.36 L/min is about 14 ms long, while the conducted interference is well under a millisecond, so a minimum pulse width filter in the interrupt would separate them, and a supply that does not share a return with the motor would remove the cause. The binary use of current, present or absent, is unaffected by the scale question.</aside>
+<div style="position:absolute; left:128px; right:128px; bottom:64px; display:flex; justify-content:space-between"><p style="font-size:24px; color:#646B76">Smart Water Tank · Project 08</p><p style="font-size:24px; color:#646B76; font-family:'IBM Plex Mono', 'Courier New', monospace">36</p></div>
+<aside>We think pointing precisely at what falls short is as valuable as showing what works. The main open item is flow measurement, highlighted. The cause is known and the fix is cheap: a real pulse at our flow lasts about fourteen milliseconds, while the conducted interference is far shorter, so a minimum pulse width filter would separate them, and a supply that does not share a return path with the motor would remove the cause. A sensor rated down to 0.05 litres per minute would also measure our outlet. Second, the current scale factor: we read 360 to 425 milliamps for a pump rated 100 to 200, so either the divider or the sensor variant differs from our assumption; one multimeter reading settles it, and the present-or-absent use of current is unaffected. Third, the ultrasonic beam is wider than the tank. Fourth, the sensor sometimes locks up until its power is cycled; a GPIO-controlled supply would let the firmware do that by itself. The rolling baseline needs several days to converge. And for a real deployment: a named tunnel instead of a link that changes every restart, per-user accounts, TLS on the broker, and over-the-air updates.</aside>
 </section>

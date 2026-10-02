@@ -1,39 +1,45 @@
-<section id="levelpipe" data-section="Control and intelligence on the ESP32" style="background:#F7F8F5; color:#14213D; font-family:'IBM Plex Sans', Arial, sans-serif; padding:128px 128px 160px; display:flex; flex-direction:column; gap:48px">
+<section id="levelpipe" style="background:#F4F3EE; color:#0E1A2B; font-family:'IBM Plex Sans', Arial, sans-serif; padding:128px 128px 160px; display:flex; flex-direction:column; gap:48px">
 <div style="display:flex; flex-direction:column; gap:16px">
-<p style="font-size:24px; color:#1F63B8; letter-spacing:3px; text-transform:uppercase; font-weight:600">Level measurement</p>
-<h2 style="font-size:64px; font-weight:600">One ping is never trusted: five gates, each counted</h2>
+<p style="font-size:24px; color:#1C5CAB; letter-spacing:3px; text-transform:uppercase; font-family:'IBM Plex Mono', 'Courier New', monospace; font-weight:600">04 · Level measurement</p>
+<h2 style="font-size:64px; font-weight:600; line-height:1.1; letter-spacing:-1px">Level measurement pipeline</h2>
 </div>
-<div style="display:flex; gap:16px; align-items:stretch">
-<div style="flex:1; display:flex; flex-direction:column; gap:8px; background:#FFFFFF; padding:28px; border:1px solid #DDE3EA; border-radius:16px">
-<p style="font-size:24px; color:#1F63B8; font-weight:600">1</p>
-<h3 style="font-size:30px; font-weight:600">Window</h3>
-<p style="font-size:24px; color:#4A5568; line-height:1.35">Last 15 pings, inside tank geometry</p>
+<div style="display:flex; gap:0px; align-items:stretch">
+<div style="flex:1; display:flex; flex-direction:column; gap:12px; background:#FCFCFB; padding:32px; border:1px solid #E1E0D9; border-radius:12px">
+<p style="font-size:24px; color:#2A78D6; font-family:'IBM Plex Mono', 'Courier New', monospace; font-weight:600">1 · WINDOW</p>
+<p style="font-size:26px; color:#3D4552; line-height:1.4">Last 15 pings inside the tank geometry</p>
 </div>
-<div style="flex:1; display:flex; flex-direction:column; gap:8px; background:#FFFFFF; padding:28px; border:1px solid #DDE3EA; border-radius:16px">
-<p style="font-size:24px; color:#1F63B8; font-weight:600">2</p>
-<h3 style="font-size:30px; font-weight:600">Spread</h3>
-<p style="font-size:24px; color:#4A5568; line-height:1.35">Interquartile range ≤ 3.5 cm</p>
+<x-connector style="width:40px; color:#898781" from="tl"></x-connector>
+<div style="flex:1; display:flex; flex-direction:column; gap:12px; background:#FCFCFB; padding:32px; border:1px solid #E1E0D9; border-radius:12px">
+<p style="font-size:24px; color:#2A78D6; font-family:'IBM Plex Mono', 'Courier New', monospace; font-weight:600">2 · SPREAD</p>
+<p style="font-size:26px; color:#3D4552; line-height:1.4">Interquartile range ≤ 3.5 cm</p>
 </div>
-<div style="flex:1; display:flex; flex-direction:column; gap:8px; background:#FFFFFF; padding:28px; border:1px solid #DDE3EA; border-radius:16px">
-<p style="font-size:24px; color:#1F63B8; font-weight:600">3</p>
-<h3 style="font-size:30px; font-weight:600">Median</h3>
-<p style="font-size:24px; color:#4A5568; line-height:1.35">h = 17.5 − d, then calibration</p>
+<x-connector style="width:40px; color:#898781" from="tl"></x-connector>
+<div style="flex:1; display:flex; flex-direction:column; gap:12px; background:#FCFCFB; padding:32px; border:1px solid #E1E0D9; border-radius:12px">
+<p style="font-size:24px; color:#2A78D6; font-family:'IBM Plex Mono', 'Courier New', monospace; font-weight:600">3 · MEDIAN</p>
+<p style="font-size:26px; color:#3D4552; line-height:1.4">h = 17.5 − d, then calibration</p>
 </div>
-<div style="flex:1; display:flex; flex-direction:column; gap:8px; background:#FFFFFF; padding:28px; border:1px solid #DDE3EA; border-radius:16px">
-<p style="font-size:24px; color:#1F63B8; font-weight:600">4</p>
-<h3 style="font-size:30px; font-weight:600">Physics</h3>
-<p style="font-size:24px; color:#4A5568; line-height:1.35">Too fast? Falling while pumping?</p>
+<x-connector style="width:40px; color:#898781" from="tl"></x-connector>
+<div style="flex:1; display:flex; flex-direction:column; gap:12px; background:#FCFCFB; padding:32px; border:1px solid #E1E0D9; border-radius:12px">
+<p style="font-size:24px; color:#2A78D6; font-family:'IBM Plex Mono', 'Courier New', monospace; font-weight:600">4 · PHYSICS</p>
+<p style="font-size:26px; color:#3D4552; line-height:1.4">Reject impossible jumps and falls while pumping</p>
 </div>
-<div style="flex:1; display:flex; flex-direction:column; gap:8px; background:#14213D; padding:28px; border-radius:16px">
-<p style="font-size:24px; color:#E8894F; font-weight:600">5</p>
-<h3 style="font-size:30px; font-weight:600; color:#F7F8F5">Alpha-beta</h3>
-<p style="font-size:24px; color:#DDE6F2; line-height:1.35">Level and rate, α = 0.03, no lag on a ramp</p>
+<x-connector style="width:40px; color:#898781" from="tl"></x-connector>
+<div style="flex:1; display:flex; flex-direction:column; gap:12px; background:#0E1A2B; padding:32px; border-radius:12px">
+<p style="font-size:24px; color:#F09A72; font-family:'IBM Plex Mono', 'Courier New', monospace; font-weight:600">5 · α-β FILTER</p>
+<p style="font-size:26px; color:#DCE4EE; line-height:1.4">Level and rate · α = 0.03 · no lag on a ramp</p>
 </div>
 </div>
-<div style="display:grid; grid-template-columns:1fr 1fr; gap:48px">
-<p style="font-size:30px; color:#4A5568; line-height:1.4"><b style="color:#14213D">Why:</b> the 15° beam is wider than the 10 cm tank, so some echoes come from the wall or the floor.</p>
-<p style="font-size:30px; color:#4A5568; line-height:1.4"><b style="color:#14213D">Bypass:</b> a raw distance guard under 4.5 cm, 3 pings in a row, trips overflow without any filter.</p>
+<div style="flex:1"></div>
+<div style="display:flex; gap:48px">
+<div style="flex:1; display:flex; flex-direction:column; gap:8px">
+<p style="font-size:96px; line-height:1; font-weight:500; color:#1C5CAB; font-family:'IBM Plex Mono', 'Courier New', monospace">60 → 93 %</p>
+<p style="font-size:28px; color:#3D4552">pings accepted after replacing max−min with the IQR</p>
 </div>
-<p style="position:absolute; left:128px; bottom:64px; width:1664px; font-size:24px; color:#6B7280">Project 08 · Smart Water Tank · 10</p>
-<aside>Each gate has a rejection counter published in telemetry (rj_gate, rj_spread, rj_rate, rj_fall). That is how we found that 98 percent of rejections came from one gate, the spread check. It used max minus min, which one stray echo controls completely. Switching to the interquartile range raised acceptance from 60 to 93 percent. The alpha-beta filter tracks level and velocity; the velocity is reused for flow and pump diagnosis.</aside>
+<div style="flex:1; display:flex; flex-direction:column; gap:8px; border-left:1px solid #D6D4CB; padding:0px 0px 0px 48px">
+<p style="font-size:32px; font-weight:600">Bypass for safety</p>
+<p style="font-size:28px; color:#3D4552; line-height:1.4">The raw distance, unfiltered, trips overflow after 3 pings closer than 4.5 cm.</p>
+</div>
+</div>
+<div style="position:absolute; left:128px; right:128px; bottom:64px; display:flex; justify-content:space-between"><p style="font-size:24px; color:#646B76">Smart Water Tank · Project 08</p><p style="font-size:24px; color:#646B76; font-family:'IBM Plex Mono', 'Courier New', monospace">15</p></div>
+<aside>Now the core. The ultrasonic sensor sits 17.5 centimetres above the tank floor, so the level is 17.5 minus the measured distance. That sounds trivial, but the sensor's beam spreads about fifteen degrees and is already wider than our ten centimetre tank when it reaches the water, so some echoes come back from the wall or the floor. We therefore never trust a single ping. Each reading passes five gates. We keep a window of the last fifteen pings. If the interquartile range of the window is larger than 3.5 centimetres, the sensor is jumping between two surfaces, and we reject the window. Otherwise we take the median. Then a physics check rejects changes faster than the pump could cause, or a falling level while the pump is filling. Finally an alpha-beta filter tracks both the level and its rate of change, without the lag of a moving average. Every gate has its own rejection counter in the telemetry. That is how we found that ninety-eight percent of rejections came from one gate, which used maximum minus minimum; one stray echo controls that statistic completely. Switching to the interquartile range raised acceptance from sixty to ninety-three percent. And separately, for safety, a raw distance check bypasses all of this filtering: three pings closer than 4.5 centimetres trigger the overflow protection, whatever the filter believes.</aside>
 </section>

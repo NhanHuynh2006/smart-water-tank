@@ -1,21 +1,21 @@
-<section id="reqmap" style="background:#F7F8F5; color:#14213D; font-family:'IBM Plex Sans', Arial, sans-serif; padding:128px 128px 160px; display:flex; flex-direction:column; gap:40px">
+<section id="reqmap" style="background:#F4F3EE; color:#0E1A2B; font-family:'IBM Plex Sans', Arial, sans-serif; padding:128px 128px 160px; display:flex; flex-direction:column; gap:40px">
 <div style="display:flex; flex-direction:column; gap:16px">
-<p style="font-size:24px; color:#1F63B8; letter-spacing:3px; text-transform:uppercase; font-weight:600">The brief, requirement by requirement</p>
-<h2 style="font-size:64px; font-weight:600">Every requirement has a place and a status</h2>
+<p style="font-size:24px; color:#1C5CAB; letter-spacing:3px; text-transform:uppercase; font-family:'IBM Plex Mono', 'Courier New', monospace; font-weight:600">01 · The brief</p>
+<h2 style="font-size:64px; font-weight:600; line-height:1.1; letter-spacing:-1px">Requirements and where they are met</h2>
 </div>
-<table style="font-size:26px; color:#14213D">
-<tr><th style="width:52%">Requirement</th><th style="width:28%">How</th><th style="width:20%">Status</th></tr>
-<tr><td>ESP32, level + flow sensors</td><td>HC-SR04, 2 × YF-S401, ACS712</td><td>Met, flow from level</td></tr>
-<tr><td>Relay with inductive protection</td><td>Relay + 1N4007 + 100 nF</td><td>Met</td></tr>
-<tr><td>No overflow, safe on bad sensors</td><td>6 independent layers</td><td>Met</td></tr>
-<tr><td>Flow and accumulated volume</td><td>On device, saved to flash</td><td>Met, −5 % error</td></tr>
-<tr><td>MQTT telemetry, state, faults, availability</td><td>6 topics, LWT</td><td>Met</td></tr>
-<tr><td>Storage, REST API, dashboard</td><td>SQLite, FastAPI, web page</td><td>Met</td></tr>
-<tr><td>Hysteresis / FSM + fault rule</td><td>30–70 %, 7 states, 11 rules</td><td>Met</td></tr>
-<tr><td>Manual cannot bypass safety; acks</td><td>One guard function; cmd/ack</td><td>Met</td></tr>
-<tr><td>Local control during outage</td><td>Loop on ESP32, ring buffer</td><td>Met</td></tr>
-<tr><td>Advanced: baseline or current/flow</td><td>Both built</td><td>Baseline converging</td></tr>
+<table style="font-size:26px; color:#0E1A2B">
+<tr style="background:#E9E7DF"><th style="width:46%">Requirement of Project 08</th><th style="width:34%">How we meet it</th><th style="width:20%">Status</th></tr>
+<tr><td>ESP32, level and flow sensors</td><td>HC-SR04, 2 × YF-S401, ACS712</td><td>Met · flow from level</td></tr>
+<tr><td>Driver with inductive protection</td><td>Relay + 1N4007 + 100 nF</td><td>Met</td></tr>
+<tr><td>No overflow, safe on bad readings</td><td>Six independent layers</td><td>Met</td></tr>
+<tr><td>Flow rate and accumulated volume</td><td>Integrated on device, in flash</td><td>Met · −5.2 % error</td></tr>
+<tr><td>MQTT telemetry, state, faults, availability</td><td>Six topics, last will</td><td>Met</td></tr>
+<tr><td>Time series, REST API, dashboard</td><td>SQLite, FastAPI, web page</td><td>Met</td></tr>
+<tr><td>Hysteresis or FSM, ≥ 1 fault rule</td><td>30–70 %, 7 states, 11 rules</td><td>Met</td></tr>
+<tr><td>Manual cannot bypass safety; acks</td><td>One guard function, cmd/ack</td><td>Met</td></tr>
+<tr><td>Local control during an outage</td><td>Loop on ESP32, ring buffer</td><td>Met</td></tr>
+<tr style="background:#FBEDE5"><td>Advanced: baseline or current vs flow</td><td>Both implemented</td><td>Baseline converging</td></tr>
 </table>
-<p style="position:absolute; left:128px; bottom:64px; width:1664px; font-size:24px; color:#6B7280">Project 08 · Smart Water Tank · 3</p>
-<aside>This is the requirement table from chapter 2 of the report. Be upfront about the two partial items: the flow sensors are fitted but the numbers used for control come from the level, and the rolling baseline has not yet seen enough days to alarm. Both are explained later with measurements.</aside>
+<div style="position:absolute; left:128px; right:128px; bottom:64px; display:flex; justify-content:space-between"><p style="font-size:24px; color:#646B76">Smart Water Tank · Project 08</p><p style="font-size:24px; color:#646B76; font-family:'IBM Plex Mono', 'Courier New', monospace">05</p></div>
+<aside>This table takes each requirement of the brief, says how we meet it, and gives an honest status. Most rows are met and demonstrated. Two points I want to be upfront about, because we will come back to both with measurements. First, the flow sensors are physically fitted and wired, but in our installation the numbers they produce cannot be trusted, so the flow used for control is derived from the level. Second, for the advanced component we built both options the brief offers: a rolling baseline for abnormal consumption, and a classifier based on pump current versus flow. The classifier works and we will demo it; the baseline needs several days of data before it is allowed to raise an alarm.</aside>
 </section>

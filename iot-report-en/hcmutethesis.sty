@@ -45,7 +45,7 @@
 \newsavebox\thesmashminipage
 \newenvironment{smashminipage}
   {\begin{lrbox}{\thesmashminipage}\begin{minipage}[t]{\textwidth}}
-  {\end{minipage}\end{lrbox}\smash{\usebox{\thesmashminipage}}\clearpage}
+  {\end{minipage}\end{lrbox}\noindent\smash{\usebox{\thesmashminipage}}\clearpage}
   
 \def\coverpage{
 \pagestyle{empty}
@@ -79,10 +79,9 @@
     % {\fontsize{20}{1}\selectfont \textbf{\parbox[c][3cm]{0.9\linewidth}{ \centering \@tname }}} \\[1cm]
 
 {\fontsize{13}{1}\selectfont 
-\hspace{4cm}\parbox[t]{11cm}{
-    \textbf{Students: } \parbox[t]{9.2cm}{\@stuname}\\[0.9cm]
-    \textbf{Supervisor: }  \parbox[t]{9.2cm}{\@sSupervise} 
-	\hspace{2.2cm}	
+\noindent\hspace{3.6cm}\parbox[t]{11cm}{
+    \textbf{Students: } \parbox[t]{8.0cm}{\@stuname}\\[0.9cm]
+    \textbf{Supervisor: }  \parbox[t]{8.0cm}{\@sSupervise} 
 }
 }
 \vspace{0.25cm}
@@ -110,10 +109,9 @@
 \end{center}
 
 {\fontsize{13}{1}\selectfont 
-\hspace{4cm}\parbox[t]{11cm}{
-   \textbf{Students: } \parbox[t]{9.2cm}{\@stuname}\\[0.9cm]
-   \textbf{Supervisor: } \parbox[t]{9.2cm}{\@sSupervise} 
-	\hspace{1.2cm}	
+\noindent\hspace{3.6cm}\parbox[t]{11cm}{
+   \textbf{Students: } \parbox[t]{8.0cm}{\@stuname}\\[0.9cm]
+   \textbf{Supervisor: } \parbox[t]{8.0cm}{\@sSupervise} 
 
 }
 }

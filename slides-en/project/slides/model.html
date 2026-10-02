@@ -1,19 +1,28 @@
-<section id="model" style="background:#F7F8F5; color:#14213D; font-family:'IBM Plex Sans', Arial, sans-serif; padding:128px 128px 160px; display:grid; grid-template-columns:1fr 1fr; gap:64px">
-<div style="display:flex; flex-direction:column; gap:32px">
-<p style="font-size:24px; color:#1F63B8; letter-spacing:3px; text-transform:uppercase; font-weight:600">Parallel level model</p>
-<h2 style="font-size:56px; font-weight:600; line-height:1.15">When the sensor goes blind, the tank model steers, for at most 45 s</h2>
-<p style="font-size:30px; color:#4A5568; line-height:1.45">The model integrates pump in minus drain out and is pulled towards every accepted reading with gain 0.05.</p>
-<p style="font-size:30px; color:#4A5568; line-height:1.45">Before it, fills stopped at about 50 %. After 45 s without a real reading: <span style="color:#B8471A; font-weight:600">LEVEL_LOST</span>, pump off.</p>
+<section id="model" style="background:#F4F3EE; color:#0E1A2B; font-family:'IBM Plex Sans', Arial, sans-serif; padding:128px 128px 160px; display:flex; flex-direction:column; gap:48px">
+<div style="display:flex; flex-direction:column; gap:16px">
+<p style="font-size:24px; color:#1C5CAB; letter-spacing:3px; text-transform:uppercase; font-family:'IBM Plex Mono', 'Courier New', monospace; font-weight:600">04 · Tank model</p>
+<h2 style="font-size:64px; font-weight:600; line-height:1.1; letter-spacing:-1px">Model bridging and flow from level</h2>
 </div>
-<div style="display:flex; flex-direction:column; gap:32px">
-<p style="font-size:24px; color:#1F63B8; letter-spacing:3px; text-transform:uppercase; font-weight:600">Flow derived from level</p>
-<div style="display:flex; flex-direction:column; gap:16px; background:#FFFFFF; padding:40px; border:1px solid #DDE3EA; border-radius:16px">
-<p style="font-size:32px; font-family:'JetBrains Mono', 'Courier New', monospace">in  = 0.36 L/min · pump</p>
-<p style="font-size:32px; font-family:'JetBrains Mono', 'Courier New', monospace">out = −rate × A × 60/1000</p>
+<div style="display:flex; gap:48px; flex:1">
+<div style="flex:1; display:flex; flex-direction:column; gap:24px; background:#FCFCFB; padding:48px; border:1px solid #E1E0D9; border-radius:12px">
+<p style="font-size:24px; color:#2A78D6; font-family:'IBM Plex Mono', 'Courier New', monospace; font-weight:600">PARALLEL MODEL</p>
+<p style="font-size:30px; font-family:'IBM Plex Mono', 'Courier New', monospace">dh/dt = (Q_in − Q_out) / A</p>
+<p style="font-size:28px; color:#3D4552; line-height:1.45">Pulled towards every accepted reading. If the sensor goes blind mid-fill, the model steers.</p>
+<div style="flex:1"></div>
+<div style="display:flex; gap:32px; border-top:1px solid #E1E0D9; padding:24px 0px 0px 0px">
+<div style="flex:1; display:flex; flex-direction:column; gap:4px"><p style="font-size:56px; line-height:1; font-weight:500; color:#1C5CAB; font-family:'IBM Plex Mono', 'Courier New', monospace">45 s</p><p style="font-size:24px; color:#3D4552">max blind, then LEVEL_LOST</p></div>
+<div style="flex:1; display:flex; flex-direction:column; gap:4px"><p style="font-size:56px; line-height:1; font-weight:500; color:#1C5CAB; font-family:'IBM Plex Mono', 'Courier New', monospace">50 → 70 %</p><p style="font-size:24px; color:#3D4552">where fills used to stop</p></div>
 </div>
-<p style="font-size:30px; color:#4A5568; line-height:1.45">Outflow is measured only with the pump off and settled 20 s, then <b style="color:#14213D">held</b> while pumping.</p>
-<p style="font-size:30px; color:#4A5568; line-height:1.45">The old formula made the red outflow curve jump every time the pump started.</p>
 </div>
-<p style="position:absolute; left:128px; bottom:64px; width:1664px; font-size:24px; color:#6B7280">Project 08 · Smart Water Tank · 11</p>
-<aside>Two uses of a simple tank model. First, it bridges short dropouts of the ultrasonic sensor during a fill, with hard limits: 45 s maximum, and a returning reading that disagrees by more than 2.5 cm is treated as suspect. Second, outflow. The old formula subtracted a lagging rate from an instantly switching pump term, so the dashboard showed consumption rising whenever the pump started. The valve sets the draw, not the pump, so we hold the drain estimate while pumping.</aside>
+<div style="flex:1; display:flex; flex-direction:column; gap:24px; background:#FCFCFB; padding:48px; border:1px solid #E1E0D9; border-radius:12px">
+<p style="font-size:24px; color:#EB6834; font-family:'IBM Plex Mono', 'Courier New', monospace; font-weight:600">FLOW FROM LEVEL</p>
+<p style="font-size:30px; font-family:'IBM Plex Mono', 'Courier New', monospace">in&#160;&#160;= 0.36 L/min × pump</p>
+<p style="font-size:30px; font-family:'IBM Plex Mono', 'Courier New', monospace">out = −rate × A</p>
+<p style="font-size:28px; color:#3D4552; line-height:1.45">Outflow is measured only with the pump off and settled for 20 s, then <b style="color:#0E1A2B">held</b> while pumping.</p>
+<div style="flex:1"></div>
+<p style="font-size:26px; color:#3D4552; line-height:1.45; border-top:1px solid #E1E0D9; padding:24px 0px 0px 0px">The first formula made the outflow curve jump every time the pump started.</p>
+</div>
+</div>
+<div style="position:absolute; left:128px; right:128px; bottom:64px; display:flex; justify-content:space-between"><p style="font-size:24px; color:#646B76">Smart Water Tank · Project 08</p><p style="font-size:24px; color:#646B76; font-family:'IBM Plex Mono', 'Courier New', monospace">16</p></div>
+<aside>We also run a simple model of the tank in parallel with the measurement. The level changes by inflow minus outflow, divided by the base area. The model is pulled gently towards every accepted reading, so it never drifts far. Its first use is bridging: during a fill the ultrasonic sensor sometimes produces no accepted reading for tens of seconds, and our first firmware simply stopped every such fill at about fifty percent. Now the state machine controls on the model during the gap, for at most forty-five seconds; after that, the pump stops and we raise LEVEL_LOST. The model never replaces the sensor for long. Its second use is flow. Because the turbine sensors are unusable here, inflow is the calibrated pump delivery while the pump runs, and outflow is the falling rate of the level times the area. One subtlety: the first version computed outflow as pump delivery minus the net rise at every instant. The pump term switches instantly but the rate estimate lags, so every pump start made the outflow curve jump on the dashboard, as if consumption followed the pump. Physically, the valve sets the draw, not the pump. So we measure outflow only when the pump has been off for twenty seconds, and hold that value while pumping.</aside>
 </section>

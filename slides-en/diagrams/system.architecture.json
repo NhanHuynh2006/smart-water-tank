@@ -1,0 +1,203 @@
+{
+ "schema_version": 1,
+ "diagram_type": "architecture",
+ "meta": {
+  "title": "Smart Water Tank system",
+  "locale": "en",
+  "quality_profile": "showcase",
+  "viewBox": [
+   1240,
+   400
+  ]
+ },
+ "components": [
+  {
+   "id": "sensors",
+   "type": "external",
+   "label": "Sensors",
+   "sublabel": "level · floats · current",
+   "pos": [
+    30,
+    90
+   ],
+   "size": [
+    180,
+    66
+   ]
+  },
+  {
+   "id": "esp32",
+   "type": "backend",
+   "label": "ESP32 firmware",
+   "sublabel": "200 ms control loop",
+   "pos": [
+    270,
+    90
+   ],
+   "size": [
+    180,
+    66
+   ],
+   "tag": "11 fault rules"
+  },
+  {
+   "id": "pump",
+   "type": "external",
+   "label": "Relay + pump",
+   "sublabel": "1N4007 flyback",
+   "pos": [
+    270,
+    270
+   ],
+   "size": [
+    180,
+    66
+   ]
+  },
+  {
+   "id": "broker",
+   "type": "messagebus",
+   "label": "Mosquitto",
+   "sublabel": "MQTT :1883 · ACL",
+   "pos": [
+    520,
+    90
+   ],
+   "size": [
+    180,
+    66
+   ]
+  },
+  {
+   "id": "api",
+   "type": "backend",
+   "label": "FastAPI backend",
+   "sublabel": "ingest · REST :8000",
+   "pos": [
+    770,
+    90
+   ],
+   "size": [
+    180,
+    66
+   ]
+  },
+  {
+   "id": "db",
+   "type": "database",
+   "label": "SQLite",
+   "sublabel": "6 tables",
+   "pos": [
+    770,
+    270
+   ],
+   "size": [
+    180,
+    66
+   ]
+  },
+  {
+   "id": "ui",
+   "type": "frontend",
+   "label": "Web dashboard",
+   "sublabel": "1 Hz polling",
+   "pos": [
+    1020,
+    90
+   ],
+   "size": [
+    180,
+    66
+   ]
+  },
+  {
+   "id": "tunnel",
+   "type": "cloud",
+   "label": "Cloudflare tunnel",
+   "sublabel": "public HTTPS link",
+   "pos": [
+    1020,
+    270
+   ],
+   "size": [
+    180,
+    66
+   ]
+  }
+ ],
+ "boundaries": [
+  {
+   "kind": "region",
+   "label": "Edge node · keeps working offline",
+   "wraps": [
+    "sensors",
+    "esp32",
+    "pump"
+   ]
+  },
+  {
+   "kind": "region",
+   "label": "Laptop server",
+   "wraps": [
+    "broker",
+    "api",
+    "db",
+    "ui"
+   ]
+  }
+ ],
+ "connections": [
+  {
+   "id": "read",
+   "from": "sensors",
+   "to": "esp32",
+   "label": "read"
+  },
+  {
+   "id": "drive",
+   "from": "esp32",
+   "to": "pump",
+   "label": "relay",
+   "fromSide": "bottom",
+   "toSide": "top",
+   "labelDy": 50
+  },
+  {
+   "id": "publish",
+   "from": "esp32",
+   "to": "broker",
+   "label": "MQTT",
+   "variant": "emphasis"
+  },
+  {
+   "id": "ingest",
+   "from": "broker",
+   "to": "api",
+   "label": "subscribe"
+  },
+  {
+   "id": "store",
+   "from": "api",
+   "to": "db",
+   "label": "SQL",
+   "fromSide": "bottom",
+   "toSide": "top",
+   "labelDy": 50
+  },
+  {
+   "id": "serve",
+   "from": "api",
+   "to": "ui",
+   "label": "REST"
+  },
+  {
+   "id": "public",
+   "from": "tunnel",
+   "to": "ui",
+   "label": "HTTPS",
+   "variant": "dashed",
+   "fromSide": "top",
+   "toSide": "bottom"
+  }
+ ]
+}

@@ -1,26 +1,26 @@
-<section id="signals" style="background:#F7F8F5; color:#14213D; font-family:'IBM Plex Sans', Arial, sans-serif; padding:128px 128px 160px; display:flex; flex-direction:column; gap:48px">
+<section id="signals" style="background:#F4F3EE; color:#0E1A2B; font-family:'IBM Plex Sans', Arial, sans-serif; padding:128px 128px 160px; display:flex; flex-direction:column; gap:48px">
 <div style="display:flex; flex-direction:column; gap:16px">
-<p style="font-size:24px; color:#1F63B8; letter-spacing:3px; text-transform:uppercase; font-weight:600">Signal conditioning</p>
-<h2 style="font-size:64px; font-weight:600">Three wiring lessons, each found by measuring</h2>
+<p style="font-size:24px; color:#1C5CAB; letter-spacing:3px; text-transform:uppercase; font-family:'IBM Plex Mono', 'Courier New', monospace; font-weight:600">02 · Signal conditioning</p>
+<h2 style="font-size:64px; font-weight:600; line-height:1.1; letter-spacing:-1px">Three wiring lessons, each found by measuring</h2>
 </div>
-<div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:32px">
-<div style="display:flex; flex-direction:column; gap:16px; background:#FFFFFF; padding:40px; border:1px solid #DDE3EA; border-radius:16px">
-<p style="font-size:64px; font-weight:600; color:#B8471A; font-family:'JetBrains Mono', 'Courier New', monospace">30 % → 0</p>
-<h3 style="font-size:32px; font-weight:600">Echo loss</h3>
-<p style="font-size:28px; color:#4A5568; line-height:1.4">A TXS0108E level shifter distorted the echo pulse. A plain resistor divider fixed it: 0 misses in 179 pings.</p>
+<div style="display:flex; gap:24px; flex:1">
+<div style="flex:1; display:flex; flex-direction:column; gap:20px; background:#FCFCFB; padding:40px; border:1px solid #E1E0D9; border-radius:12px">
+<p style="font-size:24px; color:#646B76; font-family:'IBM Plex Mono', 'Courier New', monospace">ECHO LINE</p>
+<p style="font-size:72px; line-height:1; font-weight:500; color:#B4461A; font-family:'IBM Plex Mono', 'Courier New', monospace">30 % → 0</p>
+<p style="font-size:28px; color:#3D4552; line-height:1.4">echoes lost. A TXS0108E level shifter distorted the pulse; a resistor divider gave 0 misses in 179 pings.</p>
 </div>
-<div style="display:flex; flex-direction:column; gap:16px; background:#FFFFFF; padding:40px; border:1px solid #DDE3EA; border-radius:16px">
-<p style="font-size:64px; font-weight:600; color:#B8471A; font-family:'JetBrains Mono', 'Courier New', monospace">50.00 Hz</p>
-<h3 style="font-size:32px; font-weight:600">Mains pickup</h3>
-<p style="font-size:28px; color:#4A5568; line-height:1.4">Flow read 0.3 L/min with the valve shut. The internal 45 kΩ pull up was an antenna; 4.7 kΩ gave 0 Hz.</p>
+<div style="flex:1; display:flex; flex-direction:column; gap:20px; background:#FCFCFB; padding:40px; border:1px solid #E1E0D9; border-radius:12px">
+<p style="font-size:24px; color:#646B76; font-family:'IBM Plex Mono', 'Courier New', monospace">FLOW, PUMP OFF</p>
+<p style="font-size:72px; line-height:1; font-weight:500; color:#B4461A; font-family:'IBM Plex Mono', 'Courier New', monospace">50.00 Hz</p>
+<p style="font-size:28px; color:#3D4552; line-height:1.4">with the valve shut: mains pickup on a 45 kΩ internal pull up. 4.7 kΩ external gave 0 Hz.</p>
 </div>
-<div style="display:flex; flex-direction:column; gap:16px; background:#FFFFFF; padding:40px; border:1px solid #DDE3EA; border-radius:16px">
-<p style="font-size:64px; font-weight:600; color:#B8471A; font-family:'JetBrains Mono', 'Courier New', monospace">1500 Hz</p>
-<h3 style="font-size:32px; font-weight:600">Pump noise</h3>
-<p style="font-size:28px; color:#4A5568; line-height:1.4">With the pump on, both flow lines read 40× the real 35 Hz. Diode and rerouting changed nothing: it is conducted.</p>
+<div style="flex:1; display:flex; flex-direction:column; gap:20px; background:#FCFCFB; padding:40px; border:1px solid #E1E0D9; border-radius:12px">
+<p style="font-size:24px; color:#646B76; font-family:'IBM Plex Mono', 'Courier New', monospace">FLOW, PUMP ON</p>
+<p style="font-size:72px; line-height:1; font-weight:500; color:#B4461A; font-family:'IBM Plex Mono', 'Courier New', monospace">1500 Hz</p>
+<p style="font-size:28px; color:#3D4552; line-height:1.4">against a real 35 Hz. Diode and rerouting changed nothing: the noise is conducted.</p>
 </div>
 </div>
-<p style="font-size:32px; color:#14213D; line-height:1.4">So flow for control is <b>derived from the level</b>, and the dashboard says so.</p>
-<p style="position:absolute; left:128px; bottom:64px; width:1664px; font-size:24px; color:#6B7280">Project 08 · Smart Water Tank · 7</p>
-<aside>These three are in the report's "Faults found on the bench" section. The third one is why we do not trust the YF-S401 readings: 1474 and 1548 Hz while the pump runs, before and after the flyback diode, versus about 35 Hz for real water. The outlet draw of 0.1 to 0.2 L/min is also below the sensor's 0.3 L/min start. We state this openly rather than show numbers we know are wrong.</aside>
+<p style="font-size:32px; line-height:1.4">So the flow used for control is <b>derived from the level</b>, and the dashboard says so.</p>
+<div style="position:absolute; left:128px; right:128px; bottom:64px; display:flex; justify-content:space-between"><p style="font-size:24px; color:#646B76">Smart Water Tank · Project 08</p><p style="font-size:24px; color:#646B76; font-family:'IBM Plex Mono', 'Courier New', monospace">10</p></div>
+<aside>Three wiring lessons, each found by measuring rather than by reading code. First, the ultrasonic echo line originally went through a TXS0108E automatic level shifter. That part is designed for open drain buses, and its pull ups and edge accelerators distorted the echo pulse, whose width is the measurement. We lost about thirty percent of the echoes. A plain resistor divider fixed it completely: zero misses in 179 pings. Second, the flow inputs reported flow with the valve closed. The pulse rate was exactly 50.00 hertz, the mains frequency: the weak internal pull up turned the wire into an antenna. External 4.7 kilo-ohm pull ups brought it to zero. Third, and this one we could not fix in time: with the pump running, both flow lines read about 1500 hertz, while real water at 0.36 litres per minute gives about 35 hertz. A flyback diode and moving the wires apart changed nothing, so the noise is conducted through the shared supply and ground, not radiated. On top of that, our outlet flow is below the sensor's minimum of 0.3 litres per minute. So for control and accounting we derive flow from the level, and the dashboard labels it as such.</aside>
 </section>
