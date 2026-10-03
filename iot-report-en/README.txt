@@ -30,7 +30,7 @@ STATUS (27/09)
 - Numbers come from IOT/tools/analyze_experiments.py -> IOT/docs/results.json.
 
 STILL TO FILL
-1. main.tex: names and IDs of all 5 members (\cstuname).
+1. DONE: member names and IDs on the cover and in the contribution table.
 2. chapter05.tex "Member contributions": the 5 row table.
 3. Table 5.2.1 (E1 level calibration): run  bench.py level  (IOT/docs/TESTING.md).
 4. Table 5.4.1 (E5): OVERFLOW, no_flow, NO_CURRENT, manual rejection rows:
