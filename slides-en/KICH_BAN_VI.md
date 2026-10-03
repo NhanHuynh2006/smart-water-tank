@@ -327,7 +327,7 @@ Các script nằm trong repo:
 - analyze_experiments cho chu kỳ bơm, tần suất đóng cắt và độ trễ.
 - bench cho hiệu chuẩn, gây lỗi có đánh dấu thời gian bằng phím Enter, và thử mất mạng.
 
-Bảng liệt kê các thí nghiệm, chuẩn đối chiếu và trạng thái. Buổi chính được phân tích là ngày 23 tháng 9: một giờ hai mươi tư phút chạy trên cấu hình lọc cuối cùng, 4870 bản tin, 99,5 phần trăm có mức nước tin được, và không có một sự cố nào. Hiệu chuẩn mức bằng thước là thí nghiệm nhóm còn chạy lại trên bản lắp cuối trước buổi bảo vệ.
+Bảng liệt kê các thí nghiệm, chuẩn đối chiếu và trạng thái. Buổi chính được phân tích là ngày 23 tháng 9: một giờ hai mươi tư phút chạy trên cấu hình lọc cuối cùng, 4870 bản tin, 99,5 phần trăm có mức nước tin được, và không có một sự cố nào. Với mức nước, nhóm kiểm tra độ lặp lại so với hai mốc vật lý cố định: nước đứng yên, và công tắc phao dưới, một tiếp điểm cơ khí gắn ở độ cao cố định. Qua tám lần phao đóng, mức đo được là 4,55 cm với độ lệch chuẩn chỉ 0,074 cm, nhỏ hơn rất nhiều so với dải điều khiển. Kiểm tra giá trị tuyệt đối bằng thước là bước nhóm còn làm trước buổi bảo vệ.
 
 ## 29. Control response and switching · 1:30
 
@@ -368,7 +368,7 @@ Có mười bản tin bị mất, và nhóm muốn giải thích thay vì giấu
 
 Nhóm cũng học được rằng tắt broker không phải phép thử tương đương: thiết bị nối lại và phát lại trước khi backend kịp đăng ký lại, nên phần phát lại bị mất.
 
-Về gây lỗi: lỗi mất cảm biến bắn sau bốn mươi tới bốn mươi mốt giây tính từ bản tin cuối có mức tin được. Con số này khớp thiết kế: mức bị đánh dấu không tin được năm giây sau lần đo tốt cuối, và bộ đếm bốn mươi lăm giây cũng tính từ chính lần đo đó. Các phép gây lỗi còn lại là phao, đầu hút khô và dây bơm. Nhóm chạy chúng bằng công cụ bench trên firmware cuối, và thầy sẽ thấy hai phép trong số đó ngay trong demo.
+Về gây lỗi: lỗi mất cảm biến bắn sau bốn mươi tới bốn mươi mốt giây tính từ bản tin cuối có mức tin được. Con số này khớp thiết kế: mức bị đánh dấu không tin được năm giây sau lần đo tốt cuối, và bộ đếm bốn mươi lăm giây cũng tính từ chính lần đo đó. Các dòng còn lại lấy từ nhật ký sự cố và nhật ký lệnh của ba ngày thử. Trong cả mười tám lần lỗi tràn và lỗi không tiến triển khi bơm đang chạy, bản tin báo bơm tắt được gửi ngay trong cùng chu kỳ hai trăm mili giây với lỗi. Mọi lệnh bật tay khi đang có lỗi đều bị từ chối đúng lý do, xác nhận trong ba mươi tới bốn mươi mili giây. Thầy sẽ thấy hai lỗi trong số này ngay trong demo.
 
 ## 33. The result to remember: 70.4 % · 0:25
 
