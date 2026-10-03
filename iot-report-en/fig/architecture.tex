@@ -19,12 +19,6 @@
 \node[box] (ui)      at (13.2,-7.0){\textbf{Web dashboard}\\1 Hz polling};
 \node[box] (tunnel)  at (13.2,-9.8){\textbf{Cloudflare tunnel}\\public HTTPS link};
 
-% ---- boundaries ----
-\begin{scope}[on background layer]
-\node[edge, fit=(sensors)(fw)(pump), label={[font=\footnotesize\bfseries, anchor=south west]north west:Edge node: closed control loop, keeps working offline}] {};
-\node[edge, fit=(broker)(api)(db)(ui), label={[font=\footnotesize\bfseries, anchor=north west]north west:Server (laptop)}] {};
-\end{scope}
-
 % ---- edge node ----
 \draw[arr] (sensors) -- node[lbl, above=2pt] {read\\every 200 ms} (fw);
 \draw[arr] (fw) -- node[lbl, above=2pt] {switch} (pump);
@@ -37,7 +31,13 @@
 \draw[arr] (broker) -- node[lbl, right=3pt] {subscribe} (api);
 \draw[arr] (api) -- node[lbl, above=2pt] {SQL} (db);
 \draw[arr] ([yshift=0.3cm]api.east) -- node[lbl, above=2pt] {REST /api} ([yshift=0.3cm]ui.west);
-\draw[arr] ([yshift=-0.3cm]ui.west) -- node[lbl, below=2pt] {POST /api/command} ([yshift=-0.3cm]api.east);
-\draw[arr] (tunnel) -- node[lbl, right=3pt] {HTTPS} (ui);
+\draw[arr] ([yshift=-0.3cm]ui.west) -- node[lbl, below=2pt] (postlbl) {POST\\/api/command} ([yshift=-0.3cm]api.east);
+\draw[arr] (tunnel) -- node[lbl, right=3pt, pos=0.2] {HTTPS} (ui);
+% ---- boundaries ----
+\begin{scope}[on background layer]
+\node[edge, fit=(sensors)(fw)(pump), label={[font=\footnotesize\bfseries, anchor=south west]north west:Edge node: closed control loop, keeps working offline}] {};
+\node[edge, fit=(broker)(api)(db)(ui)(postlbl), label={[font=\footnotesize\bfseries, anchor=north west]north west:Server (laptop)}] {};
+\end{scope}
+
 \end{tikzpicture}
 \endgroup
