@@ -15,10 +15,9 @@ All figures in this chapter come from the database of the running system or from
 \renewcommand{\arraystretch}{1.05}
 \begin{tabular}{|p{0.7cm}|p{4.2cm}|p{4.4cm}|p{3.4cm}|}
 \hline
-\rowcolor[HTML]{B7E1F0}
 \textbf{ID} & \textbf{Subject} & \textbf{Reference} & \textbf{Status} \\
 \hline
-E1 & Level calibration & Scale in the tank, 6 levels & Pending final run \\
+E1 & Level repeatability & Still water, lower float switch & Done; ruler check pending \\
 \hline
 E2 & Flow and volume error & Tank geometry, measured drain & Done, 6 cycles \\
 \hline
@@ -26,7 +25,7 @@ E3 & Control response & Configured thresholds & Done, 6 cycles \\
 \hline
 E4 & Switching frequency & Pump event log & Done, 84 min \\
 \hline
-E5 & Fault detection delay & Timestamped manual mark & Sensor timeout done; others pending \\
+E5 & Fault detection and response & Fault and pump event logs & Partly done \\
 \hline
 E6 & Network loss and recovery & Sequence numbers & Done on earlier firmware; rerun pending \\
 \hline
@@ -42,24 +41,23 @@ E9 & Wi-Fi power saving & Server clock & Done \\
 \section{Sensor calibration}
 \label{sec:o8-2}
 
-\textbf{E1, level.} The procedure is to switch to manual mode, fill the tank to about 2, 4, 6, 8, 10 and 12 centimetres read on the scale, and at each level let \texttt{bench.py level} average 20 seconds of accepted readings. The tool prints the error per point, the root mean square error and a fitted slope and offset for the firmware constants. The filter's own repeatability is already known: with the water still, twenty consecutive readings spanned 3.87 to 3.89 centimetres, a standard deviation of 0.010 centimetres. The calibration run itself had not been completed on the final installation when this report was written, and Table \ref{tab:calib} is left for it rather than filled from an earlier mounting.
+\textbf{E1, level.} The procedure is to switch to manual mode, fill the tank to about 2, 4, 6, 8, 10 and 12 centimetres read on the scale, and at each level let \texttt{bench.py level} average 20 seconds of accepted readings. The tool prints the error per point, the root mean square error and a fitted slope and offset for the firmware constants. That ruler run had not been completed on the final installation when this report was written, so Table \ref{tab:calib} reports what the database can already establish without inventing a reference: the repeatability of the level against two fixed physical references. The first is still water, read twenty times in a row. The second is the lower float switch, a mechanical contact at a fixed height on the tank wall; every time it closed or opened during the session of 23 September, the level reported in the same second was recorded. If the level measurement drifted or jumped, the float would be seen at a different level each time.
+
+The results are tight. The float closed at a reported 4.55 centimetres on average with a standard deviation of 0.074 centimetres over eight events, and never outside 4.46 to 4.67 centimetres. It opened at 4.87 centimetres on average; the 0.32 centimetre difference between the two is the float's own mechanical hysteresis, not a measurement error. Both spreads are two orders of magnitude smaller than the 5.6 centimetre width of the control band, so measurement noise cannot by itself make the pump switch. What these figures cannot give is the absolute offset of the level, which is why measuring the float height with the ruler, and the five point ruler run, remain on the list.
 
 \begin{table}[H]
-\caption{E1 level calibration against the scale.}
+\caption{E1 level repeatability against fixed physical references, 23 September.}
 \label{tab:calib}
 \centering
 \renewcommand{\arraystretch}{1.05}
-\begin{tabular}{|p{3.0cm}|p{3.0cm}|p{3.0cm}|p{3.0cm}|}
+\begin{tabular}{|p{4.6cm}|p{2.6cm}|p{1.2cm}|p{4.2cm}|}
 \hline
-\rowcolor[HTML]{B7E1F0}
-\textbf{Scale (cm)} & \textbf{Device (cm)} & \textbf{Std. dev. (cm)} & \textbf{Error (cm)} \\
+\textbf{Reference} & \textbf{Mean level} & \textbf{$n$} & \textbf{Spread} \\
 \hline
- & & & \\ \hline
- & & & \\ \hline
- & & & \\ \hline
- & & & \\ \hline
- & & & \\ \hline
-\multicolumn{2}{|l|}{RMSE, fitted $a$, $b$} & \multicolumn{2}{l|}{} \\ \hline
+Still water, consecutive readings & 3.88 cm & 20 & sd 0.010 cm, range 3.87 to 3.89 \\ \hline
+Lower float closes & 4.55 cm & 8 & sd 0.074 cm, range 4.46 to 4.67 \\ \hline
+Lower float opens & 4.87 cm & 9 & sd 0.158 cm, range 4.63 to 5.11 \\ \hline
+Ruler, 2 to 12 cm, five points & \multicolumn{3}{l|}{to be measured with \texttt{bench.py level}} \\ \hline
 \end{tabular}
 \end{table}
 
@@ -72,7 +70,6 @@ E9 & Wi-Fi power saving & Server clock & Done \\
 \renewcommand{\arraystretch}{1.05}
 \begin{tabular}{|p{6.4cm}|p{3.0cm}|p{3.0cm}|}
 \hline
-\rowcolor[HTML]{B7E1F0}
 \textbf{Condition} & \textbf{Inlet} & \textbf{Outlet} \\
 \hline
 Pump off, internal pull ups only & \multicolumn{2}{p{6.0cm}|}{0.26 to 0.51 L/min apparent flow; exactly 50.00 Hz on one channel} \\ \hline
@@ -99,7 +96,6 @@ where $\Delta h$ is the level rise over the fill, $T_{fill}$ its duration, and $
 \small\setlength{\tabcolsep}{4pt}
 \begin{tabular}{|p{1.25cm}|p{1.05cm}|p{1.05cm}|p{1.3cm}|p{1.05cm}|p{1.3cm}|p{1.15cm}|p{1.15cm}|p{1.4cm}|}
 \hline
-\rowcolor[HTML]{B7E1F0}
 \textbf{Start} & \textbf{Stop (\%)} & \textbf{Peak (\%)} & \textbf{Over\-shoot} & \textbf{Fill (s)} & \textbf{Drain (L/min)} & \textbf{$V_{dev}$ (L)} & \textbf{$V_{ref}$ (L)} & \textbf{Error} \\
 \hline
 16:56:37 & 70.5 & 71.9 & +1.47 & 237.4 & 0.180 & 1.289 & 1.520 & $-15.2$\% \\ \hline
@@ -146,16 +142,17 @@ One result was not predicted. The automatic fills did not start at 30 percent bu
 \renewcommand{\arraystretch}{1.05}
 \begin{tabular}{|p{4.4cm}|p{3.2cm}|p{2.0cm}|p{3.4cm}|}
 \hline
-\rowcolor[HTML]{B7E1F0}
 \textbf{Injection} & \textbf{Expected code} & \textbf{Design} & \textbf{Measured} \\
 \hline
 Unplug the echo wire & \texttt{SENSOR\_TIMEOUT} & 45 s & 40.2 to 41.0 s after the last trusted message, $n = 9$ \\ \hline
-Lift the upper float while filling & \texttt{OVERFLOW} & 0.2 s & \\ \hline
-Lift the suction out of the water & \texttt{no\_flow}, then \texttt{NO\_PROGRESS} & 25 s, 90 s & \\ \hline
-Disconnect one pump wire & \texttt{NO\_CURRENT}, \texttt{no\_current} & 2 s & \\ \hline
-Manual start with upper float lifted & rejected, \texttt{fault\_active} & immediate & \\ \hline
+Overflow condition reached & \texttt{OVERFLOW} & 0.2 s & Pump off in the same control cycle, $n = 3$ \\ \hline
+Pump running, level not rising & \texttt{NO\_PROGRESS} & 90 s & Pump off in the same control cycle, $n = 15$ \\ \hline
+Disconnect one pump wire & \texttt{NO\_CURRENT} & 2 s & Not yet injected \\ \hline
+Manual start while a fault is active & rejected, \texttt{fault\_active} & immediate & Rejected 4 of 4, ack in 31 to 43 ms \\ \hline
 \end{tabular}
 \end{table}
+
+The last three measured rows come from the fault, pump event and command logs of 21 to 23 September rather than from a timestamped injection. They answer a different but equally important question: once a rule fires, how quickly does the pump actually stop? In all eighteen overflow and no progress events where the pump was still running, the message reporting the pump off was published in the same 200 millisecond cycle as the fault, within 0.12 seconds of it. Every manual start attempted while a fault was active was refused with the correct reason. The delay from the physical event to the fault, and the no current rule, still need the timestamped runs of \texttt{bench.py fault}.
 
 The sensor timeout figure comes from the database and is consistent with the design once the pipeline is accounted for: the level is marked untrusted 5 seconds after the last accepted reading, and the timeout counts 45 seconds from that same reading, so the fault arrives about 40 seconds after the last message that still showed a trusted level. Under earlier, shorter timeouts the same measurement gave 0.8 to 18 seconds, and the frequency of those faults during ordinary fills is how the group discovered that a short timeout was stopping normal operation.
 
@@ -180,7 +177,6 @@ The sensor timeout figure comes from the database and is consistent with the des
 \renewcommand{\arraystretch}{1.05}
 \begin{tabular}{|p{7.4cm}|p{5.4cm}|}
 \hline
-\rowcolor[HTML]{B7E1F0}
 \textbf{Quantity} & \textbf{Result} \\
 \hline
 E7: command round trip, final firmware, median, 95th percentile, maximum (ms) \textbf{(result of record)} & 42.4, 137.8 and 181.6, $n = 75$ \\ \hline
@@ -212,7 +208,6 @@ The round trip fell from a median of 226 to 42 milliseconds between the first an
 \renewcommand{\arraystretch}{1.05}
 \begin{tabular}{|p{5.0cm}|p{2.6cm}|p{2.6cm}|p{2.0cm}|}
 \hline
-\rowcolor[HTML]{B7E1F0}
 \textbf{Statistic} & \textbf{Power saving on} & \textbf{Power saving off} & \textbf{Change} \\
 \hline
 Minimum (ms)          & 144 & 29  & $-80$\% \\ \hline
@@ -261,24 +256,23 @@ On the bench the controller stopped every automatic fill between 70.1 and 70.8 p
 \label{tab:phancong}
 \centering
 \renewcommand{\arraystretch}{1.15}
-\begin{tabular}{|p{4.2cm}|p{8.8cm}|}
+\begin{tabular}{|p{4.6cm}|p{8.4cm}|}
 \hline
-\rowcolor[HTML]{B7E1F0}
 \textbf{Member} & \textbf{Area of responsibility} \\
 \hline
-Trịnh Trần Quốc Bảo, 24119016 & [Fill in area of responsibility] \\
+\raggedright Trịnh Trần Quốc Bảo\newline 24119016 & Problem statement and requirements; system architecture, the edge decision principle, the bench rig and signal conditioning. Presents Parts 1 and 2. \\
 \hline
-Đặng Cao Dương, 24119024 & [Fill in area of responsibility] \\
+\raggedright Đặng Cao Dương\newline 24119024 & Lessons from bench faults, limitations and next steps, conclusion; coordinates the live demonstration and explains each test case and its purpose. Presents Part 7 and the demo. \\
 \hline
-Huỳnh Lê Thành Nhân, 24119068 & [Fill in area of responsibility] \\
+\raggedright Huỳnh Lê Thành Nhân\newline 24119068 & Firmware and code: MQTT protocol and acknowledgements, level filter pipeline, flow from level, state machine, fault rules, safety guard, pump health and leak detection. Presents Parts 3 and 4. \\
 \hline
-Nguyễn Đoàn Hoàng Ngân, 24119064 & [Fill in area of responsibility] \\
+\raggedright Nguyễn Đoàn Hoàng Ngân\newline 24119064 & Backend and SQLite schema, REST API, dashboard and Cloudflare tunnel, security model, ring buffer and outage recovery. Presents Part 5. \\
 \hline
-Tô Ngọc Thảo Uyên, 24119098 & [Fill in area of responsibility] \\
+\raggedright Tô Ngọc Thảo Uyên\newline 24119098 & Experiment plan and analysis: control response, volume estimation error, latency and Wi-Fi power saving, fault and outage results. Presents Part 6. \\
 \hline
 \end{tabular}
 \end{table}
 
-Suggested grouping for the five members: hardware and circuitry; firmware and control; experiments and analysis; backend, database and security; interface and report. The assignment requires every member to present and answer technical questions, so the table records who led each area rather than limiting anyone's scope of understanding.
+The assignment requires every member to present and answer technical questions, so the table records who leads each part of the work and of the presentation rather than limiting anyone's scope of understanding.
 
 Deliverables are the working physical prototype; the firmware with its per-component test programs; the backend, dashboard and simulator; the protocol specification; the test procedures and analysis scripts (\texttt{docs/TESTING.md}, \texttt{tools/}); a code guide for newcomers (\texttt{docs/CODE\_GUIDE.md}); the raw database; the presentation slides; and a backup demonstration video.
