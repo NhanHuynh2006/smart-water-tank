@@ -1,84 +1,284 @@
-\chapter{BACKEND, DATA MANAGEMENT AND INTERFACE}
+\chapter{EXPERIMENTS, RESULTS AND CONCLUSION}
+\label{chap:results}
 
-\section{Backend architecture}
+\section{Principles and reference instruments}
+\label{sec:o8-1}
 
-The backend is a single Python process containing three concurrent components. The ingestion component holds a persistent broker session and subscribes to the six specified topics. The API server exposes endpoints for the dashboard and for extracting experimental data. The rolling baseline leak detector is invoked on every incoming telemetry message and is described in Section 6.6; because it learns slowly, it is rebuilt from the stored history each time the process starts, so a restart does not discard days of learning. In addition the process keeps an in memory copy of the latest state, so that the current state endpoint can answer without touching the database, since the dashboard calls it once per second.
+Three principles apply to the whole experimental programme: every measurement must have a reference independent of the system under evaluation; every experiment must be repeated enough times to yield a dispersion figure and not merely a mean; and results must be reported through standard statistical indicators rather than qualitative remarks \cite{bentley2005, jcgm100}. The references are a millimetre scale standing in the tank, the geometry of the tank itself (a 10 by 10 centimetre base, so one centimetre of level is 0.1 litres), a measuring jug, and the server clock. The indicators are the per point error $e_i = x_{meas,i} - x_{ref,i}$, the mean absolute error and the root mean square error.
 
-For every telemetry message the ingestion component records the device timestamp alongside \texttt{recv\_ts}, written by the backend on arrival, so that a one way delay $\tau = t_{recv} - t_{sample}$ is available from a single query without external instrumentation. The device timestamp is stored twice: \texttt{ts} at one second resolution, kept so that existing consumers of the payload continue to parse, and \texttt{ts\_ms} at millisecond resolution, which is the field the latency query prefers. The coarser field alone carries a quantisation error of up to 500 milliseconds, larger than the transport delay it is meant to measure, and Section 8.5 records the corrected figures side by side. The measurement assumes both clocks are synchronised; messages emitted before synchronisation completes carry a zero timestamp and are excluded from the statistics. Because that assumption cannot be discharged on a microcontroller disciplined only by the network time protocol, the one way figure is treated as a comparison quantity and the command round trip, timed entirely by the server clock, is the reported result.
-
-\section{Data schema and API}
-
-The schema has six tables, split according to data behaviour, and is shown with the whole repository in the code guide delivered alongside this report: \texttt{telemetry} is written continuously at one row per second, while \texttt{faults}, \texttt{pump\_events}, \texttt{commands}, \texttt{availability} and \texttt{config} are written sparsely and discretely. The telemetry table is indexed on the timestamp column, the only column ever used as a filter predicate. The group applies the tag and field separation principle of Section 2.5: the device identifier acts as an indexed tag while the measured quantities are unindexed fields. In particular the sequence number column, although it changes on every row, is deliberately left unindexed to avoid exactly the cardinality explosion the lectures warn about \cite{slide04}. The command table stores both the send time and the acknowledgement time, whose difference is the command round trip latency.
-
-On database choice, the group is aware that the theory in Section 2.5 identifies real limits of relational engines for high rate time series data \cite{slide04}. Those limits, however, appear at thousands of writes per second, whereas this system writes one row per second from one node, three to four orders of magnitude below the problematic regime. Deploying a dedicated time series engine would add operational complexity without any measurable benefit, so the group chose SQLite while still respecting the schema design principles above \cite{sqlite}.
+All figures in this chapter come from the database of the running system or from two scripts in the repository that read it: \texttt{tools/analyze\_experiments.py} for the automatic cycles, switching and latency, and \texttt{tools/bench.py} for the interactive tests (level calibration, fault injection with a timestamped mark, and network outage). The analysed session is 23 September, 16:48 to 18:12, 4870 telemetry messages on the final filter configuration, with 99.5 percent of messages carrying a trusted level and no fault raised in the window. The test procedures are written out step by step in \texttt{docs/TESTING.md} so that any member can repeat them.
 
 \begin{table}[H]
-\caption{Main API endpoints.}
-\label{tab:api}
+\caption{Experiment plan and status.}
+\label{tab:expsummary}
 \centering
-\renewcommand{\arraystretch}{1.1}
-\begin{tabular}{|p{1.5cm}|p{4.6cm}|p{6.9cm}|}
+\renewcommand{\arraystretch}{1.05}
+\begin{tabular}{|p{0.7cm}|p{4.2cm}|p{4.4cm}|p{3.4cm}|}
 \hline
 \rowcolor[HTML]{B7E1F0}
-\textbf{Method} & \textbf{Path} & \textbf{Purpose} \\
+\textbf{ID} & \textbf{Subject} & \textbf{Reference} & \textbf{Status} \\
 \hline
-GET & \texttt{/api/latest} & Latest state, data freshness, pending commands \\
+E1 & Level calibration & Scale in the tank, 6 levels & Pending final run \\
 \hline
-GET & \texttt{/api/telemetry} & Time series over a requested interval \\
+E2 & Flow and volume error & Tank geometry, measured drain & Done, 6 cycles \\
 \hline
-GET & \texttt{/api/volume/daily} & Volume pumped in and drawn out per day \\
+E3 & Control response & Configured thresholds & Done, 6 cycles \\
 \hline
-GET & \texttt{/api/leak/baseline} & State of the rolling baseline, slots learned \\
+E4 & Switching frequency & Pump event log & Done, 84 min \\
 \hline
-POST & \texttt{/api/login}, \texttt{/api/logout} & Open or close an administrator session \\
+E5 & Fault detection delay & Timestamped manual mark & Sensor timeout done; others pending \\
 \hline
-GET & \texttt{/api/auth} & Whether this browser may control the pump \\
+E6 & Network loss and recovery & Sequence numbers & Done on earlier firmware; rerun pending \\
 \hline
-GET & \texttt{/api/faults}, \texttt{/api/events}, \texttt{/api/commands} & Fault log, pump switching log, command log with acknowledgement latency \\
+E7 & Telemetry and control latency & Server clock & Done, $n = 75$ \\
 \hline
-POST & \texttt{/api/command} & Issue a command, returns its identifier; session required \\
+E8 & Control policy comparison & Simulator & Simulated \\
 \hline
-GET, PUT & \texttt{/api/config} & Read thresholds; update requires a session \\
-\hline
-GET & \texttt{/api/stats/latency} & Latency statistics used in Section 8.5 \\
+E9 & Wi-Fi power saving & Server clock & Done \\
 \hline
 \end{tabular}
 \end{table}
 
-Method selection follows the two properties introduced in Section 2.5. Read endpoints use GET because they are safe and change no state. The configuration endpoint uses PUT because replacing the full threshold set is idempotent. The command endpoint uses POST because each call creates a new command record with its own identifier and is therefore not idempotent \cite{slide05}.
+\section{Sensor calibration}
+\label{sec:o8-2}
 
-\textbf{Daily volume.} The first implementation computed each day's volume as the maximum minus the minimum of the accumulated counter. That is wrong whenever the counter is reset during the day, and it was: the result swung by litres after every reset. The corrected query uses a window function to take the increment between consecutive rows and sums only increments that are positive and physically possible in one second, so a reset contributes nothing instead of a large negative step. Inflow increments are additionally counted only while the previous row showed the pump running, because with flow derived from level the inlet cannot be non zero with the pump off. Rows stamped before the device clock synchronised carry a timestamp near zero and are assigned to the server's arrival date instead, which removed a spurious day in 1970 from the chart. Figure \ref{fig:daily} shows the result for the three bench days.
+\textbf{E1, level.} The procedure is to switch to manual mode, fill the tank to about 2, 4, 6, 8, 10 and 12 centimetres read on the scale, and at each level let \texttt{bench.py level} average 20 seconds of accepted readings. The tool prints the error per point, the root mean square error and a fitted slope and offset for the firmware constants. The filter's own repeatability is already known: with the water still, twenty consecutive readings spanned 3.87 to 3.89 centimetres, a standard deviation of 0.010 centimetres. The calibration run itself had not been completed on the final installation when this report was written, and Table \ref{tab:calib} is left for it rather than filled from an earlier mounting.
+
+\begin{table}[H]
+\caption{E1 level calibration against the scale.}
+\label{tab:calib}
+\centering
+\renewcommand{\arraystretch}{1.05}
+\begin{tabular}{|p{3.0cm}|p{3.0cm}|p{3.0cm}|p{3.0cm}|}
+\hline
+\rowcolor[HTML]{B7E1F0}
+\textbf{Scale (cm)} & \textbf{Device (cm)} & \textbf{Std. dev. (cm)} & \textbf{Error (cm)} \\
+\hline
+ & & & \\ \hline
+ & & & \\ \hline
+ & & & \\ \hline
+ & & & \\ \hline
+ & & & \\ \hline
+\multicolumn{2}{|l|}{RMSE, fitted $a$, $b$} & \multicolumn{2}{l|}{} \\ \hline
+\end{tabular}
+\end{table}
+
+\textbf{E2, pump delivery and flow sensors.} The pump delivery was calibrated from the level: with the outlet closed the level rose 1.2 centimetres in 20 seconds, that is 0.12 litres in 20 seconds or 0.36 litres per minute, against 1.67 litres per minute in the datasheet at zero head. The turbine sensors could not be calibrated in the usual way, by counting pulses against a collected volume, because in this installation they do not count water. Table \ref{tab:flownoise} shows why.
+
+\begin{table}[H]
+\caption{YF-S401 pulse rates on the bench.}
+\label{tab:flownoise}
+\centering
+\renewcommand{\arraystretch}{1.05}
+\begin{tabular}{|p{6.4cm}|p{3.0cm}|p{3.0cm}|}
+\hline
+\rowcolor[HTML]{B7E1F0}
+\textbf{Condition} & \textbf{Inlet} & \textbf{Outlet} \\
+\hline
+Pump off, internal pull ups only & \multicolumn{2}{p{6.0cm}|}{0.26 to 0.51 L/min apparent flow; exactly 50.00 Hz on one channel} \\ \hline
+Pump off, 4.7 k$\Omega$ external pull ups & 0 Hz & 0 Hz \\ \hline
+Pump running, before flyback diode & 1474 Hz & 1548 Hz \\ \hline
+Pump running, diode fitted and wiring separated & 1487 Hz & 1567 Hz \\ \hline
+Pulse rate expected for the real 0.36 L/min & \multicolumn{2}{c|}{about 35 Hz} \\ \hline
+\end{tabular}
+\end{table}
+
+The pull ups removed mains pickup completely. The pump interference, forty times the real signal, was unaffected by the diode and by moving the wiring apart, which places it in the shared supply and ground rather than in radiation. The outlet draw of 0.11 to 0.20 litres per minute is in any case below the 0.3 litre per minute starting flow of the sensor. Flow for control and accounting is therefore derived from the level (Section~\ref{sec:o6-2}), and the result is judged by the volume error below.
+
+\textbf{E2, volume estimation error.} For each automatic fill the device's pumped volume is compared with a reference built only from the level and the tank geometry:
+\begin{equation}
+V_{ref} = A\,\Delta h + \bar{Q}_{drain}\,T_{fill},
+\end{equation}
+where $\Delta h$ is the level rise over the fill, $T_{fill}$ its duration, and $\bar{Q}_{drain}$ the drain rate measured independently by fitting the level slope with the pump off for 90 seconds before the fill and 90 seconds after it (skipping 20 seconds after the stop while the pipe empties). Averaging before and after matters because the drain follows Torricelli's law and is faster when the tank is fuller. The device value is the constant delivery integrated over the run, so the comparison tests the calibrated constant and the timing, not a sensor.
+
+\begin{table}[H]
+\caption{E2 and E3: complete automatic fill cycles, 23 September.}
+\label{tab:cycles}
+\centering
+\renewcommand{\arraystretch}{1.05}
+\small\setlength{\tabcolsep}{4pt}
+\begin{tabular}{|p{1.25cm}|p{1.05cm}|p{1.05cm}|p{1.3cm}|p{1.05cm}|p{1.3cm}|p{1.15cm}|p{1.15cm}|p{1.4cm}|}
+\hline
+\rowcolor[HTML]{B7E1F0}
+\textbf{Start} & \textbf{Stop (\%)} & \textbf{Peak (\%)} & \textbf{Over\-shoot} & \textbf{Fill (s)} & \textbf{Drain (L/min)} & \textbf{$V_{dev}$ (L)} & \textbf{$V_{ref}$ (L)} & \textbf{Error} \\
+\hline
+16:56:37 & 70.5 & 71.9 & +1.47 & 237.4 & 0.180 & 1.289 & 1.520 & $-15.2$\% \\ \hline
+17:09:56 & 70.8 & 72.4 & +1.61 & 144.0 & 0.189 & 0.859 & 0.983 & $-12.6$\% \\ \hline
+17:17:13 & 70.4 & 71.6 & +1.20 & 146.0 & 0.146 & 0.872 & 0.875 & $-0.3$\% \\ \hline
+17:32:34 & 70.3 & 71.5 & +1.23 & 219.0 & 0.113 & 1.311 & 1.212 & $+8.2$\% \\ \hline
+17:55:56 & 70.1 & 71.9 & +1.85 & 144.0 & 0.196 & 0.864 & 1.006 & $-14.1$\% \\ \hline
+18:02:00 & 70.4 & 71.5 & +1.10 & 160.0 & 0.150 & 0.958 & 0.930 & $+3.0$\% \\ \hline
+\textbf{Mean} & \textbf{70.4} & & \textbf{+1.41} & \textbf{175.1} & \textbf{0.16} & & & $\mathbf{-5.2}$\textbf{\%} \\ \hline
+\end{tabular}
+\end{table}
+
+The mean volume error is $-5.2$ percent with a spread from $-15.2$ to $+8.2$ percent. The sign pattern is informative: the three largest negative errors coincide with the three largest drain rates, which is what a constant delivery predicts, since a fuller source bucket and a shorter delivery head both change the real pump output while the model keeps 0.36. The error is therefore a property of treating delivery as a constant, and a working inlet flow sensor is the remedy.
+
+\section{Control response and switching}
+\label{sec:o8-3}
+
+\textbf{E3, control response.} Figure \ref{fig:cycles} shows the analysed session. Every automatic fill stopped between 70.1 and 70.8 percent against a 70 percent threshold, and the level peaked 1.1 to 1.85 percent higher, the water still in the pipe after the relay opens. The worst peak, 72.4 percent, leaves 12.6 percent of margin to the 85 percent overflow limit. A fill from the lower threshold took 144 to 160 seconds at a net rise of 0.033 to 0.037 centimetres per second.
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.6\textwidth]{fig/daily_volume.png}
-    \caption{Daily volume pumped in and drawn out, as served by the API.}
-    \label{fig:daily}
+    \includegraphics[width=\textwidth]{fig/e4_level_cycles.png}
+    \caption{Level during the analysed session. Blue bands: pump running. Hatched: manual mode, used for command tests and for draining the tank below the band on purpose.}
+    \label{fig:cycles}
 \end{figure}
 
-\section{Monitoring interface}
+One result was not predicted. The automatic fills did not start at 30 percent but at 32 to 33 percent, and in every case the lower float engaged in the same second. The float is mounted slightly higher than the 30 percent line, about 4.5 centimetres, and because the controller accepts either the float or the ultrasonic threshold as permission to start, the float wins. This is the designed behaviour of two independent start paths, and the finding is that the effective lower threshold is set by a screw on the tank wall rather than by the configuration.
+
+\textbf{E4, switching frequency.} Over the 84 minute session the pump started 18 times, 12.9 per hour, including starts commanded by hand during the command tests. The shortest gap between a stop and the next start was 32 seconds, above the 20 second minimum off time, so the relay never chattered. The level was trusted in 99.5 percent of messages, and no fault fired, which bounds the false alarm rate of all eleven rules at zero in 84 minutes of normal operation.
+
+\textbf{A fault found by this analysis.} Separating automatic from manual starts exposed pump starts that belonged to neither: starts at 38, 46 and 51 percent with the device in automatic mode and no command sent. Each coincided with a device restart, identified by the sequence number returning to one, and in the replayed history the pump turned on in the second message after boot with the level reading exactly zero. The cause was an initialisation order defect. At start up the firmware sets the time of the last valid reading to the current time, so that the sensor timeout counts from power up; but the validity flag was derived from that same timestamp, so for the first seconds after every boot the level was declared valid while still holding its initial value of zero. The state machine saw an empty tank and started the pump, which then ran until the real level passed 70 percent. The fix requires at least one accepted reading before the level can be declared valid, and the status message now carries the reason for the last restart, so a restart caused by a supply dip can be told apart from a firmware upload.
+
+\textbf{E8, control policy comparison.} To show that the band and timing constraints matter, configuration A (49 and 51 percent, no timing constraints, approximating a single threshold) was compared with configuration B (30 and 70 percent with both timing constraints) on the simulator of Section~\ref{sec:o5-4}, under the same ten minute continuous draw repeated three times, with one fixed target band from 25 to 85 percent for both. A switched 472 times per hour and B 8 times per hour, a reduction of 98.3 percent, with neither leaving the target band. The hardware session above, at 12.9 starts per hour with manual starts included and a different draw rate, is of the same order as the simulated figure for B.
+
+\section{Fault detection}
+\label{sec:o8-4}
+
+\textbf{E5, procedure.} Each fault is injected by hand while \texttt{bench.py fault} is running; the operator presses Enter at the instant of the action, and the tool records the time to the first fault message, the fault code, the pump health label and the time until the pump state message reports the pump off. Table \ref{tab:e5} lists the injections, the design delay and the measured result.
+
+\begin{table}[H]
+\caption{E5 fault injection.}
+\label{tab:e5}
+\centering
+\renewcommand{\arraystretch}{1.05}
+\begin{tabular}{|p{4.4cm}|p{3.2cm}|p{2.0cm}|p{3.4cm}|}
+\hline
+\rowcolor[HTML]{B7E1F0}
+\textbf{Injection} & \textbf{Expected code} & \textbf{Design} & \textbf{Measured} \\
+\hline
+Unplug the echo wire & \texttt{SENSOR\_TIMEOUT} & 45 s & 40.2 to 41.0 s after the last trusted message, $n = 9$ \\ \hline
+Lift the upper float while filling & \texttt{OVERFLOW} & 0.2 s & \\ \hline
+Lift the suction out of the water & \texttt{no\_flow}, then \texttt{NO\_PROGRESS} & 25 s, 90 s & \\ \hline
+Disconnect one pump wire & \texttt{NO\_CURRENT}, \texttt{no\_current} & 2 s & \\ \hline
+Manual start with upper float lifted & rejected, \texttt{fault\_active} & immediate & \\ \hline
+\end{tabular}
+\end{table}
+
+The sensor timeout figure comes from the database and is consistent with the design once the pipeline is accounted for: the level is marked untrusted 5 seconds after the last accepted reading, and the timeout counts 45 seconds from that same reading, so the fault arrives about 40 seconds after the last message that still showed a trusted level. Under earlier, shorter timeouts the same measurement gave 0.8 to 18 seconds, and the frequency of those faults during ordinary fills is how the group discovered that a short timeout was stopping normal operation.
+
+\section{Latency and behaviour during an outage}
+\label{sec:o8-5}
+
+\textbf{E7, and why the headline number is the round trip.} The group reports the command round trip as the primary latency result, not the one way telemetry delay. A one way delay is $t_{recv} - t_{send}$ read from two different clocks, so it carries their offset as a systematic error, and the network time protocol on a microcontroller over Wi-Fi is accurate only to tens of milliseconds, the same order as the quantity measured. Immediately after a reboot the group observed an apparent one way delay of about 1100 milliseconds while the round trip at the same moment was 187 milliseconds, direct evidence that the one way figure was reporting clock skew. The round trip is stamped by the server at both ends, so the offset cancels exactly.
+
+\textbf{A measurement defect found and corrected.} The first implementation carried a device timestamp at one second resolution, whose quantisation error of up to 500 milliseconds exceeded the delay being measured: the median of 844.6 milliseconds over 372 samples was an artefact of the field width. A millisecond field was added alongside, and the same measurement then gave 245.0 milliseconds. The resolution of an instrument must be finer than the effect it is meant to resolve, otherwise the instrument measures itself.
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=\textwidth]{fig/dashboard.png}
-    \caption{Monitoring dashboard during an automatic fill: process mimic with the tank at 60.5 percent, numeric tiles with the pump health label, and the level history. For this screenshot, recorded bench data from 23 September were replayed into an isolated copy of the backend, so the live database was not modified.}
-    \label{fig:dashboard}
+    \includegraphics[width=0.6\textwidth]{fig/e7_rtt_hist.png}
+    \caption{Distribution of command round trip times in the analysed session.}
+    \label{fig:rtt}
 \end{figure}
 
-The interface is designed for an operator who glances at the screen for a few seconds to answer three questions: what is the level, is the pump running, and is anything wrong. It is a single HTML file with no build step and no framework. The upper part is a process mimic in the style of a control room: the source bucket, the pump, the pipe and the tank are drawn as a diagram, the water in the tank rises and falls with the measured level against a ruler graduated from 0 to 14 centimetres, and the low, high and overflow thresholds are drawn at their true positions for the active configuration. Drawing the thresholds on the tank lets a viewer see at once where the level sits relative to the hysteresis band and why the pump just switched.
+\begin{table}[H]
+\caption{Latency and outage results.}
+\label{tab:e78}
+\centering
+\renewcommand{\arraystretch}{1.05}
+\begin{tabular}{|p{7.4cm}|p{5.4cm}|}
+\hline
+\rowcolor[HTML]{B7E1F0}
+\textbf{Quantity} & \textbf{Result} \\
+\hline
+E7: command round trip, final firmware, median, 95th percentile, maximum (ms) \textbf{(result of record)} & 42.4, 137.8 and 181.6, $n = 75$ \\ \hline
+E7: telemetry one way, final firmware, median and 95th percentile (ms) & 166.9 and 238.0, $n = 4826$, comparison only \\ \hline
+E7: command round trip, first firmware (ms) & 225.8 and 575.3, $n = 14$ \\ \hline
+E7: telemetry one way at second resolution (ms) & 844.6, $n = 372$, quantisation artefact \\ \hline
+E6: outage duration, device isolated & 60.0 s \\ \hline
+E6: did the pump start on its own during the outage & no, it stayed off throughout \\ \hline
+E6: messages buffered and replayed & 32, sequence 598 to 629, 240 entry buffer \\ \hline
+E6: messages lost & 10, sequence 588 to 597 \\ \hline
+\end{tabular}
+\end{table}
 
-Below the mimic are the numeric tiles: level, inlet and outlet flow, pump current in milliamperes with the pump health label underneath it, and today's volume. Beside them are the history charts, a daily volume bar chart, and three logs: faults (with the pump health at the moment of each fault), pump events and commands. A freshness line next to the connection lamp shows how many seconds ago the last message arrived.
+The round trip fell from a median of 226 to 42 milliseconds between the first and the final firmware. Section~\ref{sec:o8-6} accounts for most of it, the removal of Wi-Fi power saving. The final session also ran on a different access point, and the group has not separated the remaining improvement between the two causes.
 
-Two display details matter more than they appear to. The device reports once per second, so a number written straight into the page moves in visible steps; the interface eases the displayed value towards each new reading. And the filtered level still moves by a few millimetres from sample to sample, which on a large readout looks like instability; the display applies a deadband of 0.25 centimetres, below the resolution anyone can act on, so the number holds still unless the water really moves. Neither detail touches the data: the database and the API carry the unmodified values.
+\textbf{E6, the outage procedure.} The outage test isolates the device alone, leaving the broker and the backend connected to each other, because that is the failure the requirement describes. \texttt{bench.py outage} either drops the device's traffic at the laptop firewall for a fixed interval or prompts the operator to switch the access point off and on, records every MQTT message, and reports the time until the broker published the last will, the time to reconnect, the messages replayed and lost, every pump transition contained in the replayed history, and the longest control period during the outage. An earlier attempt stopped the broker process instead; that is not equivalent, because the device reconnected one second before the backend resubscribed and the whole replayed batch was published to a broker with no subscriber, so none of it reached storage.
 
-On the update mechanism, the lectures recommend REST for low frequency administrative tasks and WebSocket for live streams \cite{slide06, rfc6455}. The group chose polling at 1 Hz, which runs against that general recommendation and therefore needs justification. The device publishes at 1 Hz, so the polling rate equals the data production rate and no request is wasted. With a handful of clients and one node the resulting traffic is a few kilobytes per second. A WebSocket introduces a stateful channel with its own lifecycle to manage, including heartbeats and reconnection \cite{slide06}, that is a new set of failure states in exchange for a benefit that is not measurable at this scale. The conclusion reverses beyond roughly ten nodes or a required update rate of 5 Hz.
+\textbf{Reading the outage result.} Thirty two entries against a buffer of 240 means the buffer was about thirteen percent full, so a four minute outage remains within capacity. The ten lost messages deserve more attention than the thirty two that survived. They were published into a socket that the client still believed open: a connection severed by a silent packet drop is detected only when the 15 second keep alive expires, and every sample generated inside that window is written to a dead socket. The residual gap is bounded by the keep alive interval, not by the buffer size. The E6 figures above were recorded on the first firmware, in which a blocked broker could stall the control loop for three seconds per reconnection attempt; the final firmware bounds that stall to half a second and reports it, and the test is to be repeated on it with the pump running at the moment of the cut, so that the replayed history shows the device stopping the pump at 70 percent on its own.
 
-The feedback sync principle is implemented in how command state is displayed. When the user presses the pump button the interface does not change the pump symbol; it posts the request, receives an identifier, shows ``sending command'' and polls the command log for that identifier. When the acknowledgement arrives it reports the outcome in a plain sentence, including the reason for a rejection, while the pump symbol follows only the pump state reported in telemetry. An early version gave no feedback at all on a rejection, and a user reported that manual mode ``did not work'' when the device had in fact correctly refused a start inside the 20 second minimum off time; the countdown shown on the button now makes that interlock visible instead of mysterious.
+\section{Reducing transport latency at the radio}
+\label{sec:o8-6}
 
-\textbf{Remote access and control rights.} The assignment frames the system as remote supervision, so the dashboard is published through an outbound Cloudflare tunnel that gives it a public HTTPS address without opening any inbound port on the laboratory network. Anyone with the address can watch. Control is a separate matter: the control panel stays hidden until the browser holds an administrator session, obtained by entering a password kept in a file outside the repository. The group first tried to grant control by client address, allowing only the host machine, and abandoned it for two reasons found in testing: through the tunnel every request arrives from the loopback address, so the rule granted control to the whole Internet; and on the host itself every open tab could control the pump, which is not what the owner meant by ``only my machine''. Section 7.2 describes the session mechanism.
+\textbf{E9.} The spread of the first round trip figures was wider than a local wireless network should produce, with a 95th percentile near 900 milliseconds at a signal strength better than $-20$ dBm. The cause was the radio: the Arduino port for the ESP32 enables modem sleep by default, so the receiver is powered down between beacon intervals and a packet waits for the next scheduled wake. Disabling it is a single call after association. The experiment held everything else fixed.
 
-The interface adapts to the state reported by the device, following the conditional rendering principle \cite{slide06}: data older than 5 seconds or an arriving last will message turns the connection lamp red; a fault or overflow lock switches the status to an alarm style; and a false \texttt{level\_ok} flag marks the level as untrusted. Hiding or disabling buttons is only a convenience, since the backend rejects commands without a session and the device rejects unsafe ones regardless of who sent them.
+\begin{table}[H]
+\caption{Command round trip before and after disabling Wi-Fi power saving.}
+\label{tab:e9}
+\centering
+\renewcommand{\arraystretch}{1.05}
+\begin{tabular}{|p{5.0cm}|p{2.6cm}|p{2.6cm}|p{2.0cm}|}
+\hline
+\rowcolor[HTML]{B7E1F0}
+\textbf{Statistic} & \textbf{Power saving on} & \textbf{Power saving off} & \textbf{Change} \\
+\hline
+Minimum (ms)          & 144 & 29  & $-80$\% \\ \hline
+Median (ms)           & 462 & 187 & $-60$\% \\ \hline
+95th percentile (ms)  & 884 & 315 & $-64$\% \\ \hline
+Maximum (ms)          & 906 & 402 & $-56$\% \\ \hline
+Samples               & 12  & 12  & \\ \hline
+\end{tabular}
+\end{table}
 
-\section{Device simulator}
+The improvement is largest in the tail, the signature of a scheduling effect rather than a bandwidth effect. The cost is roughly double the radio's continuous current, immaterial for a mains powered controller and decisive for a battery powered one; a latency figure quoted without its power cost is not an engineering result. The change does not alter the 200 millisecond control period, and therefore does not change how quickly the tank reacts to its own level.
 
-The simulator implements the hydraulic model introduced in Section 2.6 together with a sensor noise model, and publishes messages that conform to the specification of Chapter 4. It serves two purposes: while components had not arrived it allowed the backend and interface branches to be developed fully, and it allows control parameters to be swept across dozens of configurations in a few minutes, which is not feasible on real hardware. The sweep results are reported in Section 8.3. The simulator can also inject three failure modes, namely a pump that runs without delivering water, a sensor stuck at a fixed value, and a leak at a prescribed flow rate.
+\section{Limitations}
+\label{sec:o8-7}
+
+The group believes that pointing precisely at where the design falls short carries as much engineering value as presenting what worked.
+
+On hardware, the most serious limitation is the flow measurement. The assignment makes a flow sensor mandatory, and two are fitted, but in this installation they do not measure water: the pump's conducted interference is forty times the real pulse rate, and the outlet draw is below the sensor's starting flow. Flow is therefore derived from the level, which makes the inlet a calibrated constant rather than an independent observation. Three consequences follow and are stated rather than hidden: the volume error of $-5$ percent with a 23 point spread is a property of that constant; the literal rule ``pump on with near zero flow'' is carried by level progress instead of the turbine; and the edge leak rule is inactive. The remedies are known and cheap: power the sensors from a supply that does not share a return path with the motor, filter the interrupt input by minimum pulse width (a real pulse at 0.36 litres per minute lasts about 14 milliseconds, the interference well under one), and choose a sensor whose range starts near 0.05 litres per minute.
+
+Second, the current scale factor assumes the 5 ampere sensor variant and a one to one divider; it yields 360 to 425 milliamperes for a pump rated at 100 to 200, so either the divider or the variant differs from the assumption, and one reading with a multimeter in series will settle it. The binary use of current, present or absent, which is all the fault rules and the health classifier need, is unaffected. Third, the beam of the ultrasonic sensor is wider than the tank, so a share of pings return from the wall or the floor; the filter chain of Section~\ref{sec:o6-2} makes this manageable, and the counters show 93 percent acceptance, but a stilling tube or a wider vessel would remove the cause. Fourth, the sensor can lock up after a supply disturbance and recover only when its supply is cycled; powering it from a controllable output would let the firmware do that by itself.
+
+On measurement, the headline latency no longer relies on two clocks, as Section~\ref{sec:o8-5} explains; the residual limitation is that the clock synchronisation error was characterised only by observation. The outage buffer protects only samples generated after the client notices the broken connection, so up to one keep alive interval, 15 seconds, is lost at the start of every outage; and an outage that also restarts the broker discards the replayed batch, since the device can flush before the backend resubscribes. Repeat counts of six to seventy five suffice for means and spreads but not for formal hypothesis tests. The rolling baseline needs at least three observations of each half hour slot before it may alarm; after three bench days none of the 48 slots qualifies, so its detection performance is unmeasured. The level calibration and three of the fault delays of Table \ref{tab:e5} remain to be run on the final installation.
+
+On operations, the public tunnel address changes every time it is started, which suits a demonstration but not a deployment, where a named tunnel or a fixed host is needed; administrator sessions are held in memory and do not survive a restart; and there is one administrator password rather than per user accounts. The broker traffic is not encrypted inside the laboratory network. There is no remote firmware update.
+
+On the interface, a defect that survived three separate inspections is worth recording because of how it hid rather than because of its size. The query that feeds the history charts applied its row limit after ordering the window in ascending time, so it returned the oldest rows of the window rather than the newest. At the specified rate of one message per second a ten minute window holds six hundred rows and never reaches the two thousand row limit, so the fault was invisible in every ordinary session. Running the simulator at ten times real time raises the rate to roughly five messages per second, the window then holds close to three thousand rows, and the charts silently froze in the past while the live status panel beside them continued to update. Nothing failed and nothing was logged; the two halves of the same screen simply disagreed.
+
+The general lesson is that a pagination limit at the query layer must truncate from the end that is being discarded, not from the end being displayed. Ordering ascending and then limiting is correct only while the result set is known to fit, which makes it a latent fault that waits for the data rate to rise. The corrected query selects the newest rows first and reorders them for plotting. The group notes that the defect was found only because the acceleration factor of the simulator pushed the system past a threshold the specified rate never approaches, which is an argument for exercising a system deliberately outside its nominal operating point rather than only at it.
+
+Future directions include a working flow measurement by the remedies above, which would restore the inlet as an independent observation and let the turbine and level estimates be checked against each other as a leak test in their own right; a Kalman filter in place of the alpha-beta filter, using the pump state as a known input; continuous speed control by pulse width modulation; and multiple nodes feeding one backend.
+
+\section{Conclusion}
+\label{sec:o8-9}
+
+The project delivers a working closed loop water tank that measures its level, controls its pump, detects and classifies faults, keeps working without the network, and can be watched from anywhere on the Internet while only an administrator can operate it. Every line of firmware, backend and interface was written by the group, and every figure in this chapter can be regenerated from the database by the scripts in the repository.
+
+Three decisions carry the design. First, the whole control law and every safety rule live in the edge controller, derived from the rule that anything needing an immediate safe stop belongs at the edge; the outage requirement then follows from the architecture instead of being added to it. Second, safety is structural: every path that can start the pump passes through one guard function that is re-evaluated every cycle, and overflow is guarded by independent layers of which the raw distance guard, the float and the run limits do not depend on the filtered level at all. Third, the group trusted measurements over datasheets and over its own expectations: the pump delivers a fifth of its rated flow, the flow sensors count interference rather than water, the level sensor needs a fifteen sample robust filter in this tank, and the analysis of the final session found an initialisation defect that started the pump after every restart. Each of these was found by counting, and each is fixed or stated.
+
+On the bench the controller stopped every automatic fill between 70.1 and 70.8 percent with at most 1.85 percent of overshoot, switched 12.9 times per hour with no chatter, raised no false alarm in 84 minutes, estimated pumped volume to $-5$ percent on average, and answered commands with a median round trip of 42 milliseconds. The main open item is a trustworthy flow measurement, for which the cause and the remedy are both identified.
+
+\section{Member contributions}
+\label{sec:o8-10}
+
+\begin{table}[H]
+\caption{Distribution of work among group members.}
+\label{tab:phancong}
+\centering
+\renewcommand{\arraystretch}{1.15}
+\begin{tabular}{|p{4.2cm}|p{8.8cm}|}
+\hline
+\rowcolor[HTML]{B7E1F0}
+\textbf{Member} & \textbf{Area of responsibility} \\
+\hline
+[Full name of member 1], [ID] & [Fill in area of responsibility] \\
+\hline
+[Full name of member 2], [ID] & [Fill in area of responsibility] \\
+\hline
+[Full name of member 3], [ID] & [Fill in area of responsibility] \\
+\hline
+[Full name of member 4], [ID] & [Fill in area of responsibility] \\
+\hline
+[Full name of member 5], [ID] & [Fill in area of responsibility] \\
+\hline
+\end{tabular}
+\end{table}
+
+Suggested grouping for the five members: hardware and circuitry; firmware and control; experiments and analysis; backend, database and security; interface and report. The assignment requires every member to present and answer technical questions, so the table records who led each area rather than limiting anyone's scope of understanding.
+
+Deliverables are the working physical prototype; the firmware with its per-component test programs; the backend, dashboard and simulator; the protocol specification; the test procedures and analysis scripts (\texttt{docs/TESTING.md}, \texttt{tools/}); a code guide for newcomers (\texttt{docs/CODE\_GUIDE.md}); the raw database; the presentation slides; and a backup demonstration video.

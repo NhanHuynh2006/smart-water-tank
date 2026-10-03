@@ -10,16 +10,14 @@ BUILD
   pdflatex main.tex
 On Overleaf: create a new project, upload this whole folder, Compiler = pdfLaTeX.
 
-STRUCTURE (8 chapters)
-  1 Introduction
-  2 Theoretical background and system requirements
-  3 Architecture and hardware design
-  4 Protocol and communication
-  5 Backend, data management and interface
-  6 Control and system intelligence
-  7 Security and reliability
-  8 Experiments, results, limitations, conclusion, member contributions
-    (8.4 latency and outage, 8.5 Wi-Fi power saving, both measured on hardware)
+STRUCTURE (5 chapters + 1 appendix)
+  1 Introduction and background   (motivation, scope, requirements, theory)
+  2 System architecture, hardware and protocol
+  3 Control and system intelligence
+  4 Backend, interface, security and reliability
+  5 Experiments, results and conclusion (limitations, member contributions)
+  A Bench fault log
+  Cross references use \label/\ref, so section numbers update themselves.
 
 STATUS (27/09)
 - Chapters 2 to 8 rewritten to match the final system: requirement table
@@ -33,11 +31,11 @@ STATUS (27/09)
 
 STILL TO FILL
 1. main.tex: names and IDs of all 5 members (\cstuname).
-2. chapter08.tex "Member contributions": the 5 row table.
-3. Table 8.2.1 (E1 level calibration): run  bench.py level  (IOT/docs/TESTING.md).
-4. Table 8.4.1 (E5): OVERFLOW, no_flow, NO_CURRENT, manual rejection rows:
+2. chapter05.tex "Member contributions": the 5 row table.
+3. Table 5.2.1 (E1 level calibration): run  bench.py level  (IOT/docs/TESTING.md).
+4. Table 5.4.1 (E5): OVERFLOW, no_flow, NO_CURRENT, manual rejection rows:
    run  bench.py fault  for each.
-5. E6 outage rows in Table 8.5.1: rerun  bench.py outage  on the final firmware.
+5. E6 outage rows in Table 5.5.1: rerun  bench.py outage  on the final firmware.
 6. Replace the dashboard placeholder (fig/dashboard.png) with a live screenshot.
 
 NOTES

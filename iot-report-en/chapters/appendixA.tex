@@ -1,0 +1,45 @@
+\chapter{BENCH FAULT LOG}
+\label{app:bench}
+The faults recorded here were all found after the prototype was assembled and nominally working. The group presents them because each was invisible from the code alone and each was resolved by a measurement rather than by argument.
+
+\section{An inverted relay made the firmware believe the pump was off}
+
+The most serious fault was also the simplest. The configuration declared the relay module active low, so the firmware drove the control pin high to stop the pump. The module fitted was active high. Every command to stop therefore started the pump, and the telemetry reported \texttt{pump: false} throughout. The tank filled from 0.2 to 11.2 centimetres and came close to overflowing while the interface displayed a stopped pump and an overflow lock.
+
+The fault also corrupted the current measurement, in a way that concealed it. The quiescent offset of the Hall sensor is tracked by an exponential average that updates only while the firmware believes the pump is off. Because the firmware believed that permanently, the average absorbed the running current of the pump as its own zero, and the reported current settled near zero while the motor ran.
+
+Determining the true polarity required care, because the obvious method gives the wrong answer. The Hall current sensor is bidirectional: its output rests at mid scale and moves up or down depending on the direction of current through the primary conductor. A larger reading therefore does not imply a larger current, and the first version of the group's test concluded the opposite of the truth on exactly that basis. The quantity that does separate the two states is the \emph{ripple}, because a brushed motor draws a visibly rough current through its commutator while an open relay draws a flat one. Measured over two rounds, the control pin low gave a mean of 1545.88 millivolts with 4.47 millivolts of ripple, and the pin high gave 1516.54 millivolts with 27.05 millivolts of ripple. The ripple ratio of 6.0 identifies the energised state unambiguously and does not depend on which way the load is wired, whereas the means differ by only 29 millivolts and in the misleading direction.
+
+\section{An automatic direction level shifter consumed a third of the echoes}
+
+The echo line of the ultrasonic sensor was initially routed through a TXS0108E translator. That part is intended for bidirectional open drain buses: it carries integrated pull up resistors of about 10 kilohms on both ports and a one shot circuit that accelerates edges. The echo output of an HC-SR04 is a strong push pull driver, and a pulse width is the only carrier of information in the signal, so both mechanisms work against it. Replacing the translator with a two resistor divider on the echo line alone changed the miss rate from between 28 and 30 percent of pings to zero in 179 consecutive samples.
+
+\section{Fifty hertz on a floating signal line reads as plausible flow}
+
+Both flow inputs reported between 0.26 and 0.51 litres per minute with the pump stopped. Converting the reading back to its underlying pulse rate showed exactly 50.00 hertz on one channel, unchanging across every sample. The control experiment was to close the drain valve, after which no flow of any kind was physically possible; the channel continued to report 50.00 hertz. A signal locked to the mains frequency and indifferent to whether water can flow is induced interference, not measurement.
+
+The cause is impedance. The internal pull up of the microcontroller is about 45 kilohms, which leaves the line high enough in impedance to act as an antenna. The specified remedy, an external 4.7 kilohm pull up to the 3.3 volt rail, lowers the source impedance by an order of magnitude. A second and larger disturbance appears only while the pump runs, when both channels rise together to about 4750 hertz, a figure that would correspond to 48 litres per minute against a measured pump delivery of 0.36. Two independent sensors agreeing to within 0.7 percent are not measuring water; they are sharing a common mode disturbance injected by the motor.
+
+\section{A silently truncated message stopped only the database}
+
+Adding two validity fields to the telemetry payload pushed its length past the 448 byte buffer that served it. The JSON library truncates without raising an error and still returns a string, so the device published well formed nonsense. On the server the parse exception was raised inside a callback whose exceptions the client library discards. The result was a system in which the device published once per second, the broker delivered every message, the health endpoint reported the service as connected, and the database received nothing at all for several minutes while the dashboard displayed a frozen value.
+
+The lesson the group takes is that a serialiser which truncates silently and a callback which swallows exceptions are individually defensible and jointly produce a failure with no symptom at the point of failure. Both ends now report the condition explicitly, and the buffer carries margin above the maximum payload rather than matching it.
+
+\section{A command that worked but was never confirmed}
+
+Manual pump commands were executed by the device, yet the command log kept them as pending indefinitely, while mode commands were confirmed normally. The broker log showed the difference: acknowledgements of mode commands were 118 bytes long, acknowledgements of pump commands exactly 256 bytes, the size of the acknowledgement buffer.
+
+The cause was an interaction between two libraries. The MQTT client delivers an incoming message as a pointer into its internal buffer, and the same buffer is reused for outgoing messages. The JSON parser, handed a non-constant pointer, parses in place and returns string references into that buffer rather than copies. A pump command starts the pump, which publishes the new pump state before the acknowledgement is sent; that publish overwrote the buffer, so the command identifier being echoed back had already become arbitrary bytes. Mode commands publish nothing in between and were unaffected. The fix copies the incoming message into a buffer owned by the handler before parsing. The general point is that a zero-copy parser makes the lifetime of the input part of the program's correctness, and that lifetime is decided by another library.
+
+\section{A robust filter gated by a fragile statistic}
+
+After the level filter was widened to a fifteen sample median, the group counted, for every ping, which validation stage rejected it. In one ordinary fill of 605 pings, 244 were rejected, and 98 percent of those rejections came from a single stage: the check that the spread of the window stayed below a limit. Missing echoes accounted for only 2 percent. The sensor was answering almost every time.
+
+The spread had been measured as maximum minus minimum. That statistic is controlled entirely by the single most extreme sample, so one stray echo from the tank floor among fifteen good ones was enough to discard the whole window. The median was chosen precisely because it tolerates isolated outliers; gating it with the statistic most sensitive to isolated outliers undid that choice. Replacing the range with the interquartile range, which ignores the top and bottom quarter of the window, raised the acceptance rate from 60 to 93 percent in otherwise identical conditions. The interquartile range still grows when the sensor genuinely alternates between the water surface and the floor, because then roughly half the samples sit in each group, which is exactly the case the check exists to reject.
+
+\section{The level sensor is excellent, and unusable, in the same installation}
+
+With the water still, twenty consecutive samples read between 3.87 and 3.89 centimetres, a standard deviation of 0.010 centimetres. With the pump running, the same sensor collapses to reporting an empty tank while the tank is demonstrably filling. The group verified that the validity gates were not the cause by disabling them: the raw reading itself falls to the empty value, so the gates were reporting the data correctly rather than rejecting it wrongly.
+
+This pair of results is the clearest argument in the project for layered protection. Throughout the interval in which the level reading was false and the validity flag had been forced true, the rule that stops the pump when the level fails to rise still fired and still stopped it. That rule consults the clock and the level history, never the validity flag, which is precisely why it survived.

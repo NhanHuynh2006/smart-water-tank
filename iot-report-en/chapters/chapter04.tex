@@ -1,76 +1,175 @@
-\chapter{PROTOCOL AND COMMUNICATION}
+\chapter{BACKEND, INTERFACE, SECURITY AND RELIABILITY}
+\label{chap:platform}
 
-\section{Design principles and topic tree}
+\section{Backend architecture}
+\label{sec:o5-1}
 
-Three principles govern the protocol specification. First, every message carries a device generated timestamp, because although TCP preserves ordering on a single socket, brokers process multiple threads concurrently so final arrival order may differ, and deterministic ordering must therefore be imposed at application level inside the payload itself \cite{slide03}. Second, the quality of service level is chosen per topic according to the consequence of losing a message. Third, every downward command must be answered by an upward acknowledgement carrying the same identifier.
+The backend is a single Python process containing three concurrent components. The ingestion component holds a persistent broker session and subscribes to the six specified topics. The API server exposes endpoints for the dashboard and for extracting experimental data. The rolling baseline leak detector is invoked on every incoming telemetry message and is described in Section~\ref{sec:o6-6}; because it learns slowly, it is rebuilt from the stored history each time the process starts, so a restart does not discard days of learning. In addition the process keeps an in memory copy of the latest state, so that the current state endpoint can answer without touching the database, since the dashboard calls it once per second.
 
-The topic root is built from broad scope down to the individual device as \texttt{wt/lab1/esp32-01}, following the hierarchical naming rule given in the lectures \cite{slide03}.
+For every telemetry message the ingestion component records the device timestamp alongside \texttt{recv\_ts}, written by the backend on arrival, so that a one way delay $\tau = t_{recv} - t_{sample}$ is available from a single query without external instrumentation. The device timestamp is stored twice: \texttt{ts} at one second resolution, kept so that existing consumers of the payload continue to parse, and \texttt{ts\_ms} at millisecond resolution, which is the field the latency query prefers. The coarser field alone carries a quantisation error of up to 500 milliseconds, larger than the transport delay it is meant to measure, and Section~\ref{sec:o8-5} records the corrected figures side by side. The measurement assumes both clocks are synchronised; messages emitted before synchronisation completes carry a zero timestamp and are excluded from the statistics. Because that assumption cannot be discharged on a microcontroller disciplined only by the network time protocol, the one way figure is treated as a comparison quantity and the command round trip, timed entirely by the server clock, is the reported result.
+
+\section{Data schema and API}
+\label{sec:o5-2}
+
+The schema has six tables, split according to data behaviour, and is shown with the whole repository in the code guide delivered alongside this report: \texttt{telemetry} is written continuously at one row per second, while \texttt{faults}, \texttt{pump\_events}, \texttt{commands}, \texttt{availability} and \texttt{config} are written sparsely and discretely. The telemetry table is indexed on the timestamp column, the only column ever used as a filter predicate. The group applies the tag and field separation principle of Section~\ref{sec:o2-5}: the device identifier acts as an indexed tag while the measured quantities are unindexed fields. In particular the sequence number column, although it changes on every row, is deliberately left unindexed to avoid exactly the cardinality explosion the lectures warn about \cite{slide04}. The command table stores both the send time and the acknowledgement time, whose difference is the command round trip latency.
+
+On database choice, the group is aware that the theory in Section~\ref{sec:o2-5} identifies real limits of relational engines for high rate time series data \cite{slide04}. Those limits, however, appear at thousands of writes per second, whereas this system writes one row per second from one node, three to four orders of magnitude below the problematic regime. Deploying a dedicated time series engine would add operational complexity without any measurable benefit, so the group chose SQLite while still respecting the schema design principles above \cite{sqlite}.
 
 \begin{table}[H]
-\caption{MQTT topic tree and the reasoning behind each setting.}
-\label{tab:topic}
+\caption{Main API endpoints.}
+\label{tab:api}
 \centering
 \renewcommand{\arraystretch}{1.1}
-\begin{tabular}{|p{2.8cm}|p{0.8cm}|p{1.3cm}|p{7.5cm}|}
+\begin{tabular}{|p{1.5cm}|p{4.6cm}|p{6.9cm}|}
 \hline
 \rowcolor[HTML]{B7E1F0}
-\textbf{Topic} & \textbf{QoS} & \textbf{Retain} & \textbf{Reasoning} \\
+\textbf{Method} & \textbf{Path} & \textbf{Purpose} \\
 \hline
-\texttt{.../telemetry} & 0 & No & One lost sample in a continuous 1 Hz stream changes no conclusion about the trend, and in exchange latency is lowest with no device buffer \\
+GET & \texttt{/api/latest} & Latest state, data freshness, pending commands \\
 \hline
-\texttt{.../state/pump} & 1 & Yes & Published only on change, so a loss leaves the dashboard wrong until the next transition \\
+GET & \texttt{/api/telemetry} & Time series over a requested interval \\
 \hline
-\texttt{.../event/fault} & 1 & No & Losing an alarm is incorrect behaviour for a safety function \\
+GET & \texttt{/api/volume/daily} & Volume pumped in and drawn out per day \\
 \hline
-\texttt{.../status} & 1 & Yes & The last will payload is published once, with no retransmission \\
+GET & \texttt{/api/leak/baseline} & State of the rolling baseline, slots learned \\
 \hline
-\texttt{.../cmd} and \texttt{.../cmd/ack} & 1 & No & A lost command or acknowledgement is a direct functional failure \\
+POST & \texttt{/api/login}, \texttt{/api/logout} & Open or close an administrator session \\
+\hline
+GET & \texttt{/api/auth} & Whether this browser may control the pump \\
+\hline
+GET & \texttt{/api/faults}, \texttt{/api/events}, \texttt{/api/commands} & Fault log, pump switching log, command log with acknowledgement latency \\
+\hline
+POST & \texttt{/api/command} & Issue a command, returns its identifier; session required \\
+\hline
+GET, PUT & \texttt{/api/config} & Read thresholds; update requires a session \\
+\hline
+GET & \texttt{/api/stats/latency} & Latency statistics used in Section~\ref{sec:o8-5} \\
 \hline
 \end{tabular}
 \end{table}
 
-The design respects all three naming pitfalls listed in the lectures \cite{slide03}: no leading separator, no whitespace inside the path, and six explicit subscriptions rather than a root wildcard. No topic uses the highest quality of service level, because it requires a four step handshake and packet identifier tracking on the edge device, while the duplicate delivery problem it solves is already handled at application level: each command carries a unique identifier, so a duplicate simply causes the device to resend the same acknowledgement without acting twice. This is the idempotency property of Section 2.5.
+Method selection follows the two properties introduced in Section~\ref{sec:o2-5}. Read endpoints use GET because they are safe and change no state. The configuration endpoint uses PUT because replacing the full threshold set is idempotent. The command endpoint uses POST because each call creates a new command record with its own identifier and is therefore not idempotent \cite{slide05}.
 
-\section{Message structure and fault codes}
+\textbf{Daily volume.} The first implementation computed each day's volume as the maximum minus the minimum of the accumulated counter. That is wrong whenever the counter is reset during the day, and it was: the result swung by litres after every reset. The corrected query uses a window function to take the increment between consecutive rows and sums only increments that are positive and physically possible in one second, so a reset contributes nothing instead of a large negative step. Inflow increments are additionally counted only while the previous row showed the pump running, because with flow derived from level the inlet cannot be non zero with the pump off. Rows stamped before the device clock synchronised carry a timestamp near zero and are assigned to the server's arrival date instead, which removed a spurious day in 1970 from the chart. Figure \ref{fig:daily} shows the result for the three bench days.
 
-Payloads use JSON built with a statically allocated document, following the rule that forbids dynamic allocation inside the loop \cite{slide05, arduinojson}.
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.6\textwidth]{fig/daily_volume.png}
+    \caption{Daily volume pumped in and drawn out, as served by the API.}
+    \label{fig:daily}
+\end{figure}
 
-\begin{lstlisting}[caption={Telemetry message payload, abridged.},label={lst:telemetry}]
-{ "dev":"esp32-01", "ts":1790160600, "ts_ms":1790160600123, "seq":10421,
-  "level_pct":62.4, "level_cm":8.74, "level_ok":true,
-  "level_rate_cms":0.036, "level_model_cm":8.71, "blind_ms":0,
-  "flow_lpm":0.36, "volume_l":143.62, "volume_today_l":12.40,
-  "flow_out_lpm":0.16, "volume_out_l":98.10, "flow_src":"level",
-  "pump":true, "state":"FILLING", "mode":"AUTO",
-  "current_mv":36.1, "current_ma":390.2, "pump_health":"ok",
-  "float_max":false, "float_min":false, "fault":"", "rssi":-55,
-  "lv_try":605, "lv_ok":563, "rj_spread":31, "ctl_gap_ms":201 }
-\end{lstlisting}
+\section{Monitoring interface}
+\label{sec:o5-3}
 
-The \texttt{seq} field is a monotonically increasing counter allowing lost messages to be counted exactly in Section 8.5. The \texttt{ts\_ms} field is produced by the device after time synchronisation and supports latency measurement. The \texttt{level\_ok} field states whether the reading can be trusted, letting the interface distinguish a genuinely low tank from a broken sensor. The \texttt{flow\_src} field states whether the flow figures come from the pulse sensors or are derived from the level, so no consumer can mistake one for the other. The \texttt{lv\_try}, \texttt{lv\_ok} and \texttt{rj\_*} counters record how many level pings were attempted, accepted and rejected at each filter stage; they turned out to be the most useful diagnostic in the project, as Section 8.8 shows. The \texttt{ctl\_gap\_ms} field reports the longest control period since the previous live message, so the first message after an outage proves whether the control loop was ever stalled by the network. Messages replayed after reconnection carry a \texttt{replay} flag and a reduced field set, and are excluded from latency statistics. The full message runs to several hundred bytes, so the serialisation buffer is 1024 bytes and the MQTT client buffer 1200 bytes; Section 8.8 explains why both margins are explicit.
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\textwidth]{fig/dashboard.png}
+    \caption{Monitoring dashboard during an automatic fill: process mimic with the tank at 60.5 percent, numeric tiles with the pump health label, and the level history. For this screenshot, recorded bench data from 23 September were replayed into an isolated copy of the backend, so the live database was not modified.}
+    \label{fig:dashboard}
+\end{figure}
 
-Eleven fault codes are generated on the device and one on the backend. They fall into three groups. The self clearing group, \texttt{SENSOR\_TIMEOUT}, \texttt{SENSOR\_CONFLICT} and \texttt{LEVEL\_LOST}, concerns signal quality and resolves on its own once the signal has been valid for long enough. The latching group, \texttt{OVERFLOW}, \texttt{NO\_CURRENT}, \texttt{DRY\_RUN}, \texttt{NO\_PROGRESS}, \texttt{FILL\_TIMEOUT}, \texttt{HARD\_LIMIT} and \texttt{VOLUME\_LIMIT}, requires the operator to confirm that the physical cause has been dealt with before the fault can be cleared. The warning group, \texttt{LEAK\_SUSPECTED} on the device and \texttt{LEAK\_BASELINE} on the backend, raises an alert without locking the pump. Every fault message also carries the pump health label and the pump current at the instant of the fault, captured before the pump is stopped, so the record states not only that something failed but which side of the pump failed. Trigger conditions are given in Section 6.4.
+The interface is designed for an operator who glances at the screen for a few seconds to answer three questions: what is the level, is the pump running, and is anything wrong. It is a single HTML file with no build step and no framework. The upper part is a process mimic in the style of a control room: the source bucket, the pump, the pipe and the tank are drawn as a diagram, the water in the tank rises and falls with the measured level against a ruler graduated from 0 to 14 centimetres, and the low, high and overflow thresholds are drawn at their true positions for the active configuration. Drawing the thresholds on the tank lets a viewer see at once where the level sits relative to the hysteresis band and why the pump just switched.
 
-\section{Command and acknowledgement mechanism}
+Below the mimic are the numeric tiles: level, inlet and outlet flow, pump current in milliamperes with the pump health label underneath it, and today's volume. Beside them are the history charts, a daily volume bar chart, and three logs: faults (with the pump health at the moment of each fault), pump events and commands. A freshness line next to the connection lamp shows how many seconds ago the last message arrived.
 
-This section implements the feedback sync principle of Section 2.5 and satisfies the requirement that commands be acknowledged with a verified state.
+Two display details matter more than they appear to. The device reports once per second, so a number written straight into the page moves in visible steps; the interface eases the displayed value towards each new reading. And the filtered level still moves by a few millimetres from sample to sample, which on a large readout looks like instability; the display applies a deadband of 0.25 centimetres, below the resolution anyone can act on, so the number holds still unless the water really moves. Neither detail touches the data: the database and the API carry the unmodified values.
 
-\begin{lstlisting}[caption={Command message and matching acknowledgement.},label={lst:cmd}]
-// .../cmd
-{"cmd_id":"a7f3c2e1","action":"pump","value":true,"ts":1735689600}
-// .../cmd/ack
-{"dev":"esp32-01","cmd_id":"a7f3c2e1","status":"rejected",
- "reason":"overflow_guard","state":"OVERFLOW_LOCK","pump":false}
-\end{lstlisting}
+On the update mechanism, the lectures recommend REST for low frequency administrative tasks and WebSocket for live streams \cite{slide06, rfc6455}. The group chose polling at 1 Hz, which runs against that general recommendation and therefore needs justification. The device publishes at 1 Hz, so the polling rate equals the data production rate and no request is wasted. With a handful of clients and one node the resulting traffic is a few kilobytes per second. A WebSocket introduces a stateful channel with its own lifecycle to manage, including heartbeats and reconnection \cite{slide06}, that is a new set of failure states in exchange for a benefit that is not measurable at this scale. The conclusion reverses beyond roughly ten nodes or a required update rate of 5 Hz.
 
-The acknowledgement reports not only the outcome but also the actual device state after processing, so the dashboard always displays a state the device has confirmed rather than one the user has just requested. Four actions are supported: change mode, switch the pump, clear a fault and reset the volume counters. Ten rejection reasons are defined: \texttt{auto\_mode\_active}, \texttt{fault\_active}, \texttt{overflow\_guard}, \texttt{float\_max\_triggered}, \texttt{water\_too\_close}, \texttt{level\_sensor\_invalid}, \texttt{min\_off\_time}, \texttt{no\_active\_fault}, \texttt{condition\_still\_present} and \texttt{unknown\_action}. The dashboard translates each into a plain sentence, and for \texttt{min\_off\_time} it shows a countdown on the pump button until a start will be accepted.
+The feedback sync principle is implemented in how command state is displayed. When the user presses the pump button the interface does not change the pump symbol; it posts the request, receives an identifier, shows ``sending command'' and polls the command log for that identifier. When the acknowledgement arrives it reports the outcome in a plain sentence, including the reason for a rejection, while the pump symbol follows only the pump state reported in telemetry. An early version gave no feedback at all on a rejection, and a user reported that manual mode ``did not work'' when the device had in fact correctly refused a start inside the 20 second minimum off time; the countdown shown on the button now makes that interlock visible instead of mysterious.
 
-The rejection table is worth more than a debugging aid: during the demonstration, pressing the pump on button while a fault is active and seeing an explicit rejection with a named reason is visible proof that manual mode cannot override the interlocks.
+\textbf{Remote access and control rights.} The assignment frames the system as remote supervision, so the dashboard is published through an outbound Cloudflare tunnel that gives it a public HTTPS address without opening any inbound port on the laboratory network. Anyone with the address can watch. Control is a separate matter: the control panel stays hidden until the browser holds an administrator session, obtained by entering a password kept in a file outside the repository. The group first tried to grant control by client address, allowing only the host machine, and abandoned it for two reasons found in testing: through the tunnel every request arrives from the loopback address, so the rule granted control to the whole Internet; and on the host itself every open tab could control the pump, which is not what the owner meant by ``only my machine''. Section~\ref{sec:o7-2} describes the session mechanism.
 
-\section{Connection lifecycle and availability monitoring}
+The interface adapts to the state reported by the device, following the conditional rendering principle \cite{slide06}: data older than 5 seconds or an arriving last will message turns the connection lamp red; a fault or overflow lock switches the status to an alarm style; and a false \texttt{level\_ok} flag marks the level as untrusted. Hiding or disabling buttons is only a convenience, since the backend rejects commands without a session and the device rejects unsafe ones regardless of who sent them.
 
-The firmware implements the four state connection machine described in the lectures. The critical point is the accompanying design note: connection logic must never sit inside a blocking wait loop, because that stalls the processor and suspends both analog sampling and safety checks for the whole outage \cite{slide03}. Our reconnection routine therefore never blocks, retries only once its interval has elapsed, and the control loop runs independently of network state. The retry interval grows exponentially with an upper bound, $T_{retry} = \min(T_{max}, T_{base} \cdot 2^{n})$ with $T_{base}$ of 1 second and $T_{max}$ of 30 seconds \cite{slide06}.
+\section{Device simulator}
+\label{sec:o5-4}
 
-A non blocking design still has to account for the calls it cannot avoid. Opening a TCP connection to an unreachable broker blocks inside the network stack, and the default timeout of the ESP32 client is three seconds, during which the control loop does not run. The firmware therefore opens the socket itself with a 500 millisecond limit before handing it to the MQTT client, and bounds the wait for the broker's connection acknowledgement to two seconds. After a Wi-Fi reconnection the device also resolves the broker's host name over multicast DNS, because a laptop that moves between networks receives a different address on each; a fixed fallback address is used if the name does not resolve.
+The simulator implements the hydraulic model introduced in Section~\ref{sec:o2-6} together with a sensor noise model, and publishes messages that conform to the specification of Sections \ref{sec:o4-1} to \ref{sec:o4-4}. It serves two purposes: while components had not arrived it allowed the backend and interface branches to be developed fully, and it allows control parameters to be swept across dozens of configurations in a few minutes, which is not feasible on real hardware. The sweep results are reported in Section~\ref{sec:o8-3}. The simulator can also inject three failure modes, namely a pump that runs without delivering water, a sensor stuck at a fixed value, and a leak at a prescribed flow rate.
 
-On connecting, the device pre registers a last will message announcing that it is offline, then overwrites it with an online message once the session is established. Should the node suffer an abrupt loss of power, the broker keep alive supervisor publishes the stored will by itself \cite{slide03}, so the interface switches to a disconnected state with no polling logic on the application side. A second backend check treats the device as offline when the newest telemetry message is older than 5 seconds. The two complement each other, since the will reacts quickly to a total power loss while the freshness check also catches a live session whose data stream has stopped.
+
+\section{Threat model and mitigations}
+\label{sec:o7-1}
+
+Under the ITU-T Y.2060 model of Section~\ref{sec:o2-2}, security is a cross cutting capability acting on every layer rather than a layer of its own \cite{itu2060}, so the analysis is organised per layer.
+
+\begin{table}[H]
+\caption{Threat scenarios and mitigations.}
+\label{tab:threat}
+\centering
+\renewcommand{\arraystretch}{1.1}
+\begin{tabular}{|p{5.2cm}|p{3.4cm}|p{4.4cm}|}
+\hline
+\rowcolor[HTML]{B7E1F0}
+\textbf{Attack scenario} & \textbf{Consequence} & \textbf{Mitigation} \\
+\hline
+Connect to the broker and publish a pump on command & Overflow, pump damage & Mandatory authentication, per topic access control \\
+\hline
+Sniff traffic to harvest credentials & Full control takeover & TLS transport on port 8883 \\
+\hline
+Forge telemetry so the system misreads the level & Incorrect pumping, possible overflow & Local interlock based on the mechanical float \\
+\hline
+Replay commands repeatedly to make the pump chatter & Mechanical pump damage & Minimum on and off times enforced on the device \\
+\hline
+Call the API directly, bypassing the web interface & Unauthorised commands & Every control endpoint checks an administrator session \\
+\hline
+Guess the administrator password through the public address & Control takeover & Five failures in five minutes lock the source address \\
+\hline
+\end{tabular}
+\end{table}
+
+The two middle rows are worth highlighting because they are mitigated not by cryptography but by the control design itself. The mechanical float is a physical constraint that no network message can override, and the minimum switching times are enforced in firmware, so an attacker may send any number of commands without making the pump toggle faster than the limit. This illustrates the principle that safety in a cyber physical system cannot be separated from its control design.
+
+\section{Authentication, authorisation and encryption}
+\label{sec:o7-2}
+
+The Mosquitto configuration disables anonymous connections entirely and mandates both a password file and an access control list file \cite{mosquitto}. The group applies least privilege: the edge device may only publish on the northbound topics under its own branch and may only subscribe to its own command topic, while the backend may publish on the command topic and read the whole northbound branch. The practical meaning is that if the edge device is compromised, the attacker still cannot use that device to issue control commands, because the device account has no write permission on the command topic. This is exactly the node compromise scenario the lectures raise when introducing access control lists \cite{slide03}.
+
+On the API side the system distinguishes a viewer, who needs nothing and may call every read endpoint, from an administrator, who may also call the command and configuration endpoints. Administrator rights are obtained by password. The password lives in a file outside the repository with owner only permissions, and is compared in constant time. A correct password creates a random 256 bit session token, returned as a cookie marked HttpOnly so page scripts cannot read it, SameSite Strict so another site cannot make the browser send it, and Secure whenever the request arrived over HTTPS, which through the tunnel is always. Sessions last seven days and are held in memory, so restarting the backend logs everyone out, which the group accepts at this scale. A missing or expired session returns 401. Five wrong passwords within five minutes lock further attempts from that address for the rest of the window, with the client address taken from the tunnel's forwarded header only when the connection itself comes from the local machine, since any remote caller could forge that header.
+
+The group records one design it rejected. Control was first granted to requests from the host machine's own address. Behind the tunnel every request, from anywhere, arrives from the loopback address, so the rule silently gave control to the whole Internet; and even without the tunnel it gave control to every browser tab on the host rather than to a person. Identity has to come from something the person knows, not from where the packet appears to come from.
+
+The broker runs on the unencrypted port 1883 and listens only on the laboratory network; the public tunnel carries the dashboard over HTTPS and never exposes the broker. For a real deployment the group switches to MQTTS on port 8883 \cite{slide03, rfc8446}. The cost should be stated plainly: the TLS handshake requires the microcontroller to perform public key operations, which noticeably increases startup time and memory consumption. One principle holds in every configuration, namely that no secret ever appears inside the telemetry payload, so even a successful eavesdropper gains no credentials.
+
+\section{Reliability during a network outage}
+\label{sec:o7-3}
+
+This is a mandatory requirement and also the most important property of the system. Four mechanisms are implemented.
+
+First, the control loop runs on a fixed cycle, and the two network calls it cannot avoid are bounded: opening a socket to the broker gives up after 500 milliseconds instead of the default three seconds, and waiting for the broker's acknowledgement gives up after two seconds. During an outage the system therefore loses only remote visibility while retaining every control and safety function, and the longest control period is published in the first message after reconnection so the claim can be checked rather than assumed.
+
+Second, when the link is down telemetry messages are not discarded but packed into a compact structure and pushed into a circular buffer holding 240 entries, about four minutes of data. The circular buffer was chosen for exactly the reason given in the lectures, namely constant time insertion with no array shifting \cite{slide01}. Each entry stores only the essential fields as scaled integers instead of a full JSON string. Once the link returns the whole buffer is replayed in order, tagged so it can be excluded from latency statistics.
+
+Third, accumulated volume is written to non volatile storage and reloaded at startup, so a sudden power loss does not erase the consumption history.
+
+Fourth, inside the initialisation routine and before any sensor is read, the relay control pin is driven to the pump off level, so every restart begins from a safe state. The integrated brownout detector acts as an additional protective layer: when the supply falls below the critical threshold, flash writes become unreliable and the core may execute corrupted instructions, so the hardware deliberately holds the device in a safe reset state until the voltage recovers \cite{slide01}.
+
+\begin{table}[H]
+\caption{Independent layers of overflow protection.}
+\label{tab:layers}
+\centering
+\renewcommand{\arraystretch}{1.1}
+\begin{tabular}{|p{4.6cm}|p{3.6cm}|p{4.8cm}|}
+\hline
+\rowcolor[HTML]{B7E1F0}
+\textbf{Mechanism} & \textbf{Location} & \textbf{Still effective when} \\
+\hline
+High threshold of the hysteresis band & State machine & Sensor is healthy \\
+\hline
+Safety limit at 85 percent & Fault rule & Sensor is healthy \\
+\hline
+Raw distance closer than 4.5 cm, three pings in a row & Fault rule, unfiltered & The filter chain is producing nonsense \\
+\hline
+No level progress in 90 seconds & Fault rule & Level reading is frozen or false \\
+\hline
+2.5 litres in one run; 240 s and unconditional 300 s run limits & Fault rules & Every level sensor has failed \\
+\hline
+Upper mechanical float & Digital input & Ultrasonic sensor has failed \\
+\hline
+Relay driven off as the first instruction at boot & Firmware start up & Controller has just reset \\
+\hline
+\end{tabular}
+\end{table}
+
+The value of this arrangement lies in the independence of the layers. The first two both rely on the filtered ultrasonic level and fail together if it fails, but the raw distance guard bypasses the filter, the run limits consult only the clock, and the float requires no measurement at all. The time limits are honestly the weakest layer: a 240 second run at the measured delivery adds 1.44 litres, about a whole tank, so on their own they bound the damage rather than prevent it, and they sit behind the float rather than replacing it. No single point of failure disables the overflow protection as a whole.

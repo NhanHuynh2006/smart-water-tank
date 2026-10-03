@@ -1,77 +1,164 @@
-\chapter{ARCHITECTURE AND HARDWARE DESIGN}
+\chapter{CONTROL AND SYSTEM INTELLIGENCE}
+\label{chap:control}
 
-\section{Overall architecture}
+\section{Overview}
+\label{sec:o6-1}
 
-The system consists of four blocks in series: an edge node built around an ESP32 with its sensors and one actuator; an MQTT broker acting as a content based message router; a backend service comprising an ingestion process, a database and an API server; and a web dashboard. A fifth, optional element is an outbound tunnel that publishes the dashboard on a public HTTPS address so that the tank can be supervised from anywhere with Internet access, not only from inside the laboratory network.
+This chapter presents the main technical contribution of the project. All of it runs in the microcontroller firmware, with the single exception of the rolling baseline leak detector of Section~\ref{sec:o6-6}, which sits on the backend for the reason given in Section~\ref{sec:o3-2}. The control loop runs on a fixed 200 millisecond cycle of six steps: read the sensors, filter the level, update the parallel level model, evaluate the fault rules, run the state machine, and drive the outputs. The loop does not depend on network state; the only network work inside it is bounded as described in Section~\ref{sec:o4-4}.
 
-\begin{figure}[H]
-    \centering
-    \includegraphics[width=0.92\textwidth]{fig/architecture.png}
-    \caption{Architecture of the smart water tank system. The closed control loop lives entirely inside the edge node.}
-    \label{fig:kientruc}
-\end{figure}
+\section{Computed quantities}
+\label{sec:o6-2}
 
-Mapping onto the five layer model of Section 2.2: the perception layer is the ESP32 with its sensors and relay; the transport layer is a Mosquitto broker over Wi-Fi; the processing layer is the ingestion process, SQLite and a FastAPI server; the application layer is the dashboard; and the business layer, kept deliberately minimal at this scale, is the daily volume report. The single most important property of Figure \ref{fig:kientruc} is that the closed control loop lives entirely inside the first block, so the remaining blocks never sit on the path of a pump switching decision.
+\textbf{Level.} The ultrasonic sensor measures the distance $d$ from the transducer to the water, and the level is $h = 17.5 - d$ centimetres, then corrected as $h_{corr} = a \cdot h + b$ with coefficients from the calibration of Section~\ref{sec:o8-2}. Because a share of echoes in this narrow tank return from the wall or the floor (Section~\ref{sec:o3-3}), a single ping is never trusted. Each 200 millisecond cycle fires one ping and the reading passes through a chain of gates, each of which counts its own rejections so that the chain can be tuned from evidence rather than intuition:
 
-Wi-Fi was selected over BLE, Zigbee and LoRaWAN for three reasons. The system is mains powered, so the low energy advantage of BLE and LoRaWAN carries no weight. The device sits indoors within a few tens of metres, comfortably inside Wi-Fi coverage. Most importantly, Wi-Fi gives the node a native IP address so it speaks to the broker directly, whereas every alternative needs an edge gateway to translate between two protocol worlds \cite{slide02}, adding hardware and a point of failure. The conclusion reverses for tanks spread over a wide area or for a battery powered node. One practical constraint surfaced on the bench: the ESP32 radio supports only the 2.4 GHz band, so the node cannot join a 5 GHz only access point, and the firmware therefore accepts up to three network credentials and tries them in turn.
+\begin{enumerate}
+\item \textbf{Window and geometry.} The last fifteen pings are kept; pings outside the physical geometry of the tank are discarded.
+\item \textbf{Spread.} If the interquartile range of the window exceeds 3.5 centimetres the window is rejected, because the sensor is then alternating between two surfaces and the median of the window means nothing. Appendix \ref{app:bench} explains why this is the interquartile range and not the full range.
+\item \textbf{Median.} The median of the window becomes the candidate reading. A median tolerates isolated outliers that would drag a mean.
+\item \textbf{Rate.} The candidate is rejected if it differs from the last accepted value by more than physics allows in the elapsed time plus a 2 centimetre noise allowance, and, while the pump runs, if it has fallen by more than 1 centimetre, since the tank cannot drain faster than a running pump fills it.
+\item \textbf{Alpha-beta filter.} Accepted readings feed a two state filter that tracks both level $\hat{h}$ and its rate of change $\hat{v}$:
+\begin{equation}
+\hat{h}^- = \hat{h} + \hat{v}\,\Delta t,\quad r = h - \hat{h}^-,\quad
+\hat{h} \leftarrow \hat{h}^- + \alpha r,\quad \hat{v} \leftarrow \hat{v} + \frac{\beta}{\Delta t} r
+\label{eq:alphabeta}
+\end{equation}
+with $\alpha = 0.03$ and $\beta = \alpha^2/(2-\alpha)$. The earlier exponential moving average lagged a rising level by a constant offset; the alpha-beta filter tracks a steady ramp without lag, and its rate estimate $\hat{v}$ is used below for flow and for pump diagnosis.
+\end{enumerate}
 
-\section{Function placement and edge autonomy}
+If no reading is accepted for 5 seconds the level is marked untrusted (\texttt{level\_ok} false). Independently of all of the above, a raw distance guard reads the unfiltered distance on every ping and declares the water too close after three consecutive readings nearer than 4.5 centimetres to the transducer. That guard shares nothing with the filter chain, so a filter defect cannot disable it.
 
-This is the central architectural decision of the project. The assignment requires that level control keep working during a network outage. Combined with the placement rule of Section 2.2, which states that any operation needing an immediate safe stop must be computed at the edge \cite{slide01}, the group adopted a single principle: \textbf{the server never issues a direct pump switching command in automatic mode, and never bypasses the device's own checks in manual mode.}
+\textbf{Parallel level model.} During a fill the sensor sometimes produces no accepted reading for tens of seconds, and the earliest firmware stopped every such fill at about half the target. The firmware now runs a model of the tank in parallel with the measurement, integrating $dh/dt = (Q_{in} - Q_{out})/A$ with the calibrated pump delivery and the latest drain estimate, and pulling the model towards each accepted reading with a gain of 0.05. While the sensor is blind during a fill, the state machine controls on the model instead. The model is never allowed to replace the sensor for long: after 45 seconds without a single accepted reading the pump stops and \texttt{LEVEL\_LOST} is raised, and a returning reading that disagrees with the model by more than 2.5 centimetres is treated as suspect rather than adopted. The overflow float, the raw distance guard and the run time limits keep working throughout the blind interval.
 
-The edge node therefore owns sensor reading and filtering, the control state machine, every safety interlock, all fault detection rules, the pump health classifier and volume accumulation, because each of these demands a deterministic cycle and has to survive an outage. The backend owns only the things the node cannot do well: durable history, the daily volume report, and statistical baseline leak detection, which needs a window of several days and exceeds the memory available on the microcontroller.
+\textbf{Flow.} Section~\ref{sec:o3-3} explains why the turbine readings are not used in this installation. With flow derived from level, inlet flow is the calibrated pump delivery of 0.36 litres per minute while the pump runs and zero otherwise. Outlet flow is computed from the rate estimate as $Q_{out} = -\hat{v} \cdot A \cdot 60/1000$ litres per minute, but only when the pump has been off for at least 20 seconds and the surface has settled; the estimate is smoothed and then \emph{held} while the pump runs. An earlier version computed outlet flow as pump delivery minus the net level rate at every instant. Because the delivery term switches instantly while the rate estimate lags, every pump start made the outlet curve jump by the full pump delivery and decay back, which on the dashboard looked as if consumption rose whenever the pump started. Holding the drain estimate removed the artefact and matches the physics: the valve setting, not the pump, determines the draw.
 
-This split makes the system degrade in a controlled way when connectivity is lost: the user loses remote visibility and remote commands, but the tank is still refilled at the correct thresholds and every safety constraint is still enforced. The behaviour is verified experimentally in Section 8.5.
+\textbf{Volume.} Accumulated volume is the numerical integral of flow,
+\begin{equation}
+V(t) = \sum_{i} Q_i \cdot \frac{\Delta t}{60},
+\label{eq:volume}
+\end{equation}
+computed on the microcontroller rather than the server, because if it ran on the server every message lost during an outage would become water permanently unaccounted for. The totals are written to non volatile storage every 60 seconds, so a sudden power loss costs at most one minute. Section~\ref{sec:o8-2} measures the resulting volume error at $-5$ percent on average.
 
-\section{Sensor selection and signal conditioning}
+\textbf{Current.} Pump current is reported in milliamperes using the scale factor of Section~\ref{sec:o3-3}, with readings under the 4 millivolt noise floor reported as zero.
+
+\section{State machine and hysteresis}
+\label{sec:o6-3}
 
 \begin{table}[H]
-\caption{Main bill of materials.}
-\label{tab:bom}
+\caption{Controller state set.}
+\label{tab:fsm}
 \centering
 \renewcommand{\arraystretch}{1.1}
-\begin{tabular}{|p{5.2cm}|p{7.8cm}|}
+\begin{tabular}{|p{3.1cm}|p{4.6cm}|p{5.2cm}|}
 \hline
 \rowcolor[HTML]{B7E1F0}
-\textbf{Component} & \textbf{Role} \\
+\textbf{State} & \textbf{Entry condition} & \textbf{Exit condition} \\
 \hline
-ESP32 DevKit V1 & Edge microcontroller \\
+\texttt{BOOT} & Power up & A valid level reading is available \\
 \hline
-HC-SR04 ultrasonic sensor & Tank level, mounted 17.5 cm above the tank floor \\
+\texttt{IDLE} & Pump off, no fault & Automatic mode and (level below 30 percent or lower float) and the safety guard allows a start \\
 \hline
-Two YF-S401 Hall turbine flow sensors & Inlet (pump to tank) and outlet (tank to consumer) flow \\
+\texttt{FILLING} & Automatic start & Level above 70 percent after at least 3 s, or switch to manual \\
 \hline
-ACS712 Hall current sensor, 5 A variant & Pump current, used for the pump health classifier \\
+\texttt{MANUAL\_ON} & Manual start accepted & Manual stop, return to automatic, or the safety guard objects \\
 \hline
-Two mechanical float switches on the storage tank & Upper level overflow guard and lower level fill permission \\
+\texttt{FAULT\_SENSOR} & Sensor fault raised & Valid, consistent signal for 2.5 continuous seconds \\
 \hline
-Single channel relay module, 5 V submersible pump & Switching stage and actuator \\
+\texttt{FAULT\_DRYRUN} & Pump fault raised & Operator clears the fault \\
 \hline
-1N4007 diode, 100 nF ceramic, 1000 $\mu$F electrolytic & Inductive protection, brush noise filtering, inrush buffering \\
-\hline
-10 k$\Omega$, 20 k$\Omega$ dividers, 4.7 k$\Omega$ pull ups & Level shifting of 5 V signals, pull ups on the open collector flow outputs \\
-\hline
-12 V supply, 2 A fuse, 5 V 5 A buck converter & System power, distributed in a star from the converter output \\
+\texttt{OVERFLOW\_LOCK} & Overflow or run limit fault & Operator clears the fault and the overflow condition is gone \\
 \hline
 \end{tabular}
 \end{table}
 
-\textbf{The tank.} The storage tank has a square base of 10 by 10 centimetres, so one centimetre of level is exactly 0.1 litres. The working range is 14 centimetres, which the firmware treats as 100 percent, giving a usable volume of 1.4 litres. The small volume is deliberate: it makes a full fill and drain cycle last about four minutes, so dozens of control cycles can be observed in one bench session.
+The reason for a state machine rather than a plain conditional expression is that fault states need to be sticky. A conditional rule would allow the pump to restart the moment a transient fault condition disappears, for instance when the suction tube touches the water again; the state machine holds the system in the fault state until an explicit intervention occurs. One invariant is enforced at the top of every cycle: whenever a fault code is set, the state must be a fault state. An early version let the manual and filling states return to idle without clearing the fault code, which left a device that looked idle and healthy while silently refusing every start.
 
-\textbf{Level sensing.} Non contact ultrasonic measurement was chosen because the transducer never touches the water, so it neither corrodes nor accumulates deposits, and its output does not depend on water conductivity. Two properties of this particular installation shaped the software in Chapter 6. First, the beam of an HC-SR04 spreads over roughly 15 degrees and is already about 8 centimetres wide when it reaches the water, against a 10 centimetre tank, so the edge of the beam strikes the wall on every ping and a fraction of echoes return from the wall or the floor rather than the surface. Second, the sensor occasionally locks up after a supply disturbance and stays silent until its supply is cycled, which no firmware reset can reach. The first property is handled by a robust filter; the second by a timeout rule and a documented recovery procedure.
+The transition between \texttt{IDLE} and \texttt{FILLING} implements equation \eqref{eq:hysteresis} with thresholds of 30 and 70 percent, leaving a 15 percent margin up to the 85 percent safety limit to absorb overshoot. Two timing constraints complement the band: a minimum on time of 3 seconds and a minimum off time of 20 seconds. Hysteresis rejects measurement noise near the threshold, while the timing constraints reject genuine short period oscillations and protect the pump from repeated inrush.
 
-\textbf{Echo line.} The echo line was first routed through a TXS0108E automatic direction level translator. That part is designed for open drain buses and its internal pull ups and edge accelerators distorted the echo pulse, whose width is the only carrier of information. Replacing it with a plain 10 k$\Omega$ and 20 k$\Omega$ divider removed a 28 to 30 percent echo loss, as recorded in Section 8.8.
+The minimum on time deserves a note, because the first draft set it to 10 seconds and that value was unsafe. At the measured 0.36 litres per minute a forced 10 second run adds 0.06 litres, over 4 percent of this 1.4 litre tank, while the state machine has no authority to stop it. Three seconds is long enough to stop the relay chattering and short enough that the band still governs. A hysteresis width of 40 percent may look wide for a control system, but the tank is a buffer: the goal is to guarantee water availability while limiting pump starts, not to hold a set point.
 
-\textbf{Flow sensing.} Both inlet and outlet carry a YF-S401 turbine sensor, where pulse frequency relates to flow as $Q = f/K$. The bench revealed two problems that no datasheet mentions. The measured pump delivery is 0.36 litres per minute and the outlet draw is 0.09 to 0.15 litres per minute, while the YF-S401 is specified from 0.3 litres per minute: the inlet sits at the very bottom of the span and the outlet below it, where the turbine simply does not turn. Worse, while the pump runs both signal lines carry about 1500 hertz of interference conducted along the shared supply and ground, which a flyback diode and physical separation of the wiring did not reduce. The firmware therefore offers two sources of flow, selected at compile time: the pulse counters, or flow derived from the level rate described in Section 6.2. The prototype runs with the second. This is stated here plainly because the assignment lists the flow sensor as mandatory: the sensors are fitted, wired, pulled up with 4.7 k$\Omega$ resistors and read by interrupt, but the numbers they produce in this installation cannot be trusted and are not used for control.
+\section{Fault detection rules}
+\label{sec:o6-4}
 
-\textbf{Float switches.} The two floats are not there to measure level. The upper float forms an overflow guard that operates independently of the ultrasonic path, and the lower float gives the pump a second, independent permission to start when the tank is low. Because two independent sources exist, the firmware can detect a contradiction between them and conclude that one reading is wrong. This is how the system satisfies the requirement to handle implausible sensor readings, as detailed in Section 6.4. Float polarity was measured rather than assumed, because a float wired with the opposite sense reads as permanently engaged.
+The system implements eleven rules where the assignment asks for at least one. They are evaluated every cycle in priority order and the first rule that fires ends the chain. Firing a rule stops the pump, lights the fault lamp, and publishes a fault message.
 
-\textbf{Current sensing.} The ACS712 output passes through a one to one divider that moves its no load point from 2.5 volts to 1.25 volts, the middle of the converter span. The 5 ampere variant produces 185 millivolts per ampere, which becomes 92.5 millivolts per ampere at the pin, or 10.81 milliamperes per millivolt. The firmware subtracts a startup offset averaged over 200 samples, reports the result in milliamperes, and reports zero below a 4 millivolt noise floor, since with the pump off the raw reading wanders between 0 and 2.7 millivolts, a single converter step being 0.8 millivolts. The measurement cannot resolve currents below about 40 milliamperes, which is enough to separate a running pump from a stopped one but not to characterise the motor, and Section 8.7 returns to this.
+\begin{table}[H]
+\caption{Fault detection rules and trigger conditions.}
+\label{tab:luatloi}
+\centering
+\renewcommand{\arraystretch}{1.08}
+\begin{tabular}{|p{3.2cm}|p{6.9cm}|p{2.7cm}|}
+\hline
+\rowcolor[HTML]{B7E1F0}
+\textbf{Code} & \textbf{Trigger condition} & \textbf{Action} \\
+\hline
+\texttt{SENSOR\_TIMEOUT} & No accepted level reading for 45 s & Sensor fault, self clearing \\
+\hline
+\texttt{SENSOR\_CONFLICT} & Upper float engaged while level reads below 70 percent, or lower float engaged while level reads above 60 percent & Sensor fault, self clearing \\
+\hline
+\texttt{OVERFLOW} & Upper float, or raw distance guard, or level at or above 85 percent & Lock \\
+\hline
+\texttt{DRY\_RUN} & Pulse flow below 0.25 L/min for 6 s with pump on; active only with sensor flow & Lock \\
+\hline
+\texttt{NO\_CURRENT} & Pump commanded on, no current for 2 s & Lock \\
+\hline
+\texttt{LEAK\_SUSPECTED} & Pump off yet inlet flow above 0.20 L/min for 60 s & Warning only \\
+\hline
+\texttt{FILL\_TIMEOUT} & One run longer than 240 s & Lock \\
+\hline
+\texttt{HARD\_LIMIT} & One run longer than 300 s, unconditionally & Lock \\
+\hline
+\texttt{VOLUME\_LIMIT} & More than 2.5 L pumped in one run & Lock \\
+\hline
+\texttt{NO\_PROGRESS} & Pump on 90 s without the level rising 1.5 cm & Lock \\
+\hline
+\texttt{LEVEL\_LOST} & Filling blind on the model for more than 45 s & Sensor fault, self clearing \\
+\hline
+\end{tabular}
+\end{table}
 
-\section{Power stage, supply and mechanical build}
+\texttt{SENSOR\_CONFLICT} is a direct application of the independent source consistency principle of Section~\ref{sec:o2-6} \cite{isermann2006}. With only an ultrasonic sensor the system cannot tell a right reading from a wrong one as long as the value stays plausible; a mechanical float turns a wrong reading into a detectable contradiction.
 
-The pump is switched through a relay module. A power MOSFET was considered, since the lectures favour it in edge designs of modest power thanks to its very low on resistance \cite{slide01}, but the relay was chosen because a pump running in two states at a low switching rate never exercises the frequency advantage of a MOSFET, and because the module drives the load from its own supply. Inductive protection uses a 1N4007 diode antiparallel across the pump terminals, alongside a 100 nF ceramic capacitor at the motor terminals whose purpose is not spike suppression but damping of brush noise. The relay polarity was determined by measurement: the module fitted is active high, and an earlier configuration that assumed active low made every stop command start the pump, as recorded in Section 8.8. The relay control pin is driven to the off level as the very first statement of the firmware, before the serial port or any sensor is initialised.
+The assignment's example rule, pump on with near zero flow, appears twice. \texttt{DRY\_RUN} implements it literally on the turbine signal, and is disabled when flow is derived from level, because inlet flow is then a constant that can never fall below any threshold: leaving the rule enabled would have been a guard that could not fire. \texttt{NO\_PROGRESS} implements the same physical idea on a measured quantity: a pump that draws current while the level does not rise is not moving water. Its mark only ever moves down with noise and moves up only on real progress, so a single high outlier cannot hide a stalled fill. Appendix \ref{app:bench} records a bench episode in which the level reading was false for the whole of a fill and this rule, which never consults the validity flag, still stopped the pump.
 
-The system runs from a 12 volt supply through a 2 ampere fuse and a 5 volt, 5 ampere buck converter shared by the pump and the logic. Because the rail is shared, distribution matters: every load branch leaves the converter output terminal in a star, and the pump ground does not share a conductor with the controller ground. A 1000 microfarad capacitor near the controller supply pin buffers the inrush current of the motor, whose start peak would otherwise pull the rail below the brownout threshold and reset the chip \cite{slide01}.
+The 45 second sensor timeout is long by design. The ultrasonic sensor in this tank drops out for tens of seconds during normal fills, and the parallel model bridges those gaps; a short timeout would stop every fill early, which the first version did at 4 seconds. The price is that a disconnected sensor is reported after 45 seconds rather than 4, which is acceptable because every overflow layer that does not rely on the sensor remains active meanwhile.
 
-The rig forms a closed water loop: a source bucket, the pump, the inlet flow sensor, the transparent main tank, a manual valve acting as the consumption load, and the outlet flow sensor. The ultrasonic bracket must be rigid, because vibration makes readings oscillate and would be misdiagnosed as a sensor fault. The circuit was assembled in steps, each with its own test program in the repository (\texttt{test\_level}, \texttt{test\_relay}, \texttt{test\_flow}, \texttt{test\_current}, \texttt{test\_floats} and others) that had to pass before moving on.
+\section{Manual mode and safety interlocks}
+\label{sec:o6-5}
+
+The assignment requires that manual mode must not override safety constraints. The group meets this with an architectural decision inside the firmware: \textbf{every code path capable of starting the pump is forced through one single guard function.} The function returns nothing when starting is permitted and a reason code when it is blocked, checking in order: an active fault, the upper float, the raw distance guard, level at or above the safety limit, an untrusted level, and the minimum off time.
+
+An earlier revision listed an empty source tank as a further condition. It was removed, and the removal is worth recording: the source vessel carries no instrument, and the condition was in fact reading the lower float of the \emph{storage} tank under a wrong label. Blocking the pump on a quantity the system cannot observe is not a safety measure but a permanent refusal to operate, and dry running is covered by rules that rest on quantities the system does observe: absent current and absent level progress.
+
+Because both the automatic state machine and user commands pass through the same guard, verifying the interlock means reviewing one function rather than auditing the codebase. When a command is refused, the acknowledgement carries the reason. Moreover, while in \texttt{MANUAL\_ON}, the guard is re-evaluated on every cycle, so lifting the upper float stops a manually started pump within one 200 millisecond cycle, and the fault cannot be cleared while the float is still up: the clear command is answered with \texttt{condition\_still\_present}.
+
+\section{Leak and anomalous consumption detection}
+\label{sec:o6-6}
+
+This is one of the two advanced options in the assignment. It is built as two mechanisms at two places in the system.
+
+The edge mechanism is the \texttt{LEAK\_SUSPECTED} rule: once the pump is off, the supply line should carry no flow at all. It runs locally and therefore survives an outage, but it only sees the pipe section carrying the sensor and needs enough flow to turn the turbine, so with flow derived from level it is inactive.
+
+The backend mechanism detects a sustained abnormal consumption level, the small slow shift discussed in Section~\ref{sec:o2-6} \cite{page1954}. The day is divided into 48 slots of 30 minutes, and each slot keeps a baseline mean and variance of the volume used in it, updated by an exponentially weighted moving average:
+\begin{equation}
+\mu_k \leftarrow \mu_k + \alpha (V_k - \mu_k), \qquad
+\sigma^2_k \leftarrow (1-\alpha)\left[\sigma^2_k + \alpha (V_k - \mu_k)^2\right]
+\label{eq:ewma}
+\end{equation}
+with $\alpha = 0.2$. Once a slot has been seen on at least three days, an alert \texttt{LEAK\_BASELINE} is raised when $V_k > \mu_k + 3\sigma_k$ holds for two consecutive slots. Slicing the day reflects that domestic consumption varies strongly with the hour, and the two slot requirement is an accumulation step in the spirit of the cumulative sum method \cite{page1954}, suppressing alarms from a single unusual draw.
+
+Two safeguards were added after the detector learned from bad data. A slot in which the counter went backwards, because it was reset, or in which more water was recorded than the pump can deliver in 30 minutes, is skipped entirely rather than learned, since early noisy flow readings had accumulated thousands of phantom litres. And the baseline is rebuilt from the stored history at every backend start. The honest status is that with three days of bench data, few slots have reached the three day minimum, so the detector is built and tested but has not yet raised a genuine alert.
+
+\section{Pump health classification}
+\label{sec:o6-7}
+
+The second advanced option in the assignment is to use the consistency between pump current and flow to classify pump faults. The firmware assigns the pump one of five labels on every cycle:
+
+\begin{itemize}
+\item \texttt{idle}: the pump is off.
+\item \texttt{starting}: on for less than 2 seconds, or less than 25 seconds with no evidence yet.
+\item \texttt{ok}: current is present and the water is moving, meaning the level rate $\hat{v}$ exceeds 0.010 centimetres per second (or the turbine reads flow, when that source is selected).
+\item \texttt{no\_current}: commanded on but no current, pointing at the electrical side: an open wire, a failed relay, a dead motor.
+\item \texttt{no\_flow}: current present but no water moving after 25 seconds, pointing at the hydraulic side: a dry suction, a blocked or detached pipe.
+\end{itemize}
+
+The label is diagnostic, not protective: stopping the pump remains the job of \texttt{NO\_CURRENT} and \texttt{NO\_PROGRESS}. Its value is that the same symptom, a tank that does not fill, is split into two causes that send the operator to two different places, and that the label is captured at the instant of every fault, before the pump is stopped, and stored with the fault record. The 25 second evidence window is chosen from the measured fill rate: at 0.036 centimetres per second of net rise, 25 seconds produce 0.9 centimetres, well clear of the filter noise.
