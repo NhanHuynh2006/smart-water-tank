@@ -1,0 +1,43 @@
+% Architecture diagram, drawn in TikZ so every arrow is straight or right-angled.
+\begingroup\setstretch{1.0}
+\begin{tikzpicture}[
+    font=\small,
+    box/.style={draw, thick, rounded corners=2pt, align=center,
+                minimum width=3.9cm, minimum height=1.25cm, fill=white},
+    edge/.style={draw, dashed, rounded corners=4pt, inner sep=0.35cm},
+    arr/.style={-{Stealth[length=2.6mm]}, thick},
+    lbl/.style={font=\footnotesize, align=center, fill=white, inner sep=1.5pt}
+]
+% ---- nodes (columns at 0, 5.4, 10.8 cm) ----
+\node[box] (sensors) at (0,0)     {\textbf{Sensors}\\HC-SR04, 2 floats\\ACS712, 2 $\times$ YF-S401};
+\node[box] (fw)      at (6.6,0)   {\textbf{ESP32 firmware}\\filter, state machine\\11 fault rules, guard};
+\node[box] (pump)    at (13.2,0)  {\textbf{Relay + pump}\\1N4007 flyback diode};
+
+\node[box] (broker)  at (6.6,-4.3) {\textbf{Mosquitto broker}\\password + ACL};
+\node[box] (api)     at (6.6,-7.0) {\textbf{FastAPI backend}\\ingest, REST\\leak baseline};
+\node[box] (db)      at (0,-7.0)   {\textbf{SQLite}\\6 tables};
+\node[box] (ui)      at (13.2,-7.0){\textbf{Web dashboard}\\1 Hz polling};
+\node[box] (tunnel)  at (13.2,-9.8){\textbf{Cloudflare tunnel}\\public HTTPS link};
+
+% ---- boundaries ----
+\begin{scope}[on background layer]
+\node[edge, fit=(sensors)(fw)(pump), label={[font=\footnotesize\bfseries, anchor=south west]north west:Edge node: closed control loop, keeps working offline}] {};
+\node[edge, fit=(broker)(api)(db)(ui), label={[font=\footnotesize\bfseries, anchor=north west]north west:Server (laptop)}] {};
+\end{scope}
+
+% ---- edge node ----
+\draw[arr] (sensors) -- node[lbl, above=2pt] {read\\every 200 ms} (fw);
+\draw[arr] (fw) -- node[lbl, above=2pt] {switch} (pump);
+
+% ---- MQTT, two straight vertical lines ----
+\draw[arr] ([xshift=-0.75cm]fw.south) -- node[lbl, left=3pt] {telemetry 1 Hz, state,\\faults, last will,\\ring buffer replay} ([xshift=-0.75cm]broker.north);
+\draw[arr] ([xshift=0.75cm]broker.north) -- node[lbl, right=3pt] {cmd (QoS 1);\\ack returns on\\cmd/ack} ([xshift=0.75cm]fw.south);
+
+% ---- server ----
+\draw[arr] (broker) -- node[lbl, right=3pt] {subscribe} (api);
+\draw[arr] (api) -- node[lbl, above=2pt] {SQL} (db);
+\draw[arr] ([yshift=0.3cm]api.east) -- node[lbl, above=2pt] {REST /api} ([yshift=0.3cm]ui.west);
+\draw[arr] ([yshift=-0.3cm]ui.west) -- node[lbl, below=2pt] {POST /api/command} ([yshift=-0.3cm]api.east);
+\draw[arr] (tunnel) -- node[lbl, right=3pt] {HTTPS} (ui);
+\end{tikzpicture}
+\endgroup
