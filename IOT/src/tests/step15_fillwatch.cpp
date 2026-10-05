@@ -35,10 +35,14 @@ int watch(const char* nhan, uint32_t ms, bool pumpOn) {
   if (pumpOn) relayOn(); else relayOff();
   Serial.printf("\n--- %s ---\n", nhan);
   uint32_t t0 = millis();
-  int co = 0, tong = 0;
+  int co = 0, tong = 0, gan = 0;
   while (millis() - t0 < ms) {
     float d = ping();
     tong++;
+    // Chan an toan: 3 lan lien tiep muc tren 75 % thi ngat bom ngay
+    if (pumpOn && d > 0 && (TANK_SENSOR_TO_BOTTOM_CM - d) > 0.75f * TANK_MAX_LEVEL_CM) {
+      if (++gan >= 3) { Serial.println("  ** muc tren 75 %, ngat bom **"); break; }
+    } else gan = 0;
     if (d > 0) {
       co++;
       Serial.printf("  %5.1fs  %6.2f cm   muc %5.2f cm = %5.1f%%\n",
