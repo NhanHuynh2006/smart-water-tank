@@ -1,0 +1,64 @@
+{
+ "T1 connectivity": {
+  "pass": true,
+  "messages_10s": 10,
+  "seq_gaps": 0,
+  "missing_fields": [],
+  "retained_status": {
+   "online": true,
+   "reset": "power_on",
+   "up_s": 4
+  },
+  "age_s": 0.39568209648132324
+ },
+ "T2 security": {
+  "pass": true,
+  "view": 200,
+  "command_without_session": 401,
+  "wrong_password": 401,
+  "login": 200
+ },
+ "T3 commands": {
+  "pass": true,
+  "n": 40,
+  "lost": 0,
+  "median_ms": 40.3,
+  "p95_ms": 139.5,
+  "min_ms": 21.9,
+  "max_ms": 150.2
+ },
+ "T4 rejections": {
+  "pass": true,
+  "pump_in_auto": "auto_mode_active",
+  "restart_during_rest": "min_off_time",
+  "clear_without_fault": "no_active_fault",
+  "first_manual_start": "accepted"
+ },
+ "T5 manual pump": {
+  "pass": true,
+  "accepted": "accepted",
+  "current_on_ma": [
+   476,
+   472,
+   478,
+   477,
+   481,
+   465
+  ],
+  "health_on": [
+   "starting"
+  ],
+  "current_off_ma": [
+   0,
+   0
+  ]
+ },
+ "T6 outage": {
+  "pass": true,
+  "outage_s": 90,
+  "lwt_after_s": 22.0,
+  "replayed": 96,
+  "missing": 4,
+  "ctl_gap_ms": 704
+ }
+}
