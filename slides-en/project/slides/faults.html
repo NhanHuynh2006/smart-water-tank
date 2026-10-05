@@ -1,22 +1,25 @@
-<section id="faults" style="background:#F4F3EE; color:#0E1A2B; font-family:'IBM Plex Sans', Arial, sans-serif; padding:128px 128px 160px; display:flex; flex-direction:column; gap:32px">
-<div style="display:flex; flex-direction:column; gap:16px">
-<p style="font-size:24px; color:#1C5CAB; letter-spacing:3px; text-transform:uppercase; font-family:'IBM Plex Mono', 'Courier New', monospace; font-weight:600">04 · Fault detection</p>
-<h2 style="font-size:64px; font-weight:600; line-height:1.1; letter-spacing:-1px">Eleven fault rules</h2>
-</div>
-<table style="font-size:24px; color:#0E1A2B">
-<tr style="background:#E9E7DF"><th style="width:30%">Code</th><th style="width:52%">Trigger</th><th style="width:18%">Action</th></tr>
-<tr><td style="font-family:'IBM Plex Mono', 'Courier New', monospace">SENSOR_TIMEOUT</td><td>No accepted level for 45 s</td><td>Self-clears</td></tr>
-<tr><td style="font-family:'IBM Plex Mono', 'Courier New', monospace">SENSOR_CONFLICT</td><td>A float disagrees with the ultrasonic level</td><td>Self-clears</td></tr>
-<tr><td style="font-family:'IBM Plex Mono', 'Courier New', monospace">LEVEL_LOST</td><td>Filling blind on the model for over 45 s</td><td>Self-clears</td></tr>
-<tr style="background:#FBEDE5"><td style="font-family:'IBM Plex Mono', 'Courier New', monospace">OVERFLOW</td><td>Upper float, raw &lt; 4.5 cm, or level ≥ 85 %</td><td>Lock</td></tr>
-<tr style="background:#FBEDE5"><td style="font-family:'IBM Plex Mono', 'Courier New', monospace">NO_PROGRESS</td><td>Pump on 90 s, level up by less than 1.5 cm</td><td>Lock</td></tr>
-<tr><td style="font-family:'IBM Plex Mono', 'Courier New', monospace">NO_CURRENT</td><td>Relay closed, no pump current for 2 s</td><td>Lock</td></tr>
-<tr><td style="font-family:'IBM Plex Mono', 'Courier New', monospace">DRY_RUN</td><td>Turbine flow under 0.25 L/min for 6 s</td><td>Lock</td></tr>
-<tr><td style="font-family:'IBM Plex Mono', 'Courier New', monospace">FILL_TIMEOUT</td><td>One run longer than 240 s</td><td>Lock</td></tr>
-<tr><td style="font-family:'IBM Plex Mono', 'Courier New', monospace">HARD_LIMIT</td><td>One run longer than 300 s, unconditionally</td><td>Lock</td></tr>
-<tr><td style="font-family:'IBM Plex Mono', 'Courier New', monospace">VOLUME_LIMIT</td><td>More than 2.5 L pumped in one run</td><td>Lock</td></tr>
-<tr><td style="font-family:'IBM Plex Mono', 'Courier New', monospace">LEAK_SUSPECTED</td><td>Pump off, inflow over 0.2 L/min for 60 s</td><td>Warn</td></tr>
-</table>
-<div style="position:absolute; left:128px; right:128px; bottom:64px; display:flex; justify-content:space-between"><p style="font-size:24px; color:#646B76">Smart Water Tank · Project 08</p><p style="font-size:24px; color:#646B76; font-family:'IBM Plex Mono', 'Courier New', monospace">18</p></div>
-<aside>The brief asks for at least one fault rule; we implemented eleven. They run every two hundred milliseconds, in priority order, and any rule that fires stops the pump at once and publishes a fault message. The first three concern the signal and clear themselves when the signal returns. The others lock the pump until an operator clears them, except the leak warning. Two rows are highlighted. OVERFLOW has three independent triggers: the mechanical float, the raw distance, or the filtered level. NO_PROGRESS is the physical form of the brief's example rule, "pump on with near zero flow". Its literal form, DRY_RUN, uses the turbine signal, and since we do not trust that signal in this installation, DRY_RUN is disabled when flow is derived from level. A guard that can never fire is worse than none. NO_PROGRESS uses a quantity we do measure: the pump draws current but the level does not rise. The forty-five second sensor timeout is long on purpose: the sensor drops out for tens of seconds during normal fills and the model covers that gap. Our first version used four seconds and stopped every fill early.</aside>
+<section id="faults" style="background:#f4f3ee">
+  <div id="e1-15ggzj8" style="position:absolute; right:128px; bottom:64px; left:128px; display:flex; flex-direction:row; justify-content:space-between">
+    <p style="font-family:'IBM Plex Sans', Arial, sans-serif; font-size:24px; color:#646b76">Smart Water Tank · Project 08</p>
+    <p style="font-family:'IBM Plex Mono', 'Courier New', monospace; font-size:24px; color:#646b76">20</p>
+  </div>
+  <div id="4bad2031" style="position:absolute; top:128px; left:128px; width:1664px; height:120px; display:flex; flex-direction:column; gap:16px">
+    <p style="font-family:'IBM Plex Mono', 'Courier New', monospace; font-size:24px; font-weight:600; letter-spacing:3px; text-transform:uppercase; color:#1c5cab">04 · Fault detection</p>
+    <h2 style="font-family:'IBM Plex Sans', Arial, sans-serif; font-size:64px; font-weight:600; line-height:1.1; letter-spacing:-1px; color:#0e1a2b">Eleven fault rules</h2>
+  </div>
+  <table id="c379b852" style="position:absolute; top:280px; left:50%; width:1664px; font-family:'IBM Plex Sans', Arial, sans-serif; font-size:24px; color:#0e1a2b; transform:translateX(-50%)">
+    <tr style="background:#e9e7df"><th style="width:30%">Code</th><th style="width:52%">Trigger</th><th style="width:18%">Action</th></tr>
+    <tr><td>SENSOR_TIMEOUT</td><td>No accepted level for 45 s, 90 s with the model</td><td>Self-clears</td></tr>
+    <tr><td>SENSOR_CONFLICT</td><td>A float disagrees with the ultrasonic level</td><td>Self-clears</td></tr>
+    <tr><td>LEVEL_LOST</td><td>Filling blind on the model for over 90 s</td><td>Self-clears</td></tr>
+    <tr style="background:#fbede5"><td>OVERFLOW</td><td>Upper float, raw &lt; 4.5 cm, or level ≥ 85 %</td><td>Lock</td></tr>
+    <tr style="background:#fbede5"><td>NO_PROGRESS</td><td>Pump on 90 s, level up by less than 1.5 cm</td><td>Lock</td></tr>
+    <tr><td>NO_CURRENT</td><td>Relay closed, no pump current for 2 s</td><td>Lock</td></tr>
+    <tr><td>DRY_RUN</td><td>Turbine flow under 0.25 L/min for 6 s</td><td>Lock</td></tr>
+    <tr><td>FILL_TIMEOUT</td><td>One run longer than 240 s</td><td>Lock</td></tr>
+    <tr><td>HARD_LIMIT</td><td>One run longer than 300 s, unconditionally</td><td>Lock</td></tr>
+    <tr><td>VOLUME_LIMIT</td><td>More than 2.5 L pumped in one run</td><td>Lock</td></tr>
+    <tr><td>LEAK_SUSPECTED</td><td>Pump off, inflow over 0.2 L/min for 60 s</td><td>Warn</td></tr>
+  </table>
+  <aside>The brief asks for at least one fault rule; we implemented eleven, the same list as Table 3.4.1 in the report. They run every two hundred milliseconds, in priority order, and any rule that fires stops the pump at once and publishes a fault message. The first three concern the signal and clear themselves when the signal returns. The others lock the pump until an operator clears them, except the leak warning. Two rows are highlighted. OVERFLOW has three independent triggers: the mechanical float, the raw distance, or the filtered level. NO_PROGRESS is the physical form of the brief's example rule, pump on with near zero flow. Its literal form, DRY_RUN, uses the turbine signal, and because control does not use the turbine, DRY_RUN is disabled when flow is derived from level: a guard that can never fire is worse than none. NO_PROGRESS uses a quantity we do measure: the pump draws current but the level does not rise. The sensor timeouts are long on purpose: crossing the blind zone takes up to seventy five seconds and the model covers that gap, so the limit is ninety seconds while the model is valid and forty five otherwise. Our first version used four seconds and stopped every fill early.</aside>
 </section>

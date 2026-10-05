@@ -6,7 +6,7 @@
 <div style="display:flex; gap:0px; align-items:stretch">
 <div style="flex:1; display:flex; flex-direction:column; gap:12px; background:#FCFCFB; padding:32px; border:1px solid #E1E0D9; border-radius:12px">
 <p style="font-size:24px; color:#2A78D6; font-family:'IBM Plex Mono', 'Courier New', monospace; font-weight:600">1 · WINDOW</p>
-<p style="font-size:26px; color:#3D4552; line-height:1.4">Last 15 pings inside the tank geometry</p>
+<p style="font-size:26px; color:#3D4552; line-height:1.4">Last 15 pings; nothing beyond the floor</p>
 </div>
 <x-connector style="width:40px; color:#898781" from="tl"></x-connector>
 <div style="flex:1; display:flex; flex-direction:column; gap:12px; background:#FCFCFB; padding:32px; border:1px solid #E1E0D9; border-radius:12px">
@@ -15,13 +15,13 @@
 </div>
 <x-connector style="width:40px; color:#898781" from="tl"></x-connector>
 <div style="flex:1; display:flex; flex-direction:column; gap:12px; background:#FCFCFB; padding:32px; border:1px solid #E1E0D9; border-radius:12px">
-<p style="font-size:24px; color:#2A78D6; font-family:'IBM Plex Mono', 'Courier New', monospace; font-weight:600">3 · MEDIAN</p>
-<p style="font-size:26px; color:#3D4552; line-height:1.4">h = 17.5 − d, then calibration</p>
+<p style="font-size:24px; color:#2A78D6; font-family:'IBM Plex Mono', 'Courier New', monospace; font-weight:600">3 · LOWER QUARTILE</p>
+<p style="font-size:26px; color:#3D4552; line-height:1.4">h = 15.88 − d · late echoes only read long</p>
 </div>
 <x-connector style="width:40px; color:#898781" from="tl"></x-connector>
 <div style="flex:1; display:flex; flex-direction:column; gap:12px; background:#FCFCFB; padding:32px; border:1px solid #E1E0D9; border-radius:12px">
 <p style="font-size:24px; color:#2A78D6; font-family:'IBM Plex Mono', 'Courier New', monospace; font-weight:600">4 · PHYSICS</p>
-<p style="font-size:26px; color:#3D4552; line-height:1.4">Reject impossible jumps and falls while pumping</p>
+<p style="font-size:26px; color:#3D4552; line-height:1.4">Reject impossible jumps, and falls below the filtered level while pumping</p>
 </div>
 <x-connector style="width:40px; color:#898781" from="tl"></x-connector>
 <div style="flex:1; display:flex; flex-direction:column; gap:12px; background:#0E1A2B; padding:32px; border-radius:12px">
@@ -40,6 +40,6 @@
 <p style="font-size:28px; color:#3D4552; line-height:1.4">The raw distance, unfiltered, trips overflow after 3 pings closer than 4.5 cm.</p>
 </div>
 </div>
-<div style="position:absolute; left:128px; right:128px; bottom:64px; display:flex; justify-content:space-between"><p style="font-size:24px; color:#646B76">Smart Water Tank · Project 08</p><p style="font-size:24px; color:#646B76; font-family:'IBM Plex Mono', 'Courier New', monospace">15</p></div>
-<aside>Now the core. The ultrasonic sensor sits 17.5 centimetres above the tank floor, so the level is 17.5 minus the measured distance. That sounds trivial, but the sensor's beam spreads about fifteen degrees and is already wider than our ten centimetre tank when it reaches the water, so some echoes come back from the wall or the floor. We therefore never trust a single ping. Each reading passes five gates. We keep a window of the last fifteen pings. If the interquartile range of the window is larger than 3.5 centimetres, the sensor is jumping between two surfaces, and we reject the window. Otherwise we take the median. Then a physics check rejects changes faster than the pump could cause, or a falling level while the pump is filling. Finally an alpha-beta filter tracks both the level and its rate of change, without the lag of a moving average. Every gate has its own rejection counter in the telemetry. That is how we found that ninety-eight percent of rejections came from one gate, which used maximum minus minimum; one stray echo controls that statistic completely. Switching to the interquartile range raised acceptance from sixty to ninety-three percent. And separately, for safety, a raw distance check bypasses all of this filtering: three pings closer than 4.5 centimetres trigger the overflow protection, whatever the filter believes.</aside>
+<div style="position:absolute; left:128px; right:128px; bottom:64px; display:flex; justify-content:space-between"><p style="font-size:24px; color:#646B76">Smart Water Tank · Project 08</p><p style="font-size:24px; color:#646B76; font-family:'IBM Plex Mono', 'Courier New', monospace">17</p></div>
+<aside>Now the core. The ultrasonic sensor sits 15.88 centimetres above the tank floor, so the level is 15.88 minus the measured distance. That sounds trivial, but the beam spreads about fifteen degrees and is already wider than our ten centimetre tank when it reaches the water, so some echoes come back from the wall or the floor. We therefore never trust a single ping. Each reading passes five gates. We keep a window of the last fifteen pings, and any distance more than a centimetre beyond the floor is discarded, because only a stray echo can produce it. If the interquartile range of the window is larger than 3.5 centimetres, the sensor is jumping between two surfaces, and we reject the window. Otherwise we take the lower quartile, not the median: a weak echo is detected one or more 40 kilohertz cycles late, about 0.43 centimetres each, so errors only ever lengthen the distance and the shorter readings are the trustworthy ones. Then a physics check rejects changes faster than the pump could cause, or a level below the filtered level while the pump is filling. Finally an alpha-beta filter tracks both the level and its rate, without the lag of a moving average. Every gate has its own rejection counter in the telemetry. That is how we found that ninety-eight percent of rejections came from one gate that used maximum minus minimum; switching to the interquartile range raised acceptance from sixty to ninety-three percent. And separately, for safety, a raw distance check bypasses all of this: three pings closer than 4.5 centimetres trigger the overflow protection, whatever the filter believes.</aside>
 </section>

@@ -4,50 +4,29 @@
 <h2 style="font-size:64px; font-weight:600; line-height:1.1; letter-spacing:-1px">Command latency</h2>
 </div>
 <div style="display:flex; gap:64px; flex:1">
-<div style="width:600px; display:flex; flex-direction:column; gap:28px">
-<div style="display:flex; flex-direction:column; gap:8px"><p style="font-size:120px; line-height:1; font-weight:500; color:#1C5CAB; font-family:'IBM Plex Mono', 'Courier New', monospace">42 ms</p><p style="font-size:28px; color:#3D4552">median command round trip, n = 75</p></div>
-<p style="font-size:26px; color:#3D4552; line-height:1.45">Measured by one server clock at both ends, so clock skew cancels. One-way telemetry, 167 ms median, is shown for comparison only.</p>
-<p style="font-size:26px; color:#3D4552; line-height:1.45">Turning off Wi-Fi modem sleep cut the 95th percentile from 884 to 315 ms.</p>
+<div style="width:600px; display:flex; flex-direction:column; gap:28px"><div style="display:flex; flex-direction:column; gap:8px"><p style="font-size:120px; line-height:1; font-weight:500; color:#1C5CAB; font-family:'IBM Plex Mono', 'Courier New', monospace">29 ms</p><p style="font-size:28px; color:#3D4552">median command round trip, final firmware, n = 40, none lost</p></div><p style="font-size:26px; color:#3D4552; line-height:1.45">Timed by one server clock at both ends, so clock skew cancels. One-way telemetry is shown in the report for comparison only.</p><p style="font-size:26px; color:#3D4552; line-height:1.45">Turning off Wi-Fi modem sleep cut the 95th percentile from 884 to 315 ms.</p></div>
+<div style="flex:1; display:flex; flex-direction:column; gap:12px"><div style="display:flex; gap:32px; align-items:center"><div style="display:flex; gap:12px; align-items:center"><div style="width:20px; height:20px; background:#2A78D6; border-radius:4px"></div><p style="font-size:24px; color:#3D4552">median (ms)</p></div><div style="display:flex; gap:12px; align-items:center"><div style="width:20px; height:20px; background:#EB6834; border-radius:4px"></div><p style="font-size:24px; color:#3D4552">95th percentile (ms)</p></div></div><div style="position:relative; width:1000px; height:560px">
+<svg aria-label="Command round trip median and 95th percentile by firmware stage: first 226 and 575 ms, modem sleep on 462 and 884, sleep off 187 and 315, 23 September 42 and 138, final firmware 29 and 48.5" style="position:absolute; left:0px; top:0px" width="1000" height="560" viewBox="0 0 1000 560"><line x1="80" x2="980" y1="480.0" y2="480.0" stroke="#e1e0d9" stroke-width="1"/><line x1="80" x2="980" y1="260.0" y2="260.0" stroke="#e1e0d9" stroke-width="1"/><line x1="80" x2="980" y1="40.0" y2="40.0" stroke="#e1e0d9" stroke-width="1"/><path d="M116.0 480 V384.6 Q116.0 380.6 120.0 380.6 H152.0 Q156.0 380.6 156.0 384.6 V480 Z" fill="#2a78d6"/><path d="M180.0 480 V231.0 Q180.0 227.0 184.0 227.0 H216.0 Q220.0 227.0 220.0 231.0 V480 Z" fill="#eb6834"/><path d="M296.0 480 V280.7 Q296.0 276.7 300.0 276.7 H332.0 Q336.0 276.7 336.0 280.7 V480 Z" fill="#2a78d6"/><path d="M360.0 480 V95.0 Q360.0 91.0 364.0 91.0 H396.0 Q400.0 91.0 400.0 95.0 V480 Z" fill="#eb6834"/><path d="M476.0 480 V401.7 Q476.0 397.7 480.0 397.7 H512.0 Q516.0 397.7 516.0 401.7 V480 Z" fill="#2a78d6"/><path d="M540.0 480 V345.4 Q540.0 341.4 544.0 341.4 H576.0 Q580.0 341.4 580.0 345.4 V480 Z" fill="#eb6834"/><path d="M656.0 480 V465.5 Q656.0 461.5 660.0 461.5 H692.0 Q696.0 461.5 696.0 465.5 V480 Z" fill="#2a78d6"/><path d="M720.0 480 V423.3 Q720.0 419.3 724.0 419.3 H756.0 Q760.0 419.3 760.0 423.3 V480 Z" fill="#eb6834"/><path d="M836.0 480 V471.2 Q836.0 467.2 840.0 467.2 H872.0 Q876.0 467.2 876.0 471.2 V480 Z" fill="#2a78d6"/><path d="M900.0 480 V462.7 Q900.0 458.7 904.0 458.7 H936.0 Q940.0 458.7 940.0 462.7 V480 Z" fill="#eb6834"/><line x1="80" x2="980" y1="480" y2="480" stroke="#c3c2b7" stroke-width="1"/></svg>
+<p style="position:absolute; left:104px; top:345px; width:64px; font-size:24px; text-align:center; color:#0E1A2B; font-family:'IBM Plex Mono', 'Courier New', monospace">226</p>
+<p style="position:absolute; left:168px; top:191px; width:64px; font-size:24px; text-align:center; color:#0E1A2B; font-family:'IBM Plex Mono', 'Courier New', monospace">575</p>
+<p style="position:absolute; left:80px; top:494px; width:180px; font-size:24px; text-align:center; color:#3D4552">First</p>
+<p style="position:absolute; left:284px; top:241px; width:64px; font-size:24px; text-align:center; color:#0E1A2B; font-family:'IBM Plex Mono', 'Courier New', monospace">462</p>
+<p style="position:absolute; left:348px; top:55px; width:64px; font-size:24px; text-align:center; color:#0E1A2B; font-family:'IBM Plex Mono', 'Courier New', monospace">884</p>
+<p style="position:absolute; left:260px; top:494px; width:180px; font-size:24px; text-align:center; color:#3D4552">Sleep on</p>
+<p style="position:absolute; left:464px; top:362px; width:64px; font-size:24px; text-align:center; color:#0E1A2B; font-family:'IBM Plex Mono', 'Courier New', monospace">187</p>
+<p style="position:absolute; left:528px; top:305px; width:64px; font-size:24px; text-align:center; color:#0E1A2B; font-family:'IBM Plex Mono', 'Courier New', monospace">315</p>
+<p style="position:absolute; left:440px; top:494px; width:180px; font-size:24px; text-align:center; color:#3D4552">Sleep off</p>
+<p style="position:absolute; left:644px; top:426px; width:64px; font-size:24px; text-align:center; color:#0E1A2B; font-family:'IBM Plex Mono', 'Courier New', monospace">42</p>
+<p style="position:absolute; left:708px; top:383px; width:64px; font-size:24px; text-align:center; color:#0E1A2B; font-family:'IBM Plex Mono', 'Courier New', monospace">138</p>
+<p style="position:absolute; left:620px; top:494px; width:180px; font-size:24px; text-align:center; color:#3D4552">23 Sep</p>
+<p style="position:absolute; left:824px; top:431px; width:64px; font-size:24px; text-align:center; color:#0E1A2B; font-family:'IBM Plex Mono', 'Courier New', monospace">29</p>
+<p style="position:absolute; left:888px; top:423px; width:64px; font-size:24px; text-align:center; color:#0E1A2B; font-family:'IBM Plex Mono', 'Courier New', monospace">48.5</p>
+<p style="position:absolute; left:800px; top:494px; width:180px; font-size:24px; text-align:center; color:#3D4552">Final</p>
+<p style="position:absolute; left:0px; top:463px; width:66px; font-size:24px; text-align:right; color:#646B76; font-family:'IBM Plex Mono', 'Courier New', monospace">0</p>
+<p style="position:absolute; left:0px; top:243px; width:66px; font-size:24px; text-align:right; color:#646B76; font-family:'IBM Plex Mono', 'Courier New', monospace">500</p>
+<p style="position:absolute; left:0px; top:23px; width:66px; font-size:24px; text-align:right; color:#646B76; font-family:'IBM Plex Mono', 'Courier New', monospace">1000</p>
+</div></div>
 </div>
-<div style="flex:1; display:flex; flex-direction:column; gap:12px">
-<div style="display:flex; gap:32px; align-items:center">
-<div style="display:flex; gap:12px; align-items:center"><div style="width:20px; height:20px; background:#2A78D6; border-radius:4px"></div><p style="font-size:24px; color:#3D4552">median (ms)</p></div>
-<div style="display:flex; gap:12px; align-items:center"><div style="width:20px; height:20px; background:#EB6834; border-radius:4px"></div><p style="font-size:24px; color:#3D4552">95th percentile (ms)</p></div>
-</div>
-<div style="position:relative; width:1000px; height:560px">
-<svg aria-label="Command round trip median and 95th percentile by firmware stage: first 226 and 575 ms, modem sleep on 462 and 884, sleep off 187 and 315, final 42 and 138" style="position:absolute; left:0px; top:0px" width="1000" height="560" viewBox="0 0 1000 560">
-<line x1="80" x2="980" y1="370.0" y2="370.0" stroke="#e1e0d9" stroke-width="1"/>
-<line x1="80" x2="980" y1="260.0" y2="260.0" stroke="#e1e0d9" stroke-width="1"/>
-<line x1="80" x2="980" y1="150.0" y2="150.0" stroke="#e1e0d9" stroke-width="1"/>
-<line x1="80" x2="980" y1="40.0" y2="40.0" stroke="#e1e0d9" stroke-width="1"/>
-<path d="M151.5 480.0 V384.6 Q151.5 380.6 155.5 380.6 H187.5 Q191.5 380.6 191.5 384.6 V480.0 Z" fill="#2a78d6"/>
-<path d="M193.5 480.0 V231.0 Q193.5 227.0 197.5 227.0 H229.5 Q233.5 227.0 233.5 231.0 V480.0 Z" fill="#eb6834"/>
-<path d="M376.5 480.0 V280.7 Q376.5 276.7 380.5 276.7 H412.5 Q416.5 276.7 416.5 280.7 V480.0 Z" fill="#2a78d6"/>
-<path d="M418.5 480.0 V95.0 Q418.5 91.0 422.5 91.0 H454.5 Q458.5 91.0 458.5 95.0 V480.0 Z" fill="#eb6834"/>
-<path d="M601.5 480.0 V401.7 Q601.5 397.7 605.5 397.7 H637.5 Q641.5 397.7 641.5 401.7 V480.0 Z" fill="#2a78d6"/>
-<path d="M643.5 480.0 V345.4 Q643.5 341.4 647.5 341.4 H679.5 Q683.5 341.4 683.5 345.4 V480.0 Z" fill="#eb6834"/>
-<path d="M826.5 480.0 V465.5 Q826.5 461.5 830.5 461.5 H862.5 Q866.5 461.5 866.5 465.5 V480.0 Z" fill="#2a78d6"/>
-<path d="M868.5 480.0 V423.3 Q868.5 419.3 872.5 419.3 H904.5 Q908.5 419.3 908.5 423.3 V480.0 Z" fill="#eb6834"/>
-<line x1="80" x2="980" y1="480.0" y2="480.0" stroke="#c3c2b7" stroke-width="1"/>
-</svg>
-<p style="position:absolute; left:138px; top:343px; width:68px; font-size:24px; text-align:center; color:#0e1a2b; font-family:'IBM Plex Mono', 'Courier New', monospace">226</p>
-<p style="position:absolute; left:180px; top:189px; width:68px; font-size:24px; text-align:center; color:#0e1a2b; font-family:'IBM Plex Mono', 'Courier New', monospace">575</p>
-<p style="position:absolute; left:82px; top:494px; width:220px; font-size:24px; text-align:center; color:#3d4552">First</p>
-<p style="position:absolute; left:362px; top:239px; width:68px; font-size:24px; text-align:center; color:#0e1a2b; font-family:'IBM Plex Mono', 'Courier New', monospace">462</p>
-<p style="position:absolute; left:404px; top:53px; width:68px; font-size:24px; text-align:center; color:#0e1a2b; font-family:'IBM Plex Mono', 'Courier New', monospace">884</p>
-<p style="position:absolute; left:308px; top:494px; width:220px; font-size:24px; text-align:center; color:#3d4552">Sleep on</p>
-<p style="position:absolute; left:588px; top:360px; width:68px; font-size:24px; text-align:center; color:#0e1a2b; font-family:'IBM Plex Mono', 'Courier New', monospace">187</p>
-<p style="position:absolute; left:630px; top:303px; width:68px; font-size:24px; text-align:center; color:#0e1a2b; font-family:'IBM Plex Mono', 'Courier New', monospace">315</p>
-<p style="position:absolute; left:532px; top:494px; width:220px; font-size:24px; text-align:center; color:#3d4552">Sleep off</p>
-<p style="position:absolute; left:812px; top:424px; width:68px; font-size:24px; text-align:center; color:#0e1a2b; font-family:'IBM Plex Mono', 'Courier New', monospace">42</p>
-<p style="position:absolute; left:854px; top:381px; width:68px; font-size:24px; text-align:center; color:#0e1a2b; font-family:'IBM Plex Mono', 'Courier New', monospace">138</p>
-<p style="position:absolute; left:758px; top:494px; width:220px; font-size:24px; text-align:center; color:#3d4552">Final</p>
-<p style="position:absolute; left:0px; top:463px; width:66px; font-size:24px; text-align:right; color:#646b76; font-family:'IBM Plex Mono', 'Courier New', monospace">0</p>
-<p style="position:absolute; left:0px; top:243px; width:66px; font-size:24px; text-align:right; color:#646b76; font-family:'IBM Plex Mono', 'Courier New', monospace">500</p>
-<p style="position:absolute; left:0px; top:23px; width:66px; font-size:24px; text-align:right; color:#646b76; font-family:'IBM Plex Mono', 'Courier New', monospace">1000</p>
-</div>
-</div>
-</div>
-<div style="position:absolute; left:128px; right:128px; bottom:64px; display:flex; justify-content:space-between"><p style="font-size:24px; color:#646B76">Smart Water Tank · Project 08</p><p style="font-size:24px; color:#646B76; font-family:'IBM Plex Mono', 'Courier New', monospace">31</p></div>
-<aside>For latency, our headline number is the command round trip, not the one-way telemetry delay, and the reason is methodological. A one-way delay subtracts two clocks, the server's and the ESP32's, and network time on a microcontroller is only accurate to tens of milliseconds, the same order as what we measure. Once, right after a reboot, the one-way figure read 1100 milliseconds while the round trip at that moment was 187. The round trip is stamped by the server at both ends, so the skew cancels. The chart shows how the round trip improved. Our first firmware had a median of 226 milliseconds. The big step was the radio: the ESP32 Arduino core enables modem sleep by default, so the receiver sleeps between beacons and packets wait. Turning it off cut the 95th percentile from 884 to 315 milliseconds, at the cost of roughly double radio current, which is fine for a mains-powered device. The final session reached a median of 42 milliseconds and a 95th percentile of 138, over 75 commands. That session also used a different access point, so we do not attribute the last step to a single cause.</aside>
+<div style="position:absolute; left:128px; right:128px; bottom:64px; display:flex; justify-content:space-between"><p style="font-size:24px; color:#646B76">Smart Water Tank · Project 08</p><p style="font-size:24px; color:#646B76; font-family:'IBM Plex Mono', 'Courier New', monospace">34</p></div>
+<aside>For latency, our headline number is the command round trip, not the one way telemetry delay, and the reason is methodological. A one way delay subtracts two clocks, and network time on a microcontroller is only accurate to tens of milliseconds, the same order as what we measure; once, right after a reboot, the one way figure read 1100 milliseconds while the round trip at that moment was 187. The round trip is stamped by the server at both ends, so the skew cancels. The chart shows how it improved. The first firmware had a median of 226 milliseconds. The big step was the radio: the ESP32 Arduino core enables modem sleep by default, so the receiver sleeps between beacons and packets wait; turning it off cut the 95th percentile from 884 to 315, at the cost of roughly double radio current, fine for a mains powered device. On the twenty third of September we measured a median of 42 and a 95th percentile of 138 over 75 commands. On the final firmware, in the system test of the fifth of October, forty commands gave a median of 29 milliseconds and a 95th percentile of 48.5, with none lost. Those sessions also used different access points, so we do not attribute the last steps to a single cause.</aside>
 </section>

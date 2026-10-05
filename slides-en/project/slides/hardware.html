@@ -9,12 +9,12 @@
 <p style="font-size:26px; color:#3D4552">cm base · 1 cm of level = 0.1 L</p>
 </div>
 <div style="display:flex; flex-direction:column; gap:8px; border-top:2px solid #0E1A2B; padding:20px 0px 0px 0px">
-<p style="font-size:88px; line-height:1; font-weight:500; color:#0E1A2B; font-family:'IBM Plex Mono', 'Courier New', monospace">1.4 L</p>
-<p style="font-size:26px; color:#3D4552">working volume · 14 cm = 100 %</p>
+<p style="font-size:88px; line-height:1; font-weight:500; color:#0E1A2B; font-family:'IBM Plex Mono', 'Courier New', monospace">1.24 L</p>
+<p style="font-size:26px; color:#3D4552">working volume · 12.4 cm = 100 %</p>
 </div>
 <div style="display:flex; flex-direction:column; gap:8px; border-top:2px solid #EB6834; padding:20px 0px 0px 0px">
 <p style="font-size:88px; line-height:1; font-weight:500; color:#B4461A; font-family:'IBM Plex Mono', 'Courier New', monospace">0.36</p>
-<p style="font-size:26px; color:#3D4552">L/min measured · datasheet 1.67</p>
+<p style="font-size:26px; color:#3D4552">L/min measured · 0.24 on 5 Oct · datasheet 1.67</p>
 </div>
 <div style="display:flex; flex-direction:column; gap:8px; border-top:2px solid #0E1A2B; padding:20px 0px 0px 0px">
 <p style="font-size:88px; line-height:1; font-weight:500; color:#0E1A2B; font-family:'IBM Plex Mono', 'Courier New', monospace">200</p>
@@ -23,11 +23,11 @@
 </div>
 <table style="font-size:26px; color:#0E1A2B">
 <tr style="background:#E9E7DF"><th style="width:28%">Part</th><th style="width:72%">Role and conditioning</th></tr>
-<tr><td>HC-SR04</td><td>Level from 17.5 cm above the floor · echo through a 10k/20k divider</td></tr>
+<tr><td>HC-SR04</td><td>Level from 15.88 cm above the floor · echo through a 10k/20k divider</td></tr>
 <tr><td>2 × YF-S401</td><td>Inlet and outlet flow · 4.7 kΩ pull ups · counted by interrupt</td></tr>
 <tr><td>ACS712 5 A</td><td>Pump current through a 1:1 divider · reported in mA</td></tr>
-<tr><td>Floats, relay, pump</td><td>Overflow guard, fill permission · 5 V pump with 1N4007</td></tr>
+<tr><td>Floats, relay, pump</td><td>Overflow guard, fill permission · relay on GPIO 10 · 5 V pump with 1N4007</td></tr>
 </table>
 <div style="position:absolute; left:128px; right:128px; bottom:64px; display:flex; justify-content:space-between"><p style="font-size:24px; color:#646B76">Smart Water Tank · Project 08</p><p style="font-size:24px; color:#646B76; font-family:'IBM Plex Mono', 'Courier New', monospace">09</p></div>
-<aside>Our tank is deliberately small: a ten by ten centimetre base, so one centimetre of level is exactly a tenth of a litre, and a working range of fourteen centimetres, or 1.4 litres. A full fill and drain cycle takes about four minutes, so we can observe dozens of control cycles in one session. The orange number is the most important measurement on this slide. The pump datasheet promises 1.67 litres per minute. We measured the real delivery by closing the outlet and timing the level: 1.2 centimetres in 20 seconds, which is 0.36 litres per minute, almost five times less, because of the delivery head and the tubing. Every timing threshold in our firmware is sized from that measured number, not from the datasheet. The table lists the sensors and how each signal is conditioned for the 3.3 volt inputs of the ESP32.</aside>
+<aside>Our tank is deliberately small: a ten by ten centimetre base, so one centimetre of level is exactly a tenth of a litre. The sensor face is 15.88 centimetres above the floor, six and a quarter inches on the ruler, and the working range is the lowest 12.4 centimetres, 1.24 litres, which leaves 3.5 centimetres of air under the sensor at a full tank. A full fill and drain cycle takes a few minutes, so we can observe many control cycles in one session. The orange number is the most important measurement on this slide. The pump datasheet promises 1.67 litres per minute. We measured the real delivery by closing the outlet and timing the level: 1.2 centimetres in 20 seconds, which is 0.36 litres per minute, almost five times less, because of the delivery head and the tubing. And it is not even constant: on the fifth of October, with a lower source bucket, the same pump gave 0.24. Every timing threshold in our firmware is sized from measured numbers, not from the datasheet. The table lists the sensors and how each signal is conditioned for the 3.3 volt inputs of the ESP32.</aside>
 </section>

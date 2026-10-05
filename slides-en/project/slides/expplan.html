@@ -5,17 +5,17 @@
 </div>
 <table style="font-size:26px; color:#0E1A2B">
 <tr style="background:#E9E7DF"><th style="width:8%">ID</th><th style="width:32%">Subject</th><th style="width:36%">Independent reference</th><th style="width:24%">Status</th></tr>
-<tr><td>E1</td><td>Level repeatability</td><td>Still water, lower float switch</td><td>sd ≤ 0.074 cm</td></tr>
+<tr><td>E1</td><td>Level calibration</td><td>Ruler + pumped volume; float</td><td>RMSE 0.68 cm</td></tr>
 <tr><td>E2</td><td>Volume estimation error</td><td>Tank geometry, drain slope</td><td>6 cycles</td></tr>
 <tr><td>E3</td><td>Control response</td><td>Configured thresholds</td><td>6 cycles</td></tr>
 <tr><td>E4</td><td>Switching frequency</td><td>Pump event log</td><td>84 minutes</td></tr>
-<tr><td>E5</td><td>Fault detection, response</td><td>Fault and pump event logs</td><td>n = 9 + 18 + 4</td></tr>
-<tr><td>E6</td><td>Outage and recovery</td><td>Sequence numbers</td><td>60 s test</td></tr>
-<tr><td>E7</td><td>Command latency</td><td>One server clock</td><td>n = 75</td></tr>
+<tr><td>E5</td><td>Fault detection, response</td><td>Fault and pump event logs</td><td>NO_CURRENT not injected</td></tr>
+<tr><td>E6</td><td>Outage and recovery</td><td>Sequence numbers</td><td>120 s, pump on</td></tr>
+<tr><td>E7</td><td>Command latency</td><td>One server clock</td><td>n = 75 + 40</td></tr>
 <tr><td>E9</td><td>Wi-Fi power saving</td><td>One server clock</td><td>12 + 12</td></tr>
 </table>
 <div style="flex:1"></div>
-<p style="font-size:28px; color:#3D4552; line-height:1.4">Session analysed: 23 Sep, 16:48 to 18:12 · <b style="color:#0E1A2B">4870 messages</b> · level trusted <b style="color:#0E1A2B">99.5 %</b> · <b style="color:#0E1A2B">0 faults</b></p>
-<div style="position:absolute; left:128px; right:128px; bottom:64px; display:flex; justify-content:space-between"><p style="font-size:24px; color:#646B76">Smart Water Tank · Project 08</p><p style="font-size:24px; color:#646B76; font-family:'IBM Plex Mono', 'Courier New', monospace">28</p></div>
-<aside>Our experimental rule was simple: every measurement needs a reference that is independent of the system being measured, and every number must come from the database by a script that anyone can rerun. The scripts are in the repository: analyze_experiments for cycles, switching and latency, and bench for calibration, fault injection with a timestamped key press, and outage tests. This table lists the experiments, the independent reference for each, and the status. The main session we analyse is September 23rd, an hour and twenty-four minutes of operation on the final filter configuration: 4870 messages, 99.5 percent of them with a trusted level, and not a single fault raised. For the level, we checked repeatability against two fixed physical references: still water, and the lower float switch, a mechanical contact at a fixed height. Over eight closings, the float was seen at 4.55 centimetres with a standard deviation of only 0.074, far smaller than our control band. The absolute check with a ruler is the one step we still run before the defence.</aside>
+<p style="font-size:28px; color:#3D4552; line-height:1.4">Control session: 23 Sep · <b style="color:#0E1A2B">4870 messages</b> · <b style="color:#0E1A2B">99.5 %</b> trusted · <b style="color:#0E1A2B">0 faults</b>. Final firmware: 5 Oct · calibration, outage, system test.</p>
+<div style="position:absolute; left:128px; right:128px; bottom:64px; display:flex; justify-content:space-between"><p style="font-size:24px; color:#646B76">Smart Water Tank · Project 08</p><p style="font-size:24px; color:#646B76; font-family:'IBM Plex Mono', 'Courier New', monospace">30</p></div>
+<aside>Our experimental rule was simple: every measurement needs a reference that is independent of the system being measured, and every number must come from the database or a log by a script that anyone can rerun. The scripts are in the repository: analyze_experiments for cycles, switching and latency; bench for outage tests; the stepwise calibration program; and systest for the automated acceptance test. Two sessions are analysed. The control session is the twenty third of September, an hour and twenty-four minutes: 4870 messages, 99.5 percent with a trusted level, and not a single fault raised. The calibration and acceptance session is the fifth of October, on the final firmware and the final sensor geometry: the ruler calibration, the outage test with the pump running, and the system test. One honest note on E5: the no current rule has not been triggered by a physical injection; we show what we did measure on the E5 slide.</aside>
 </section>

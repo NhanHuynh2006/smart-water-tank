@@ -59,7 +59,7 @@ Single channel relay module on GPIO 10, 5 V submersible pump & Switching stage a
 \end{tabular}
 \end{table}
 
-\textbf{The tank.} The storage tank has a square base of 10 by 10 centimetres, so one centimetre of level is exactly 0.1 litres. The transducer face sits 15.88 centimetres above the floor, measured with a ruler as six and a quarter inches. The working range is the lowest 12.4 centimetres, which the firmware treats as 100 percent, giving a usable volume of 1.24 litres and leaving 3.5 centimetres of air below the sensor at a full tank, outside its minimum range. The small volume is deliberate: it makes a full fill and drain cycle last about four minutes, so dozens of control cycles can be observed in one bench session.
+\textbf{The tank.} The storage tank has a square base of 10 by 10 centimetres, so one centimetre of level is exactly 0.1 litres. The transducer face sits 15.88 centimetres above the floor, measured with a ruler as six and a quarter inches. The working range is the lowest 12.4 centimetres, which the firmware treats as 100 percent, giving a usable volume of 1.24 litres and leaving 3.5 centimetres of air below the sensor at a full tank, outside its minimum range. The small volume is deliberate: it makes a full fill and drain cycle last a few minutes, so many control cycles can be observed in one bench session.
 
 \textbf{Level sensing.} Non contact ultrasonic measurement was chosen because the transducer never touches the water, so it neither corrodes nor accumulates deposits, and its output does not depend on water conductivity. Two properties of this particular installation shaped the software in Chapter \ref{chap:control}. First, the beam of an HC-SR04 spreads over roughly 15 degrees and is already about 8 centimetres wide when it reaches the water, against a 10 centimetre tank, so the edge of the beam strikes the wall on every ping and a fraction of echoes return from the wall or the floor rather than the surface. Second, the sensor occasionally locks up after a supply disturbance and stays silent until its supply is cycled, which no firmware reset can reach. The first property is handled by a robust filter; the second by a timeout rule and a documented recovery procedure. The calibration of Section~\ref{sec:o8-2} found a third property: when the water surface is 7.9 to 8.7 centimetres below the transducer, that is at a level of about 7.2 to 8.0 centimetres or 58 to 64 percent, the sensor does not return the surface at all but a stable stray echo, reading 1.0 centimetre or a distance beyond the floor in every one of forty pings. Because the stray value is steady it cannot be filtered out as noise; Section~\ref{sec:o6-2} explains how the firmware crosses this band on its model.
 
@@ -98,20 +98,19 @@ Figure~\ref{fig:power} shows the power distribution and Figure~\ref{fig:wiring} 
 
 The rig forms a closed water loop: a source bucket, the pump, the inlet flow sensor, the transparent main tank, a manual valve acting as the consumption load, and the outlet flow sensor. The ultrasonic bracket must be rigid, because vibration makes readings oscillate and would be misdiagnosed as a sensor fault. The circuit was assembled in steps, each with its own test program in the repository (\texttt{test\_level}, \texttt{test\_relay}, \texttt{test\_flow}, \texttt{test\_current}, \texttt{test\_floats} and others) that had to pass before moving on.
 
-\IfFileExists{fig/prototype.jpg}{%
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.85\textwidth]{fig/prototype.jpg}
+    \IfFileExists{fig/prototype.jpg}{\includegraphics[width=0.85\textwidth]{fig/prototype.jpg}}{\chohinh{Photo of the assembled prototype}{prototype.jpg}}
     \caption{The assembled prototype: tank with the ultrasonic bracket, pump, flow sensors and controller board.}
     \label{fig:prototype}
-\end{figure}}{}
-\IfFileExists{fig/setup.jpg}{%
+\end{figure}
+
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.85\textwidth]{fig/setup.jpg}
+    \IfFileExists{fig/setup.jpg}{\includegraphics[width=0.85\textwidth]{fig/setup.jpg}}{\chohinh{Photo of the experimental setup}{setup.jpg}}
     \caption{Experimental setup: closed water loop with the source bucket, the drain valve and the laptop running the broker and backend.}
     \label{fig:setup}
-\end{figure}}{}
+\end{figure}
 
 
 \section{Design principles and topic tree}

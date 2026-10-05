@@ -1,0 +1,17 @@
+<section id="systest" style="background:#F4F3EE; color:#0E1A2B; font-family:'IBM Plex Sans', Arial, sans-serif; padding:128px 128px 160px; display:flex; flex-direction:column; gap:48px">
+<div style="display:flex; flex-direction:column; gap:16px">
+<p style="font-size:24px; color:#1C5CAB; letter-spacing:3px; text-transform:uppercase; font-family:'IBM Plex Mono', 'Courier New', monospace; font-weight:600">06 · Acceptance</p>
+<h2 style="font-size:64px; font-weight:600; line-height:1.1; letter-spacing:-1px">Automated system test, 5/5 pass</h2>
+</div>
+<table style="font-size:28px; color:#0E1A2B">
+<tr style="background:#E9E7DF"><th style="width:22%">Test</th><th style="width:50%">Check</th><th style="width:28%">Result</th></tr>
+<tr><td>T1 connectivity</td><td>10 s of telemetry: rate, gaps, fields, retained status</td><td>Pass · 10 msgs, no gap</td></tr>
+<tr><td>T2 security</td><td>View open; command without session; wrong password</td><td>Pass · 200, 401, 401</td></tr>
+<tr><td>T3 commands</td><td>40 mode commands, round trip, none unacknowledged</td><td>Pass · median 29.1 ms</td></tr>
+<tr><td>T4 rejections</td><td>Pump in auto; restart during rest; clear with no fault</td><td>Pass · 3 right reasons</td></tr>
+<tr><td>T5 manual pump</td><td>Current with the relay closed, then open</td><td>Pass · 471–487 mA, then 0</td></tr>
+</table>
+<div style="flex:1"></div><p style="font-size:30px; line-height:1.45; width:1500px"><span style="font-family:'IBM Plex Mono', 'Courier New', monospace; color:#1C5CAB">tools/systest.py</span> repeats the acceptance checks without an operator, on the final firmware, 5 October 20:37.</p>
+<div style="position:absolute; left:128px; right:128px; bottom:64px; display:flex; justify-content:space-between"><p style="font-size:24px; color:#646B76">Smart Water Tank · Project 08</p><p style="font-size:24px; color:#646B76; font-family:'IBM Plex Mono', 'Courier New', monospace">37</p></div>
+<aside>Before the defence we wanted a test anyone can rerun without an operator, so we wrote systest. It ran on the final firmware on the fifth of October and all five tests passed. T1 listens to ten seconds of telemetry and checks the rate, sequence gaps, every required field and the retained status. T2 checks the security model: anyone can view, but a command without a session is refused with 401, and so is a wrong password. T3 sends forty mode commands one second apart and measures the round trip: none was lost, median 29.1 milliseconds. T4 checks that the device refuses what it should, with the right reason each time: a pump command in automatic mode, a restart inside the twenty second rest, and clearing a fault when there is none. T5 runs the pump by hand for eight seconds and reads the current: 471 to 487 milliamps while running, zero after.</aside>
+</section>

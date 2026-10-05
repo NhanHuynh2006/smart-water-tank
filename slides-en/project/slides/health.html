@@ -1,30 +1,33 @@
-<section id="health" style="background:#F4F3EE; color:#0E1A2B; font-family:'IBM Plex Sans', Arial, sans-serif; padding:128px 128px 160px; display:flex; flex-direction:column; gap:48px">
-<div style="display:flex; flex-direction:column; gap:16px">
-<p style="font-size:24px; color:#1C5CAB; letter-spacing:3px; text-transform:uppercase; font-family:'IBM Plex Mono', 'Courier New', monospace; font-weight:600">04 · Advanced component A</p>
-<h2 style="font-size:64px; font-weight:600; line-height:1.1; letter-spacing:-1px">Pump health classification</h2>
-</div>
-<div style="display:grid; grid-template-columns:repeat(3, 1fr); gap:24px">
-<div style="display:flex; flex-direction:column; gap:16px; background:#FCFCFB; padding:40px; border-top:6px solid #2A78D6">
-<p style="font-size:40px; font-weight:600; font-family:'IBM Plex Mono', 'Courier New', monospace">ok</p>
-<p style="font-size:26px; color:#3D4552; line-height:1.45">Current: yes<br>Water moving: yes</p>
-<p style="font-size:28px; line-height:1.4">Healthy pump</p>
-</div>
-<div style="display:flex; flex-direction:column; gap:16px; background:#FCFCFB; padding:40px; border-top:6px solid #EB6834">
-<p style="font-size:40px; font-weight:600; font-family:'IBM Plex Mono', 'Courier New', monospace">no_flow</p>
-<p style="font-size:26px; color:#3D4552; line-height:1.45">Current: yes<br>Water moving: no, after 25 s</p>
-<p style="font-size:28px; line-height:1.4"><b>Hydraulic:</b> dry intake, blocked or detached pipe</p>
-</div>
-<div style="display:flex; flex-direction:column; gap:16px; background:#FCFCFB; padding:40px; border-top:6px solid #EB6834">
-<p style="font-size:40px; font-weight:600; font-family:'IBM Plex Mono', 'Courier New', monospace">no_current</p>
-<p style="font-size:26px; color:#3D4552; line-height:1.45">Current: no<br>Water moving: no</p>
-<p style="font-size:28px; line-height:1.4"><b>Electrical:</b> open wire, failed relay or motor</p>
-</div>
-</div>
-<div style="flex:1"></div>
-<div style="display:flex; gap:48px">
-<p style="flex:1; font-size:28px; color:#3D4552; line-height:1.45; border-top:1px solid #D6D4CB; padding:24px 0px 0px 0px"><b style="color:#0E1A2B">Evidence of water</b> is the level rising faster than 0.010 cm/s. At the real 0.036 cm/s, 25 s gives 0.9 cm.</p>
-<p style="flex:1; font-size:28px; color:#3D4552; line-height:1.45; border-top:1px solid #D6D4CB; padding:24px 0px 0px 0px"><b style="color:#0E1A2B">Saved with every fault:</b> the label and the current are captured before the pump is stopped.</p>
-</div>
-<div style="position:absolute; left:128px; right:128px; bottom:64px; display:flex; justify-content:space-between"><p style="font-size:24px; color:#646B76">Smart Water Tank · Project 08</p><p style="font-size:24px; color:#646B76; font-family:'IBM Plex Mono', 'Courier New', monospace">20</p></div>
-<aside>The brief offers two options for the advanced component, and we built both. The first is pump health classification, using the consistency between pump current and water flow. When the pump is on and current flows and the water is moving, the label is ok. When current flows but no water moves after twenty-five seconds, the label is no_flow, which points to the hydraulic side: a dry intake, a blocked or detached pipe. When the relay is closed but no current flows, the label is no_current, which points to the electrical side: an open wire, a failed relay or a dead motor. The same symptom, a tank that does not fill, is split into two causes that send the technician to two different places. Evidence of water is the level rising faster than one hundredth of a centimetre per second; the real rise is about 0.036, so twenty-five seconds of pumping gives almost a centimetre, well above the filter noise. The label is diagnostic only; stopping the pump is still the job of the fault rules. But it is captured at the moment of every fault and stored with it. In the demo we will lift the intake out of the water and watch it change to no_flow.</aside>
+<section id="health" style="display:flex; flex-direction:column; gap:48px; padding:128px 128px 160px; background:#f4f3ee">
+  <div style="display:flex; flex-direction:column; gap:16px">
+    <p style="font-family:'IBM Plex Mono', 'Courier New', monospace; font-size:24px; font-weight:600; letter-spacing:3px; text-transform:uppercase; color:#1c5cab">04 · Advanced component A</p>
+    <h2 style="font-family:'IBM Plex Sans', Arial, sans-serif; font-size:64px; font-weight:600; line-height:1.1; letter-spacing:-1px; color:#0e1a2b">Pump health classification</h2>
+  </div>
+  <div style="display:grid; gap:24px; grid-template-columns:1fr 1fr 1fr">
+    <div style="display:flex; flex-direction:column; gap:16px; padding:40px; background:#fcfcfb; border-top:6px solid #2a78d6">
+      <p style="font-family:'IBM Plex Mono', 'Courier New', monospace; font-size:40px; font-weight:600; color:#0e1a2b">Good</p>
+      <p style="font-family:'IBM Plex Sans', Arial, sans-serif; font-size:26px; line-height:1.45; color:#3d4552">Current: yes<br>Water moving: yes</p>
+      <p style="font-family:'IBM Plex Sans', Arial, sans-serif; font-size:28px; line-height:1.4; color:#0e1a2b">Healthy pump</p>
+    </div>
+    <div style="display:flex; flex-direction:column; gap:16px; padding:40px; background:#fcfcfb; border-top:6px solid #eb6834">
+      <p style="font-family:'IBM Plex Mono', 'Courier New', monospace; font-size:40px; font-weight:600; color:#0e1a2b">no_flow</p>
+      <p style="font-family:'IBM Plex Sans', Arial, sans-serif; font-size:26px; line-height:1.45; color:#3d4552">Current: yes<br>Water moving: no, after 25 s</p>
+      <p style="font-family:'IBM Plex Sans', Arial, sans-serif; font-size:28px; line-height:1.4; color:#0e1a2b"><b>Hydraulic:</b> dry intake, blocked or detached pipe</p>
+    </div>
+    <div style="display:flex; flex-direction:column; gap:16px; padding:40px; background:#fcfcfb; border-top:6px solid #eb6834">
+      <p style="font-family:'IBM Plex Mono', 'Courier New', monospace; font-size:40px; font-weight:600; color:#0e1a2b">no_current</p>
+      <p style="font-family:'IBM Plex Sans', Arial, sans-serif; font-size:26px; line-height:1.45; color:#3d4552">Current: no<br>Water moving: no</p>
+      <p style="font-family:'IBM Plex Sans', Arial, sans-serif; font-size:28px; line-height:1.4; color:#0e1a2b"><b>Electrical:</b> open wire, failed relay or motor</p>
+    </div>
+  </div>
+  <div style="flex:1"></div>
+  <div style="display:flex; flex-direction:row; gap:48px">
+    <p style="flex:1; padding:24px 0 0; font-family:'IBM Plex Sans', Arial, sans-serif; font-size:28px; line-height:1.45; color:#3d4552; border-top:1px solid #d6d4cb"><span style="color:#0e1a2b"><b>Evidence of water</b></span> is the level rising faster than 0.010 cm/s. At the real 0.036 cm/s, 25 s gives 0.9 cm.</p>
+    <p style="flex:1; padding:24px 0 0; font-family:'IBM Plex Sans', Arial, sans-serif; font-size:28px; line-height:1.45; color:#3d4552; border-top:1px solid #d6d4cb"><span style="color:#0e1a2b"><b>Saved with every fault:</b></span> the label and the current are captured before the pump is stopped.</p>
+  </div>
+  <div style="position:absolute; right:128px; bottom:64px; left:128px; display:flex; flex-direction:row; justify-content:space-between">
+    <p style="font-family:'IBM Plex Sans', Arial, sans-serif; font-size:24px; color:#646b76">Smart Water Tank · Project 08</p>
+    <p style="font-family:'IBM Plex Mono', 'Courier New', monospace; font-size:24px; color:#646b76">22</p>
+  </div>
+  <aside>The brief offers two options for the advanced component, and we built both. The first is pump health classification, using the consistency between pump current and water flow. When the pump is on and current flows and the water is moving, the label is ok. When current flows but no water moves after twenty-five seconds, the label is no_flow, which points to the hydraulic side: a dry intake, a blocked or detached pipe. When the relay is closed but no current flows, the label is no_current, which points to the electrical side: an open wire, a failed relay or a dead motor. The same symptom, a tank that does not fill, is split into two causes that send the technician to two different places. Evidence of water is the level rising faster than one hundredth of a centimetre per second; the real rise is about 0.036, so twenty-five seconds of pumping gives almost a centimetre, well above the filter noise. The label is diagnostic only; stopping the pump is still the job of the fault rules. But it is captured at the moment of every fault and stored with it. In the demo we will lift the intake out of the water and watch it change to no_flow.</aside>
 </section>

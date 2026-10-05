@@ -32,17 +32,18 @@ The assignment, Project 08, asks for a smart water tank that monitors consumptio
 \label{tab:yeucau}
 \centering
 \renewcommand{\arraystretch}{1.1}
-\begin{tabular}{|p{6.9cm}|p{3.0cm}|p{3.3cm}|}
+\small
+\begin{tabular}{|>{\raggedright\arraybackslash}p{6.3cm}|>{\raggedright\arraybackslash}p{2.7cm}|>{\raggedright\arraybackslash}p{4.4cm}|}
 \hline
 \textbf{Requirement} & \textbf{Where} & \textbf{Status} \\
 \hline
-ESP32 class controller with tank level and flow sensors; pressure and pump current optional & Sections~\ref{sec:o3-3}, \ref{sec:o6-2}, \ref{sec:o8-2} & Partly validated: both flow sensors fitted and read; inlet sensor calibrated, outlet below its starting flow; control and accounting use level derived flow \\
+ESP32 class controller with tank level and flow sensors; pressure and pump current optional & Sections~\ref{sec:o3-3}, \ref{sec:o6-2}, \ref{sec:o8-2} & Partly validated: both fitted and read, inlet calibrated; control and volume use level derived flow \\
 \hline
 Low voltage pump through a relay or MOSFET driver with inductive protection & Section~\ref{sec:o3-4} & Met \\
 \hline
-Prevent overflow and behave safely on failed or implausible sensors & Sections~\ref{sec:o6-4}, \ref{sec:o7-3} & Met, six independent layers \\
+Prevent overflow and behave safely on failed or implausible sensors & Sections~\ref{sec:o6-4}, \ref{sec:o7-3} & Met, seven independent layers \\
 \hline
-Instantaneous flow and accumulated volume & Sections~\ref{sec:o6-2}, \ref{sec:o8-2} & Met from level derived flow; mean error $-5.2$\% on 23 September \\
+Instantaneous flow and accumulated volume & Sections~\ref{sec:o6-2}, \ref{sec:o8-2} & Met from level; mean error $-5.2$\% \\
 \hline
 Publish telemetry, actuator state, faults and availability over MQTT & Sections \ref{sec:o4-1} to \ref{sec:o4-4} & Met \\
 \hline
@@ -56,11 +57,11 @@ Local level control keeps working during a network outage & Sections~\ref{sec:o3
 \hline
 Advanced: leak detection from a rolling baseline, or pump current and flow consistency to classify pump faults & Sections~\ref{sec:o6-6}, \ref{sec:o6-7} & Both built; baseline still converging \\
 \hline
-Calibrate level and flow against a physical reference & Section~\ref{sec:o8-2} & Met on 5 October: level against ruler and pumped volume, one blind zone found; inlet sensor factor set \\
+Calibrate level and flow against a physical reference & Section~\ref{sec:o8-2} & Met: ruler and pumped volume, RMSE 0.68 cm; one blind zone \\
 \hline
 Control response, switching frequency, fault detection delay, volume estimation error & Sections~\ref{sec:o8-2} to \ref{sec:o8-4} & Met \\
 \hline
-Sensor or no flow fault test, network loss and recovery, telemetry and control latency & Sections~\ref{sec:o8-4}, \ref{sec:o8-5} & Met; outage rerun on the final firmware; \texttt{NO\_CURRENT} not injected \\
+Sensor or no flow fault test, network loss and recovery, telemetry and control latency & Sections~\ref{sec:o8-4}, \ref{sec:o8-5} & Met; outage rerun on final firmware; \texttt{NO\_CURRENT} not injected \\
 \hline
 \end{tabular}
 \end{table}
