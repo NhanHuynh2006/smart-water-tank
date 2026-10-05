@@ -1,45 +1,25 @@
-<section id="levelpipe" style="background:#F4F3EE; color:#0E1A2B; font-family:'IBM Plex Sans', Arial, sans-serif; padding:128px 128px 160px; display:flex; flex-direction:column; gap:48px">
+<section id="levelpipe" style="background:#F4F3EE; color:#0E1A2B; font-family:'IBM Plex Sans', Arial, sans-serif; padding:128px 128px 160px; display:flex; flex-direction:column; gap:32px">
 <div style="display:flex; flex-direction:column; gap:16px">
 <p style="font-size:24px; color:#1C5CAB; letter-spacing:3px; text-transform:uppercase; font-family:'IBM Plex Mono', 'Courier New', monospace; font-weight:600">04 · Level measurement</p>
 <h2 style="font-size:64px; font-weight:600; line-height:1.1; letter-spacing:-1px">Level measurement pipeline</h2>
 </div>
-<div style="display:flex; gap:0px; align-items:stretch">
-<div style="flex:1; display:flex; flex-direction:column; gap:12px; background:#FCFCFB; padding:32px; border:1px solid #E1E0D9; border-radius:12px">
-<p style="font-size:24px; color:#2A78D6; font-family:'IBM Plex Mono', 'Courier New', monospace; font-weight:600">1 · WINDOW</p>
-<p style="font-size:26px; color:#3D4552; line-height:1.4">Last 15 pings; nothing beyond the floor</p>
+<!-- boxes 0/346/692/1038/1384 x0 w280 h230; bottom row y320 h120 -->
+<div style="position:relative; width:1664px; height:480px">
+<div style="position:absolute; left:0px; top:0px; width:280px; height:230px; background:#FCFCFB; border:1px solid #E1E0D9; border-radius:12px; display:flex; flex-direction:column; gap:12px; padding:28px"><p style="font-size:24px; color:#2A78D6; font-family:'IBM Plex Mono', 'Courier New', monospace; font-weight:600">1 · WINDOW</p><p style="font-size:26px; color:#3D4552; line-height:1.35">15 pings, one per 200 ms; drop any beyond the floor</p></div>
+<div style="position:absolute; left:346px; top:0px; width:280px; height:230px; background:#FCFCFB; border:1px solid #E1E0D9; border-radius:12px; display:flex; flex-direction:column; gap:12px; padding:28px"><p style="font-size:24px; color:#2A78D6; font-family:'IBM Plex Mono', 'Courier New', monospace; font-weight:600">2 · SPREAD</p><p style="font-size:26px; color:#3D4552; line-height:1.35">Reject the window if IQR &gt; 3.5 cm</p></div>
+<div style="position:absolute; left:692px; top:0px; width:280px; height:230px; background:#FCFCFB; border:1px solid #E1E0D9; border-radius:12px; display:flex; flex-direction:column; gap:12px; padding:28px"><p style="font-size:24px; color:#2A78D6; font-family:'IBM Plex Mono', 'Courier New', monospace; font-weight:600">3 · QUARTILE</p><p style="font-size:26px; color:#3D4552; line-height:1.35">25th percentile;<br>h = 15.88 − d</p></div>
+<div style="position:absolute; left:1038px; top:0px; width:280px; height:230px; background:#FCFCFB; border:1px solid #E1E0D9; border-radius:12px; display:flex; flex-direction:column; gap:12px; padding:28px"><p style="font-size:24px; color:#2A78D6; font-family:'IBM Plex Mono', 'Courier New', monospace; font-weight:600">4 · PHYSICS</p><p style="font-size:26px; color:#3D4552; line-height:1.35">Reject impossible jumps and falls while pumping</p></div>
+<div style="position:absolute; left:1384px; top:0px; width:280px; height:230px; background:#0E1A2B; border:1px solid #0E1A2B; border-radius:12px; display:flex; flex-direction:column; gap:12px; padding:28px"><p style="font-size:24px; color:#F09A72; font-family:'IBM Plex Mono', 'Courier New', monospace; font-weight:600">5 · α-β FILTER</p><p style="font-size:26px; color:#DCE4EE; line-height:1.35">Level and rate;<br>α = 0.03, no lag on a ramp</p></div>
+<div style="position:absolute; left:0px; top:320px; width:280px; height:150px; background:#FCFCFB; border:1px solid #E1E0D9; border-radius:12px; display:flex; flex-direction:column; gap:12px; padding:28px"><p style="font-size:24px; color:#2A78D6; font-family:'IBM Plex Mono', 'Courier New', monospace; font-weight:600">RAW PING</p><p style="font-size:26px; color:#3D4552; line-height:1.35">unfiltered distance</p></div>
+<div style="position:absolute; left:346px; top:320px; width:1318px; height:150px; background:#FBEDE5; border:2px solid #EB6834; border-radius:12px; display:flex; flex-direction:column; gap:12px; padding:28px"><p style="font-size:24px; color:#B4461A; font-family:'IBM Plex Mono', 'Courier New', monospace; font-weight:600">SAFETY BYPASS</p><p style="font-size:26px; color:#3D4552; line-height:1.35">3 pings closer than 4.5 cm trip OVERFLOW, whatever the filter believes</p></div>
+<x-connector x1="280" y1="115" x2="346" y2="115" head="end" style="color:#646B76; border-width:3px"></x-connector>
+<x-connector x1="626" y1="115" x2="692" y2="115" head="end" style="color:#646B76; border-width:3px"></x-connector>
+<x-connector x1="972" y1="115" x2="1038" y2="115" head="end" style="color:#646B76; border-width:3px"></x-connector>
+<x-connector x1="1318" y1="115" x2="1384" y2="115" head="end" style="color:#646B76; border-width:3px"></x-connector>
+<x-connector x1="280" y1="395" x2="346" y2="395" head="end" style="color:#B4461A; border-width:3px"></x-connector>
+<p style="position:absolute; left:0px; top:262px; width:900px; font-size:24px; color:#646B76">In parallel, on every ping, outside the filter chain:</p>
 </div>
-<x-connector style="width:40px; color:#898781" from="tl"></x-connector>
-<div style="flex:1; display:flex; flex-direction:column; gap:12px; background:#FCFCFB; padding:32px; border:1px solid #E1E0D9; border-radius:12px">
-<p style="font-size:24px; color:#2A78D6; font-family:'IBM Plex Mono', 'Courier New', monospace; font-weight:600">2 · SPREAD</p>
-<p style="font-size:26px; color:#3D4552; line-height:1.4">Interquartile range ≤ 3.5 cm</p>
-</div>
-<x-connector style="width:40px; color:#898781" from="tl"></x-connector>
-<div style="flex:1; display:flex; flex-direction:column; gap:12px; background:#FCFCFB; padding:32px; border:1px solid #E1E0D9; border-radius:12px">
-<p style="font-size:24px; color:#2A78D6; font-family:'IBM Plex Mono', 'Courier New', monospace; font-weight:600">3 · LOWER QUARTILE</p>
-<p style="font-size:26px; color:#3D4552; line-height:1.4">h = 15.88 − d · late echoes only read long</p>
-</div>
-<x-connector style="width:40px; color:#898781" from="tl"></x-connector>
-<div style="flex:1; display:flex; flex-direction:column; gap:12px; background:#FCFCFB; padding:32px; border:1px solid #E1E0D9; border-radius:12px">
-<p style="font-size:24px; color:#2A78D6; font-family:'IBM Plex Mono', 'Courier New', monospace; font-weight:600">4 · PHYSICS</p>
-<p style="font-size:26px; color:#3D4552; line-height:1.4">Reject impossible jumps, and falls below the filtered level while pumping</p>
-</div>
-<x-connector style="width:40px; color:#898781" from="tl"></x-connector>
-<div style="flex:1; display:flex; flex-direction:column; gap:12px; background:#0E1A2B; padding:32px; border-radius:12px">
-<p style="font-size:24px; color:#F09A72; font-family:'IBM Plex Mono', 'Courier New', monospace; font-weight:600">5 · α-β FILTER</p>
-<p style="font-size:26px; color:#DCE4EE; line-height:1.4">Level and rate · α = 0.03 · no lag on a ramp</p>
-</div>
-</div>
-<div style="flex:1"></div>
-<div style="display:flex; gap:48px">
-<div style="flex:1; display:flex; flex-direction:column; gap:8px">
-<p style="font-size:96px; line-height:1; font-weight:500; color:#1C5CAB; font-family:'IBM Plex Mono', 'Courier New', monospace">60 → 93 %</p>
-<p style="font-size:28px; color:#3D4552">pings accepted after replacing max−min with the IQR</p>
-</div>
-<div style="flex:1; display:flex; flex-direction:column; gap:8px; border-left:1px solid #D6D4CB; padding:0px 0px 0px 48px">
-<p style="font-size:32px; font-weight:600">Bypass for safety</p>
-<p style="font-size:28px; color:#3D4552; line-height:1.4">The raw distance, unfiltered, trips overflow after 3 pings closer than 4.5 cm.</p>
-</div>
-</div>
+<div style="display:flex; gap:32px; align-items:baseline"><p style="font-size:72px; line-height:1; font-weight:500; color:#1C5CAB; font-family:'IBM Plex Mono', 'Courier New', monospace">60 → 93 %</p><p style="font-size:28px; color:#3D4552">pings accepted after replacing max − min with the IQR in step 2</p></div>
 <div style="position:absolute; left:128px; right:128px; bottom:64px; display:flex; justify-content:space-between"><p style="font-size:24px; color:#646B76">Smart Water Tank · Project 08</p><p style="font-size:24px; color:#646B76; font-family:'IBM Plex Mono', 'Courier New', monospace">17</p></div>
 <aside>Now the core. The ultrasonic sensor sits 15.88 centimetres above the tank floor, so the level is 15.88 minus the measured distance. That sounds trivial, but the beam spreads about fifteen degrees and is already wider than our ten centimetre tank when it reaches the water, so some echoes come back from the wall or the floor. We therefore never trust a single ping. Each reading passes five gates. We keep a window of the last fifteen pings, and any distance more than a centimetre beyond the floor is discarded, because only a stray echo can produce it. If the interquartile range of the window is larger than 3.5 centimetres, the sensor is jumping between two surfaces, and we reject the window. Otherwise we take the lower quartile, not the median: a weak echo is detected one or more 40 kilohertz cycles late, about 0.43 centimetres each, so errors only ever lengthen the distance and the shorter readings are the trustworthy ones. Then a physics check rejects changes faster than the pump could cause, or a level below the filtered level while the pump is filling. Finally an alpha-beta filter tracks both the level and its rate, without the lag of a moving average. Every gate has its own rejection counter in the telemetry. That is how we found that ninety-eight percent of rejections came from one gate that used maximum minus minimum; switching to the interquartile range raised acceptance from sixty to ninety-three percent. And separately, for safety, a raw distance check bypasses all of this: three pings closer than 4.5 centimetres trigger the overflow protection, whatever the filter believes.</aside>
 </section>
