@@ -122,7 +122,7 @@
 // Mot so bu cong thang (LEVEL_CAL_B) chi khop o diem 9 cm roi lam lech diem 0.
 // Sua dung con so hinh hoc thi khop ca hai, VA cac cong loc hinh hoc — dMin,
 // dMax, waterTooClose — cung tu dong dich theo. Do la ly do khong dung bias.
-#define TANK_SENSOR_TO_BOTTOM_CM   17.5f
+#define TANK_SENSOR_TO_BOTTOM_CM   15.88f   // do bang thuoc 05/10: 6 1/4 inch tu day len mat cam bien
 // SUA NGAY 23/09 tu 10 len 14 cm — dung chieu cao THAT cua thung.
 //
 // Vi sao lay ca 14 chu khong tru bot: de 100 phan tram tren giao dien la 100
@@ -136,7 +136,7 @@
 //    chan cung        = 13,0 cm con cach mieng thung 1,0 cm
 // Khoang cach cam bien o muc khoa tran la 17,5 - 11,9 = 5,6 cm, van nam trong
 // dai do duoc cua HC-SR04. Khong bao gio chay toi vung mu 2 cm.
-#define TANK_MAX_LEVEL_CM          14.0f
+#define TANK_MAX_LEVEL_CM          12.4f    // = 15,88 - 3,5 cm chua trong duoi cam bien
 #define TANK_AREA_CM2             100.0f
 
 // ---------- Hieu chuan (lay tu thi nghiem E1 va E2) ----------
@@ -611,6 +611,12 @@
 // Trong khi nuoc that chi tut 0,013 cm moi giay. Nhieu gap hai muoi lan tin
 // hieu. Cua so 9 mau chiu duoc 4 mau hong lien tiep; 15 mau chiu duoc 7.
 #define LEVEL_MEDIAN_WINDOW 15
+// Lay phan vi thu bao nhieu cua cua so lam so do (50 = trung vi).
+// Do 05/10: tieng doi yeu lam HC-SR04 bat tre 1-4 chu ky song 40 kHz, moi
+// chu ky +0,43 cm; nuoc dung yen ma so doc la 14,2 / 14,7 / 15,5 / 16,4 cm.
+// Loi nay CHI lam doc XA HON, khong bao gio gan hon, nen phan vi 25 sat
+// khoang cach that hon trung vi.
+#define LEVEL_PICK_PCT      25
 
 // ---------- Bo loc lam muot dau ra ----------
 // Trung vi chi loai dot bien, no KHONG lam muot. Chin mau deu lech +-0,5 cm

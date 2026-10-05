@@ -322,7 +322,7 @@ float medianOf5() {
   if (v[q3] - v[q1] > LEVEL_SPREAD_MAX_CM) { rej[RJ_SPREAD]++; return -1; }
 #endif
 
-  return v[levelWinCount / 2];
+  return v[(levelWinCount * LEVEL_PICK_PCT) / 100];
 }
 
 // Mot lan phat hong KHONG co nghia la mat cam bien. Giu so doc hop le cuoi
