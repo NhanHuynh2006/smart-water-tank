@@ -37,7 +37,13 @@ void setup() {
   Serial.begin(115200); delay(500);
   pinMode(PIN_TRIG, OUTPUT); pinMode(PIN_ECHO, INPUT);
   Serial.println("BEGIN");
-#ifndef RAW_FILL_FIRST
+#if defined(RAW_BACKFLOW)
+  // Kiem tra chay nguoc: van xa DONG. Bom tat 60 s (muc phai dung yen), bom
+  // 30 s, roi tat 120 s: muc tut sau khi tat bom = nuoc chay nguoc qua bom.
+  phase("still", 60000, false, 200);
+  phase("on200", 30000, true,  200);
+  phase("after", 120000, false, 200);
+#elif !defined(RAW_FILL_FIRST)
   phase("off200", 30000, false, 200);
   phase("off60",  15000, false, 60);
   phase("on200",  60000, true,  200);
