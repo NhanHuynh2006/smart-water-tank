@@ -1194,6 +1194,16 @@ void mqttTryConnect() {
     // ke tiep, nen neu mot mang bien mat thiet bi tu chuyen sang mang khac
     // thay vi nam cho mai mot cai khong con ton tai.
     wifiAnnouncedReset();
+    // Cho moi lan thu Wi-Fi it nhat 10 s. Ban cu goi lai WiFi.begin() moi
+    // 1 s: bat tay WPA2 + DHCP cua diem phat dien thoai can 2-5 s, nen lan
+    // nao cung bi cat ngang va thiet bi KHONG BAO GIO vao duoc mang
+    // (do 05/10: "chua noi (ma 6)" lien tuc trong khi mat khau dung).
+    static uint32_t lastBeginMs = 0;
+    if (lastBeginMs != 0 && millis() - lastBeginMs < 10000) {
+      nextReconnectMs = millis() + RECONNECT_BASE_MS;
+      return;
+    }
+    lastBeginMs = millis();
     static uint8_t netIdx = 0;
     const char* ssids[] = { WIFI_SSID, WIFI_SSID_2, WIFI_SSID_3 };
     const char* pwds[]  = { WIFI_PASSWORD, WIFI_PASSWORD_2, WIFI_PASSWORD_3 };
