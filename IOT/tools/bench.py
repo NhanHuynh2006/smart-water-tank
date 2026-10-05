@@ -66,7 +66,11 @@ def since(t0, kind, pred=lambda p: True):
 def iptables(ip, add):
     op = "-I" if add else "-D"
     for rule in (["INPUT", "-s", ip], ["OUTPUT", "-d", ip]):
-        subprocess.run(["sudo", "iptables", op, rule[0], rule[1], rule[2], "-j", "DROP"], check=True)
+        # SUDO_PASS (tuy chon) cho phep chay nen, khong can terminal
+        pw = os.environ.get("SUDO_PASS")
+        cmd = ["sudo", "-S"] if pw else ["sudo"]
+        subprocess.run(cmd + ["iptables", op, rule[0], rule[1], rule[2], "-j", "DROP"], check=True,
+                       input=(pw + "\n").encode() if pw else None)
 
 
 def save(kind, res):

@@ -1,0 +1,24 @@
+{
+ "cut": "12:02:35.963",
+ "restore": "12:04:36.011",
+ "outage_s": 120.0,
+ "last_live_seq": 1141,
+ "state_before": "FILLING pump=True 44.05191422%",
+ "lwt_after_cut_s": 22.6,
+ "online_after_restore_s": 8.0,
+ "first_live_after_restore_s": 8.6,
+ "first_live_seq": 1241,
+ "ctl_gap_ms_during_outage": 10032,
+ "ring_drop": 0,
+ "state_after": "IDLE pump=False 65.36545563%",
+ "replayed": 93,
+ "replay_seq": [
+  1148,
+  1240
+ ],
+ "pump_transitions_while_offline": [
+  "seq 1219: FILLING->IDLE pump=False @ 59%"
+ ],
+ "missing_seq": 6,
+ "expected_seq": 99
+}

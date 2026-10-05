@@ -48,7 +48,8 @@ float levelCm   = 0, levelPct = 0;
 bool  levelOk   = false;
 float flowLpm    = 0;                    // L/phut DAU VAO
 float volumeL    = 0, volumeTodayL    = 0;
-float flowOutLpm = 0;                    // L/phut DAU RA
+float flowOutLpm = 0;
+float sensorInLpm = 0, sensorOutLpm = 0, sensorInL = 0, sensorOutL = 0;  // cam bien, chi de doi chieu
 float volumeOutL = 0, volumeOutTodayL = 0;
 float currentMv = 0, currentOffsetMv = 0;
 // floatMax = nuoc da cham vach CAO tren bon chua  -> phai ngat bom
@@ -81,6 +82,31 @@ char topicStatus[64], topicCmd[64], topicAck[64];
 
 uint32_t nextReconnectMs = 0;
 uint8_t  reconnectFails  = 0;
+
+// ------------------------------------------------------------
+//  SOCKET CON GHI DUOC KHONG
+//  Do tren mach 05/10: cat mang 120 s thi vong dieu khien bi treo 10 GIAY
+//  (ctl_gap_ms = 10032). Nguyen nhan: khi broker im lang ma TCP chua bao dut,
+//  bo dem gui cua socket day dan, va WiFiClient::write() thu lai 10 lan,
+//  moi lan cho select() 1 giay. Trong 10 giay do khong doc cam bien, khong
+//  xet chong tran. Kiem tra truoc bang select() voi thoi gian cho bang 0:
+//  khong ghi duoc thi KHONG gui, coi nhu mat mang.
+// ------------------------------------------------------------
+static uint32_t unwritableSince = 0;
+static bool netWritable() {
+  int fd = net.fd();
+  if (fd < 0) return false;
+  fd_set set; FD_ZERO(&set); FD_SET(fd, &set);
+  struct timeval tv = {0, 0};
+  return select(fd + 1, NULL, &set, NULL, &tv) > 0 && FD_ISSET(fd, &set);
+}
+// Chi gui khi chac chan khong bi chan. Tra ve false neu bo qua.
+static bool mqttCanSend() {
+  if (!mqtt.connected()) return false;
+  if (netWritable()) { unwritableSince = 0; return true; }
+  if (unwritableSince == 0) unwritableSince = millis();
+  return false;
+}
 
 // ------------------------------------------------------------
 //  Bo dem vong khi mat mang
@@ -486,6 +512,16 @@ void readFlow(uint32_t dtMs) {
   // Tan so THO quyet dinh so doc co dung duoc hay khong. Vuot qua nguong
   // vat ly nghia la day tin hieu dang bat song chu khong phai co nuoc chay.
 #if FLOW_FROM_LEVEL
+  // Van doc hai cam bien de DOI CHIEU, khong dung cho dieu khien. Do 05/10:
+  // sau khi doi day, nhieu 1500 Hz luc bom chay da het (dau vao 29,8 Hz khi
+  // bom chay, 0 Hz khi tat), nen so cua cam bien dang duoc ghi lai song song.
+  {
+    float a = 0.2f;
+    sensorInLpm  += ((d    * inv) / FLOW_K_FACTOR     - sensorInLpm)  * a;
+    sensorOutLpm += ((dOut * inv) / FLOW_OUT_K_FACTOR - sensorOutLpm) * a;
+    sensorInL  += (d    / FLOW_K_FACTOR)     / 60.0f;   // xung / (K*60) = lit
+    sensorOutL += (dOut / FLOW_OUT_K_FACTOR) / 60.0f;
+  }
   // Bo han hai cam bien luu luong. Dau vao la hang so da hieu chuan khi bom
   // chay; dau ra suy nguoc tu toc do doi muc:
   //     luu luong rong = toc do doi muc x tiet dien x 60 / 1000
@@ -666,7 +702,7 @@ void raiseFault(const char* code) {
   doc["flow_lpm"]  = flowLpm;
   char buf[256]; size_t n = serializeJson(doc, buf);
   if (n >= sizeof(buf) - 1) Serial.println("[LOI] ban tin su co bi cat");
-  if (mqtt.connected()) mqtt.publish(topicFault, (uint8_t*)buf, n, false);
+  if (mqttCanSend()) mqtt.publish(topicFault, (uint8_t*)buf, n, false);
 
   digitalWrite(PIN_LED_FAULT, HIGH);
   Serial.printf("[FAULT] %s\n", code);
@@ -890,7 +926,7 @@ void publishPumpState() {
   doc["state"] = STATE_NAME[state];
   doc["ts"]    = nowTs();
   char buf[128]; size_t n = serializeJson(doc, buf);
-  if (mqtt.connected()) mqtt.publish(topicPumpState, (uint8_t*)buf, n, true);
+  if (mqttCanSend()) mqtt.publish(topicPumpState, (uint8_t*)buf, n, true);
 }
 
 size_t buildTelemetry(char* buf, size_t cap, const Sample* s) {
@@ -954,6 +990,8 @@ size_t buildTelemetry(char* buf, size_t cap, const Sample* s) {
     // Ban tin dau tien sau khi mat mang cho biet vong dieu khien co bi mang
     // lam treo hay khong trong suot thoi gian mat ket noi.
     doc["ctl_gap_ms"] = ctlGapMaxMs;
+    doc["sens_in_lpm"]  = sensorInLpm;   doc["sens_out_lpm"] = sensorOutLpm;
+    doc["sens_in_l"]    = sensorInL;     doc["sens_out_l"]   = sensorOutL;
     doc["ring_drop"]  = ringDropped;
   }
   if (doc.overflowed()) {
@@ -967,6 +1005,7 @@ size_t buildTelemetry(char* buf, size_t cap, const Sample* s) {
   return n;
 }
 
+void flushRing();
 void publishTelemetry() {
   seqNo++;
   // Da tung dat 448 va bi cat cut. Hau qua rat kho tim: thiet bi van gui,
@@ -975,7 +1014,8 @@ void publishTelemetry() {
   char buf[1024];
   size_t n = buildTelemetry(buf, sizeof(buf), nullptr);
 
-  if (mqtt.connected()) {
+  if (mqttCanSend()) {
+    if (ringCount) flushRing();      // con mau dem tu lan mat mang truoc
     ctlGapMaxMs = 0;
     if (!mqtt.publish(topicTelemetry, (uint8_t*)buf, n, false)) {
       Serial.printf("[MQTT] GUI THAT BAI, ban tin %u byte — bo dem qua nho?\n",
@@ -999,14 +1039,17 @@ void flushRing() {
   Serial.printf("[MQTT] phat lai %u ban tin da dem\n", ringCount);
   uint16_t idx = (ringHead + OFFLINE_BUFFER_SIZE - ringCount) % OFFLINE_BUFFER_SIZE;
   char buf[1024];
-  for (uint16_t i = 0; i < ringCount; i++) {
+  while (ringCount > 0) {
+    // Socket day thi dung lai, giu phan con lai cho lan sau, khong chan
+    // vong dieu khien (xem netWritable).
+    if (!netWritable()) { Serial.println("[MQTT] socket day, phat lai tiep sau"); return; }
     size_t n = buildTelemetry(buf, sizeof(buf), &ring[idx]);
     mqtt.publish(topicTelemetry, (uint8_t*)buf, n, false);
     idx = (idx + 1) % OFFLINE_BUFFER_SIZE;
+    ringCount--;
     mqtt.loop();
     delay(5);
   }
-  ringCount = 0;
 }
 
 void sendAck(const char* cmdId, const char* status, const char* reason) {
@@ -1022,7 +1065,7 @@ void sendAck(const char* cmdId, const char* status, const char* reason) {
   char buf[320]; size_t n = serializeJson(doc, buf);
   if (n >= sizeof(buf) - 1)
     Serial.printf("[LOI] xac nhan lenh bi cat o %u byte\n", (unsigned)n);
-  mqtt.publish(topicAck, (uint8_t*)buf, n, false);
+  if (mqttCanSend()) mqtt.publish(topicAck, (uint8_t*)buf, n, false);
 }
 
 // ------------------------------------------------------------
@@ -1300,7 +1343,21 @@ void setup() {
 void loop() {
   // Ket noi lai khong chan: vong dieu khien khong bao gio bi treo vi mang
   if (!mqtt.connected()) mqttTryConnect();
-  else mqtt.loop();
+  else {
+    // Socket khong ghi duoc qua 3 s: broker da mat ma TCP chua biet.
+    // Dong han de chuyen sang che do dem va noi lai, thay vi doi keep alive
+    // 15 s (trong luc do moi mau gui vao socket chet deu mat).
+    if (!netWritable()) {
+      if (unwritableSince == 0) unwritableSince = millis();
+      if (millis() - unwritableSince > 3000) {
+        Serial.println("[MQTT] socket khong ghi duoc 3 s, dong ket noi");
+        net.stop(); unwritableSince = 0;
+      }
+    } else {
+      unwritableSince = 0;
+      mqtt.loop();
+    }
+  }
 
   uint32_t now = millis();
 
