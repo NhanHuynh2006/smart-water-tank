@@ -66,6 +66,10 @@ float    lastGoodLevelCm  = -1;
 uint32_t pumpOnSince = 0, pumpOffSince = 0;
 uint32_t dryRunSince = 0, noCurrentSince = 0, leakSince = 0;
 uint32_t lastControlMs = 0, lastTelemetryMs = 0, lastNvsMs = 0;
+// true khi bom chay du lau ma muc KHONG len (nhan no_flow). Cap nhat moi chu
+// ky trong loop(); readLevel va mo hinh dung no de bo gia dinh "bom chay thi
+// muc phai len" — gia dinh nay sai khi xa ra bang luong bom vao.
+bool pumpNoFlow = false;
 uint32_t ctlGapMaxMs = 0;     // chu ky dieu khien dai nhat, xem buildTelemetry
 uint32_t ringDropped = 0;     // so mau offline bi ghi de vi bo dem day
 uint32_t seqNo = 0;
@@ -376,17 +380,56 @@ void readLevel() {
     // chi 0,147 L/phut, nen muc BAT BUOC phai len — moi so doc tut xuong deu
     // la sai. Cong doi xung o tren khong bat duoc chuoi truot dan cua cam
     // bien, vi tung buoc mot deu nam duoi gioi han cua no.
-    if (pumpOn && dt > 0.05f && (lastGoodLevelCm - h) > LEVEL_FALL_PUMPING_CM) {
-      rej[RJ_FALL]++; markLevelStale(); return;
+    // NHUNG gia dinh "dang bom thi muc phai len" sai khi xa ra bang luong bom
+    // vao (do 05/10: bom 0,32 L/phut, xa ~0,3 L/phut, muc dung o ~52 %).
+    // Luc do moi so doc thap hon lastGoodLevelCm qua 1 cm deu bi loai, ma
+    // lastGoodLevelCm lai khong bao gio cap nhat — cong tu KHOA CHET, thiet
+    // bi mu 40 s roi bao SENSOR_TIMEOUT du day cam van cam. Mot cu tut that
+    // thi lap lai on dinh, con mot tieng doi lac thi khong: cho qua khi cong
+    // nay da chan lien tiep FALL_ACCEPT_STREAK lan (2 s).
+    static uint8_t fallStreak = 0;
+    static float   fallRef    = -1;
+    // So voi muc DA LOC (levelEmaCm), khong so voi mot mau le: mau le co the
+    // la dinh nhieu, va so voi no thi muc that hoi thap hon cung bi chan mai.
+    float ref = (levelEmaCm >= 0) ? levelEmaCm : lastGoodLevelCm;
+    if (pumpOn && dt > 0.05f && (ref - h) > LEVEL_FALL_PUMPING_CM) {
+      // Tut that thi cac so doc nam sat nhau; tieng doi lac (do 05/10: luc
+      // bom chay lau, cam bien bao muc tu 22 % roi 12 % trong khi nuoc that
+      // o 55 %) thi nhay lung tung. Chi chap nhan chuoi on dinh.
+      if (fallRef >= 0 && fabs(h - fallRef) < 1.0f) fallStreak++;
+      else fallStreak = 0;
+      fallRef = h;
+      if (fallStreak < FALL_ACCEPT_STREAK) {
+        rej[RJ_FALL]++; markLevelStale(); return;
+      }
+      fallStreak = 0; fallRef = -1;   // chuoi on dinh: tut that
+    } else {
+      fallStreak = 0; fallRef = -1;
     }
   }
 
   // Quay lai sau mot doan mat cam bien: doi chieu voi mo hinh truoc khi tin.
   // Trong doan mat, mo hinh la thu duy nhat con biet muc nuoc o dau; neu nhan
   // bua so doc dau tien quay ve thi chinh mo hinh bi keo sup theo.
+  // Nhung mo hinh cung co the sai: no gia dinh bom day dung PUMP_FILL_LPM,
+  // nen khi xa ra bang luong bom vao thi mo hinh cu tang con muc that dung
+  // yen, va cong nay chan mai moi so doc that (do 05/10). So doc that ma
+  // ON DINH (lech nhau duoi 1 cm) lien tiep JOIN_ACCEPT_STREAK lan thi tin
+  // so do, keo mo hinh ve theo.
+  static uint8_t joinStreak = 0;
+  static float   joinRef    = -1;
   if (blindSinceMs != 0 && levelModelCm >= 0 &&
       fabs(h - levelModelCm) > MODEL_REJOIN_CM) {
-    rej[RJ_REJOIN]++; markLevelStale(); return;
+    if (joinRef >= 0 && fabs(h - joinRef) < 1.0f) joinStreak++;
+    else joinStreak = 0;
+    joinRef = h;
+    if (joinStreak < JOIN_ACCEPT_STREAK) {
+      rej[RJ_REJOIN]++; markLevelStale(); return;
+    }
+    levelModelCm = h;          // so do on dinh thang: mo hinh da troi
+    joinStreak = 0; joinRef = -1;
+  } else {
+    joinStreak = 0; joinRef = -1;
   }
 
   {
@@ -473,7 +516,9 @@ void updateLevelModel(uint32_t dtMs) {
 
   // Du bao: bom day vao voi luu luong da hieu chuan, va nuoc xa ra theo toc
   // do quan sat duoc gan nhat luc bom tat.
-  float fillCmS = pumpOn ? (PUMP_FILL_LPM * 1000.0f / 60.0f / TANK_AREA_CM2) : 0.0f;
+  // Bom chay ma bang chung cho thay muc khong len thi mo hinh cung khong
+  // duoc tu y cong them nuoc, neu khong no troi xa khoi so do that.
+  float fillCmS = (pumpOn && !pumpNoFlow) ? (PUMP_FILL_LPM * 1000.0f / 60.0f / TANK_AREA_CM2) : 0.0f;
   // Dung chung uoc luong dong xa voi dashboard, doi ra cm/s.
   float drainCmS = drainHoldLpm * 1000.0f / 60.0f / TANK_AREA_CM2;
   levelModelCm += (fillCmS - drainCmS) * dt;
@@ -1381,6 +1426,7 @@ void loop() {
     readCurrent();
     readFloats();
 
+    pumpNoFlow = (pumpHealth() == PH_NO_FLOW);
     updateLevelModel(dt);
     checkFaults();
     runStateMachine();

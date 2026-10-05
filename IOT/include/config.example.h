@@ -589,6 +589,11 @@
 // 1,0 cm chan duoc chuoi truot do ngay tu buoc dau, trong khi van rong gap
 // muoi lan nhieu con lai sau bo loc (khoang 0,1 cm moi buoc).
 #define LEVEL_FALL_PUMPING_CM  1.0f
+// So lan lien tiep cong "tut khi dang bom" duoc phep chan truoc khi coi
+// cu tut la that (10 x 200 ms = 2 s). Xem readLevel().
+#define FALL_ACCEPT_STREAK     10
+// So doc on dinh lien tiep can de thang cong "lech mo hinh" (xem readLevel)
+#define JOIN_ACCEPT_STREAK     10
 
 // ---------- Chu ky ----------
 #define CONTROL_PERIOD_MS   200UL
