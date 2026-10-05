@@ -401,7 +401,7 @@ void readLevel() {
       if (fallRef >= 0 && fabs(h - fallRef) < 1.0f) fallStreak++;
       else fallStreak = 0;
       fallRef = h;
-      if (fallStreak < FALL_ACCEPT_STREAK) {
+      if (FALL_ACCEPT_STREAK >= 255 || fallStreak < FALL_ACCEPT_STREAK) {
         rej[RJ_FALL]++; markLevelStale(); return;
       }
       fallStreak = 0; fallRef = -1;   // chuoi on dinh: tut that
@@ -425,7 +425,7 @@ void readLevel() {
     if (joinRef >= 0 && fabs(h - joinRef) < 1.0f) joinStreak++;
     else joinStreak = 0;
     joinRef = h;
-    if (joinStreak < JOIN_ACCEPT_STREAK) {
+    if (JOIN_ACCEPT_STREAK >= 255 || joinStreak < JOIN_ACCEPT_STREAK) {
       rej[RJ_REJOIN]++; markLevelStale(); return;
     }
     levelModelCm = h;          // so do on dinh thang: mo hinh da troi
@@ -520,7 +520,12 @@ void updateLevelModel(uint32_t dtMs) {
   // do quan sat duoc gan nhat luc bom tat.
   // Bom chay ma bang chung cho thay muc khong len thi mo hinh cung khong
   // duoc tu y cong them nuoc, neu khong no troi xa khoi so do that.
-  float fillCmS = (pumpOn && !pumpNoFlow) ? (PUMP_FILL_LPM * 1000.0f / 60.0f / TANK_AREA_CM2) : 0.0f;
+  // Luu luong vao: lay tu CAM BIEN dau vao khi no dang do duoc (05/10: het
+  // nhieu, da hieu chuan K theo thuoc). Mo hinh chinh xac thi cong "lech mo
+  // hinh" moi chan duoc tieng doi lac o vung mu ma khong chan nham muc that.
+  float inLpm = (sensorInLpm > 0.05f) ? sensorInLpm
+              : ((pumpOn && !pumpNoFlow) ? PUMP_FILL_LPM : 0.0f);
+  float fillCmS = inLpm * 1000.0f / 60.0f / TANK_AREA_CM2;
   // Dung chung uoc luong dong xa voi dashboard, doi ra cm/s.
   float drainCmS = drainHoldLpm * 1000.0f / 60.0f / TANK_AREA_CM2;
   levelModelCm += (fillCmS - drainCmS) * dt;

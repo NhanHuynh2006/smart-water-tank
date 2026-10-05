@@ -591,9 +591,9 @@
 #define LEVEL_FALL_PUMPING_CM  1.0f
 // So lan lien tiep cong "tut khi dang bom" duoc phep chan truoc khi coi
 // cu tut la that (10 x 200 ms = 2 s). Xem readLevel().
-#define FALL_ACCEPT_STREAK     10
+#define FALL_ACCEPT_STREAK     255   // 05/10: tat — tieng doi lac o vung mu cung on dinh, khong duoc tin
 // So doc on dinh lien tiep can de thang cong "lech mo hinh" (xem readLevel)
-#define JOIN_ACCEPT_STREAK     10
+#define JOIN_ACCEPT_STREAK     255   // 05/10: tat — mo hinh da dung luu luong do that
 
 // ---------- Chu ky ----------
 #define CONTROL_PERIOD_MS   200UL
