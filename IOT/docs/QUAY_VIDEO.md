@@ -1,6 +1,6 @@
 # Kịch bản quay video minh chứng — Project 08
 
-Mục đích: mỗi clip chứng minh **một yêu cầu cụ thể của đề**. Quay xong, các clip này dùng cho ba việc: nộp làm minh chứng, làm video dự phòng cho buổi demo, và để mình lấy số liệu E5 điền vào báo cáo (máy chủ ghi lại mọi bản tin trong lúc quay).
+Mục đích: mỗi clip chứng minh **một yêu cầu cụ thể của đề**. Quay xong, các clip này dùng cho hai việc: nộp làm minh chứng và làm video dự phòng cho buổi demo.
 
 Tổng thời lượng sau khi cắt ghép: khoảng **10–12 phút**.
 
@@ -102,9 +102,7 @@ Laptop cũng đang dùng điểm phát này, nên khi tắt thì laptop mất m�
 ---
 
 ## Sau khi quay
-1. Nhắn mình giờ bắt đầu và giờ kết thúc buổi quay.
-2. Mình đọc bản ghi của máy chủ và tính độ trễ phát hiện từng lỗi (clip 3–6), thời gian thiết bị kết nối lại và số bản tin được gửi lại (clip 7). Các số này điền vào bảng E5 và E6 của báo cáo và slide.
-3. Ghép thành **video dự phòng 10–12 phút** theo thứ tự clip 1 → 7, có chữ chú thích tên yêu cầu ở đầu mỗi clip.
+Ghép thành **video dự phòng 10–12 phút** theo thứ tự clip 1 → 7, có chữ chú thích tên yêu cầu ở đầu mỗi clip. Đề chỉ bắt buộc ít nhất một lỗi được phát hiện, nên nếu thiếu thời gian thì giữ clip 3 và bỏ bớt clip 4–6.
 
 | Clip | Yêu cầu của đề được chứng minh |
 |---|---|
