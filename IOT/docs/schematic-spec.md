@@ -53,7 +53,7 @@ Cách dùng: sao chép **toàn bộ** nội dung dưới đây, dán cho công c
 | GPIO 18 | `PIN_ECHO` | vào | S1 chân ECHO | **chia áp 10 k / 20 k** |
 | GPIO 4 | `PIN_FLOW` | vào, ngắt cạnh xuống | S2 dây vàng, ĐẦU VÀO | **nối thẳng**, xem mục 4B |
 | GPIO 19 | `PIN_FLOW_OUT` | vào, ngắt cạnh xuống | S6 dây vàng, ĐẦU RA | **nối thẳng**, xem mục 4B |
-| GPIO 26 | `PIN_RELAY` | ra | K1 chân IN | nối thẳng |
+| GPIO 10 | `PIN_RELAY` | ra | K1 chân IN | nối thẳng |
 | GPIO 34 | `PIN_CURRENT` | vào tương tự | S3 chân OUT | **chia áp 10 k / 10 k** |
 | GPIO 27 | `PIN_FLOAT_MAX` | vào, kéo lên trong | S4 | nối thẳng xuống GND |
 | GPIO 14 | `PIN_FLOAT_MIN` | vào, kéo lên trong | S5 | nối thẳng xuống GND |
@@ -226,9 +226,9 @@ Phao thường bán loại có hai hướng lắp, phân biệt bằng chiều m
 digitalWrite(PIN_RELAY, on ? LOW : HIGH);   // LOW = bơm CHẠY
 ```
 
-GPIO 26 xuống **mức thấp thì bơm chạy**. Hầu hết mô đun bán sẵn đều kích mức thấp nên thường khớp luôn. Nếu mô đun của bạn kích mức cao thì sửa `RELAY_ACTIVE_LOW` thành `0` trong `config.h`, **đừng đổi cách đấu dây**.
+GPIO 10 xuống **mức thấp thì bơm chạy**. Hầu hết mô đun bán sẵn đều kích mức thấp nên thường khớp luôn. Nếu mô đun của bạn kích mức cao thì sửa `RELAY_ACTIVE_LOW` thành `0` trong `config.h`, **đừng đổi cách đấu dây**.
 
-Ba dây tín hiệu: **VCC về 5 V, GND về GND chung, IN về GPIO 26**.
+Ba dây tín hiệu: **VCC về 5 V, GND về GND chung, IN về GPIO 10**.
 
 Phía tiếp điểm dùng **COM và NO**, **không dùng NC**, để khi mất điện thì bơm ở trạng thái ngắt. Đây là lớp phòng vệ chống tràn thứ tư trong thiết kế.
 

@@ -1219,7 +1219,7 @@ void mqttTryConnect() {
 // ------------------------------------------------------------
 void setup() {
   // Dua ro le ve NGAT NGAY DONG DAU TIEN, truoc ca Serial.begin.
-  // Tu luc cap dien toi luc dong nay chay, chan GPIO 26 van tha noi, va
+  // Tu luc cap dien toi luc dong nay chay, chan GPIO 10 van tha noi, va
   // mo dun ro le kich muc thap se hieu muc tha noi la LENH BAT. Moi mili
   // giay tri hoan o day la mot mili giay bom chay ngoai y muon.
   // Phan con lai, khoang 300 ms cua bootloader ROM, phan mem khong the

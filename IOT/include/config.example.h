@@ -51,9 +51,10 @@
 // Bom dang tat thi duong VAO bat buoc phai bang 0. No khong bang 0, con
 // duong duoc goi la RA thi lai bang 0 dung luc nuoc dang xa that.
 // Vay GPIO 4 la cam bien DAU RA, va GPIO 19 la cam bien DAU VAO.
-#define PIN_FLOW       19     // xung cam bien luu luong DAU VAO (bom -> bon)
-#define PIN_FLOW_OUT    4     // xung cam bien luu luong DAU RA  (bon -> tieu thu)
-#define PIN_RELAY       26    // relay dieu khien bom
+#define PIN_FLOW        4     // xung cam bien luu luong DAU VAO (bom -> bon); doi cho voi DAU RA ngay 05/10
+#define PIN_FLOW_OUT   19     // xung cam bien luu luong DAU RA  (bon -> tieu thu)
+#define PIN_RELAY       10    // relay dieu khien bom. GPIO 10 = chan SD3 cua flash:
+                              // CHI dung duoc khi flash o che do DIO (platformio.ini)
 #define PIN_CURRENT     34    // ACS712 (qua chia ap 10k/10k), chan chi vao
 #define PIN_FLOAT_MAX   27    // phao muc cao, INPUT_PULLUP
 #define PIN_FLOAT_MIN   14    // phao MUC THAP tren bon chua, INPUT_PULLUP
