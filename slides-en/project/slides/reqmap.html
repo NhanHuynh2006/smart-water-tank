@@ -4,17 +4,17 @@
     <h2 style="font-family:'IBM Plex Sans', Arial, sans-serif; font-size:64px; font-weight:600; line-height:1.1; letter-spacing:-1px; color:#0e1a2b">Requirements and where they are met</h2>
   </div>
   <table style="font-family:'IBM Plex Sans', Arial, sans-serif; font-size:26px; color:#0e1a2b">
-    <tr style="background:#e9e7df"><th style="width:46%">Requirement of Project 08</th><th style="width:34%">How we meet it</th><th style="width:20%">Status (met = done)</th></tr>
+    <tr style="background:#e9e7df"><th style="width:46%">Requirement of Project 08</th><th style="width:34%">How we meet it</th><th style="width:20%">Status</th></tr>
     <tr style="background:#fbede5"><td>ESP32, level and flow sensors</td><td>HC-SR04, 2 × YF-S401, ACS712</td><td style="color:#b4461a">◐ Partly validated</td></tr>
-    <tr><td>Driver with inductive protection</td><td>Relay + 1N4007 + 100 nF</td><td style="color:#1c5cab">✓ Met</td></tr>
-    <tr><td>No overflow, safe on bad readings</td><td>Seven independent layers</td><td style="color:#1c5cab">✓ Met</td></tr>
-    <tr><td>Flow rate and accumulated volume</td><td>From level, integrated on device</td><td style="color:#1c5cab">✓ Met · −5.2 % error</td></tr>
-    <tr><td>Calibrate against a physical reference</td><td>Ruler + pumped volume, 12 steps</td><td style="color:#1c5cab">✓ Met · RMSE 0.68 cm</td></tr>
-    <tr><td>MQTT telemetry, state, faults, availability</td><td>Six topics, last will</td><td style="color:#1c5cab">✓ Met</td></tr>
-    <tr><td>Time series, REST API, dashboard</td><td>SQLite, FastAPI, web page</td><td style="color:#1c5cab">✓ Met</td></tr>
-    <tr><td>Hysteresis or FSM, ≥ 1 fault rule</td><td>30–70 %, 7 states, 11 rules</td><td style="color:#1c5cab">✓ Met</td></tr>
-    <tr><td>Manual cannot bypass safety; acks</td><td>One guard function, cmd/ack</td><td style="color:#1c5cab">✓ Met</td></tr>
-    <tr><td>Local control during an outage</td><td>Loop on ESP32, ring buffer</td><td style="color:#1c5cab">✓ Met · 120 s test</td></tr>
+    <tr><td>Driver with inductive protection</td><td>Relay + 1N4007 + 100 nF</td><td style="color:#1c5cab">✓ Done</td></tr>
+    <tr><td>No overflow, safe on bad readings</td><td>Seven independent layers</td><td style="color:#1c5cab">✓ Done</td></tr>
+    <tr><td>Flow rate and accumulated volume</td><td>From level, integrated on device</td><td style="color:#1c5cab">✓ Done · −5.2 % error</td></tr>
+    <tr><td>Calibrate against a physical reference</td><td>Ruler + pumped volume, 12 steps</td><td style="color:#1c5cab">✓ Done · RMSE 0.68 cm</td></tr>
+    <tr><td>MQTT telemetry, state, faults, availability</td><td>Six topics, last will</td><td style="color:#1c5cab">✓ Done</td></tr>
+    <tr><td>Time series, REST API, dashboard</td><td>SQLite, FastAPI, web page</td><td style="color:#1c5cab">✓ Done</td></tr>
+    <tr><td>Hysteresis or FSM, ≥ 1 fault rule</td><td>30–70 %, 7 states, 11 rules</td><td style="color:#1c5cab">✓ Done</td></tr>
+    <tr><td>Manual cannot bypass safety; acks</td><td>One guard function, cmd/ack</td><td style="color:#1c5cab">✓ Done</td></tr>
+    <tr><td>Local control during an outage</td><td>Loop on ESP32, ring buffer</td><td style="color:#1c5cab">✓ Done · 120 s test</td></tr>
     <tr style="background:#fbede5"><td>Advanced: baseline or current vs flow</td><td>Both implemented</td><td style="color:#b4461a">◐ Baseline converging</td></tr>
   </table>
   <div style="position:absolute; right:128px; bottom:64px; left:128px; display:flex; flex-direction:row; justify-content:space-between">
