@@ -1,0 +1,41 @@
+% Signal wiring of the edge node, drawn in TikZ: one straight line per pin.
+\begingroup\setstretch{1.0}
+\begin{tikzpicture}[
+    font=\small,
+    dev/.style={draw, thick, rounded corners=2pt, align=center, fill=white,
+                minimum width=3.6cm, inner sep=2pt},
+    sig/.style={-{Stealth[length=2.4mm]}, thick},
+    lbl/.style={font=\footnotesize, fill=white, inner sep=1pt}
+]
+\def\row{0.82}
+% ---- ESP32 ----
+\draw[thick, rounded corners=2pt] (0,0.55) rectangle (3.0,-9*\row-0.55);
+\node[font=\bfseries, rotate=90] at (0.45,-4.5*\row) {ESP32 DevKit V1};
+\foreach \i/\pin in {0/GPIO 5, 1/GPIO 18, 2/GPIO 4, 3/GPIO 19, 4/GPIO 34,
+                     5/GPIO 27, 6/GPIO 14, 7/GPIO 10, 8/GPIO 33, 9/GPIO 25}
+  \node[anchor=east, font=\footnotesize\ttfamily] at (2.95,-\i*\row) {\pin};
+
+% ---- peripherals (x = 9.6 to 13.2) ----
+\node[dev, minimum height=\row cm+0.55cm] (us)  at (11.4,-0.5*\row) {\textbf{HC-SR04}\\TRIG / ECHO};
+\node[dev, minimum height=0.6cm] (fin)  at (11.4,-2*\row) {YF-S401, inlet};
+\node[dev, minimum height=0.6cm] (fout) at (11.4,-3*\row) {YF-S401, outlet};
+\node[dev, minimum height=0.6cm] (acs)  at (11.4,-4*\row) {ACS712 5 A, OUT};
+\node[dev, minimum height=0.6cm] (fmax) at (11.4,-5*\row) {Upper float switch};
+\node[dev, minimum height=0.6cm] (fmin) at (11.4,-6*\row) {Lower float switch};
+\node[dev, minimum height=0.6cm] (rel)  at (11.4,-7*\row) {Relay module, IN};
+\node[dev, minimum height=0.6cm] (btn)  at (11.4,-8*\row) {Fault reset button};
+\node[dev, minimum height=0.6cm] (led)  at (11.4,-9*\row) {Fault lamp (LED)};
+
+% ---- one wire per pin; arrow shows signal direction ----
+\draw[sig] (3.0,0)        -- node[lbl, above] {direct} (9.6,0);
+\draw[sig] (9.6,-1*\row)  -- node[lbl, above] {10 k$\Omega$ / 20 k$\Omega$ divider} (3.0,-1*\row);
+\draw[sig] (9.6,-2*\row)  -- node[lbl, above] {4.7 k$\Omega$ pull up to 3.3 V} (3.0,-2*\row);
+\draw[sig] (9.6,-3*\row)  -- node[lbl, above] {4.7 k$\Omega$ pull up to 3.3 V} (3.0,-3*\row);
+\draw[sig] (9.6,-4*\row)  -- node[lbl, above] {10 k$\Omega$ / 10 k$\Omega$ divider, input only pin} (3.0,-4*\row);
+\draw[sig] (9.6,-5*\row)  -- node[lbl, above] {internal pull up} (3.0,-5*\row);
+\draw[sig] (9.6,-6*\row)  -- node[lbl, above] {internal pull up} (3.0,-6*\row);
+\draw[sig] (3.0,-7*\row)  -- node[lbl, above] {direct; flash in DIO mode} (9.6,-7*\row);
+\draw[sig] (9.6,-8*\row)  -- node[lbl, above] {internal pull up} (3.0,-8*\row);
+\draw[sig] (3.0,-9*\row)  -- node[lbl, above] {220 $\Omega$} (9.6,-9*\row);
+\end{tikzpicture}
+\endgroup

@@ -40,7 +40,7 @@ This split makes the system degrade in a controlled way when connectivity is los
 \hline
 ESP32 DevKit V1 & Edge microcontroller \\
 \hline
-HC-SR04 ultrasonic sensor & Tank level, mounted 17.5 cm above the tank floor \\
+HC-SR04 ultrasonic sensor & Tank level, transducer face 15.88 cm above the tank floor \\
 \hline
 Two YF-S401 Hall turbine flow sensors & Inlet (pump to tank) and outlet (tank to consumer) flow \\
 \hline
@@ -48,9 +48,9 @@ ACS712 Hall current sensor, 5 A variant & Pump current, used for the pump health
 \hline
 Two mechanical float switches on the storage tank & Upper level overflow guard and lower level fill permission \\
 \hline
-Single channel relay module, 5 V submersible pump & Switching stage and actuator \\
+Single channel relay module on GPIO 10, 5 V submersible pump & Switching stage and actuator \\
 \hline
-1N4007 diode, 100 nF ceramic, 1000 $\mu$F electrolytic & Inductive protection, brush noise filtering, inrush buffering \\
+1N4007 diode, 100 nF ceramic, 470 $\mu$F electrolytic & Inductive protection, brush noise filtering, inrush buffering on the controller board \\
 \hline
 10 k$\Omega$, 20 k$\Omega$ dividers, 4.7 k$\Omega$ pull ups & Level shifting of 5 V signals, pull ups on the open collector flow outputs \\
 \hline
@@ -59,13 +59,15 @@ Single channel relay module, 5 V submersible pump & Switching stage and actuator
 \end{tabular}
 \end{table}
 
-\textbf{The tank.} The storage tank has a square base of 10 by 10 centimetres, so one centimetre of level is exactly 0.1 litres. The working range is 14 centimetres, which the firmware treats as 100 percent, giving a usable volume of 1.4 litres. The small volume is deliberate: it makes a full fill and drain cycle last about four minutes, so dozens of control cycles can be observed in one bench session.
+\textbf{The tank.} The storage tank has a square base of 10 by 10 centimetres, so one centimetre of level is exactly 0.1 litres. The transducer face sits 15.88 centimetres above the floor, measured with a ruler as six and a quarter inches. The working range is the lowest 12.4 centimetres, which the firmware treats as 100 percent, giving a usable volume of 1.24 litres and leaving 3.5 centimetres of air below the sensor at a full tank, outside its minimum range. The small volume is deliberate: it makes a full fill and drain cycle last about four minutes, so dozens of control cycles can be observed in one bench session.
 
-\textbf{Level sensing.} Non contact ultrasonic measurement was chosen because the transducer never touches the water, so it neither corrodes nor accumulates deposits, and its output does not depend on water conductivity. Two properties of this particular installation shaped the software in Chapter \ref{chap:control}. First, the beam of an HC-SR04 spreads over roughly 15 degrees and is already about 8 centimetres wide when it reaches the water, against a 10 centimetre tank, so the edge of the beam strikes the wall on every ping and a fraction of echoes return from the wall or the floor rather than the surface. Second, the sensor occasionally locks up after a supply disturbance and stays silent until its supply is cycled, which no firmware reset can reach. The first property is handled by a robust filter; the second by a timeout rule and a documented recovery procedure.
+\textbf{Level sensing.} Non contact ultrasonic measurement was chosen because the transducer never touches the water, so it neither corrodes nor accumulates deposits, and its output does not depend on water conductivity. Two properties of this particular installation shaped the software in Chapter \ref{chap:control}. First, the beam of an HC-SR04 spreads over roughly 15 degrees and is already about 8 centimetres wide when it reaches the water, against a 10 centimetre tank, so the edge of the beam strikes the wall on every ping and a fraction of echoes return from the wall or the floor rather than the surface. Second, the sensor occasionally locks up after a supply disturbance and stays silent until its supply is cycled, which no firmware reset can reach. The first property is handled by a robust filter; the second by a timeout rule and a documented recovery procedure. The calibration of Section~\ref{sec:o8-2} found a third property: when the water surface is 7.9 to 8.7 centimetres below the transducer, that is at a level of about 7.2 to 8.0 centimetres or 58 to 64 percent, the sensor does not return the surface at all but a stable stray echo, reading 1.0 centimetre or a distance beyond the floor in every one of forty pings. Because the stray value is steady it cannot be filtered out as noise; Section~\ref{sec:o6-2} explains how the firmware crosses this band on its model.
 
 \textbf{Echo line.} The echo line was first routed through a TXS0108E automatic direction level translator. That part is designed for open drain buses and its internal pull ups and edge accelerators distorted the echo pulse, whose width is the only carrier of information. Replacing it with a plain 10 k$\Omega$ and 20 k$\Omega$ divider removed a 28 to 30 percent echo loss, as recorded in Appendix \ref{app:bench}.
 
-\textbf{Flow sensing.} Both inlet and outlet carry a YF-S401 turbine sensor, where pulse frequency relates to flow as $Q = f/K$. The bench revealed two problems that no datasheet mentions. The measured pump delivery is 0.36 litres per minute and the outlet draw is 0.09 to 0.15 litres per minute, while the YF-S401 is specified from 0.3 litres per minute: the inlet sits at the very bottom of the span and the outlet below it, where the turbine simply does not turn. Worse, while the pump runs both signal lines carry about 1500 hertz of interference conducted along the shared supply and ground, which a flyback diode and physical separation of the wiring did not reduce. The firmware therefore offers two sources of flow, selected at compile time: the pulse counters, or flow derived from the level rate described in Section~\ref{sec:o6-2}. The prototype runs with the second. This is stated here plainly because the assignment lists the flow sensor as mandatory: the sensors are fitted, wired, pulled up with 4.7 k$\Omega$ resistors and read by interrupt, but the numbers they produce in this installation cannot be trusted and are not used for control.
+\textbf{Flow sensing.} Both inlet and outlet carry a YF-S401 turbine sensor, where pulse frequency relates to flow as $Q = f/K$. Because the assignment makes the flow sensor mandatory, the group states its status precisely rather than simply as met: the hardware requirement is implemented, the measurement path is only partly validated, and control and accounting use flow derived from the level.
+
+The history explains why. Until 22 September both signal lines carried about 1500 hertz of interference while the pump ran, forty times the real pulse rate, and a flyback diode and physical separation of the wiring did not reduce it (Section~\ref{sec:o8-2}). The firmware was therefore given two sources of flow, selected at compile time: the pulse counters, or flow derived from the level rate described in Section~\ref{sec:o6-2}. The prototype runs with the second. On 5 October the power stage was rewired: the relay now switches the supply ahead of the current sensor and the pump, the pump leads carry a diode and a capacitor at the motor, a 470 microfarad capacitor sits on the controller board, and the sensor lines were rerouted. The firmware also ignores any edge that arrives less than 1.2 milliseconds after the previous one, a pulse width filter that rejects spikes while passing the real pulses, which are about 30 milliseconds apart at these flows. After that change the inlet sensor reads 0 hertz with the pump off and 20 to 30 hertz with it running, which is water rather than interference. Its factor was calibrated against the ruler and the tank geometry, $K = 85.5$ pulses per second per litre per minute instead of the nominal 98, and its reading is now published as \texttt{sens\_in\_lpm} and drives the level model of Section~\ref{sec:o6-2}. The outlet sensor remains of limited use: the bench drain of 0.1 to 0.2 litres per minute is below the 0.3 litre per minute starting flow of the YF-S401, so it turns only intermittently.
 
 \textbf{Float switches.} The two floats are not there to measure level. The upper float forms an overflow guard that operates independently of the ultrasonic path, and the lower float gives the pump a second, independent permission to start when the tank is low. Because two independent sources exist, the firmware can detect a contradiction between them and conclude that one reading is wrong. This is how the system satisfies the requirement to handle implausible sensor readings, as detailed in Section~\ref{sec:o6-4}. Float polarity was measured rather than assumed, because a float wired with the opposite sense reads as permanently engaged.
 
@@ -74,11 +76,42 @@ Single channel relay module, 5 V submersible pump & Switching stage and actuator
 \section{Power stage, supply and mechanical build}
 \label{sec:o3-4}
 
-The pump is switched through a relay module. A power MOSFET was considered, since the lectures favour it in edge designs of modest power thanks to its very low on resistance \cite{slide01}, but the relay was chosen because a pump running in two states at a low switching rate never exercises the frequency advantage of a MOSFET, and because the module drives the load from its own supply. Inductive protection uses a 1N4007 diode antiparallel across the pump terminals, alongside a 100 nF ceramic capacitor at the motor terminals whose purpose is not spike suppression but damping of brush noise. The relay polarity was determined by measurement: the module fitted is active high, and an earlier configuration that assumed active low made every stop command start the pump, as recorded in Appendix \ref{app:bench}. The relay control pin is driven to the off level as the very first statement of the firmware, before the serial port or any sensor is initialised.
+The pump is switched through a relay module. A power MOSFET was considered, since the lectures favour it in edge designs of modest power thanks to its very low on resistance \cite{slide01}, but the relay was chosen because a pump running in two states at a low switching rate never exercises the frequency advantage of a MOSFET, and because the module drives the load from its own supply. Inductive protection uses a 1N4007 diode antiparallel across the pump terminals, alongside a 100 nF ceramic capacitor at the motor terminals whose purpose is not spike suppression but damping of brush noise. The relay polarity was determined by measurement: the module fitted is active high, and an earlier configuration that assumed active low made every stop command start the pump, as recorded in Appendix \ref{app:bench}. The relay control pin is driven to the off level as the very first statement of the firmware, before the serial port or any sensor is initialised. The relay input moved to GPIO 10 on 5 October. That pin is wired to the flash chip on most ESP32 modules and is free only when the flash runs in dual line (DIO) mode, so the build sets \texttt{board\_build.flash\_mode = dio}; the group confirmed on the bench that the pin then switches the relay without resetting the chip.
 
-The system runs from a 12 volt supply through a 2 ampere fuse and a 5 volt, 5 ampere buck converter shared by the pump and the logic. Because the rail is shared, distribution matters: every load branch leaves the converter output terminal in a star, and the pump ground does not share a conductor with the controller ground. A 1000 microfarad capacitor near the controller supply pin buffers the inrush current of the motor, whose start peak would otherwise pull the rail below the brownout threshold and reset the chip \cite{slide01}.
+The system runs from a 12 volt supply through a 2 ampere fuse and a 5 volt, 5 ampere buck converter shared by the pump and the logic. Because the rail is shared, distribution matters: every load branch leaves the converter output terminal in a star, and the pump ground does not share a conductor with the controller ground. A 470 microfarad capacitor on the controller board buffers the inrush current of the motor, whose start peak would otherwise pull the rail below the brownout threshold and reset the chip \cite{slide01}.
+
+Figure~\ref{fig:power} shows the power distribution and Figure~\ref{fig:wiring} the signal wiring of every input and output.
+
+\begin{figure}[H]
+    \centering
+    \resizebox{\textwidth}{!}{\input{fig/power.tex}}
+    \caption[Power distribution and pump circuit]{Power distribution and pump circuit. The relay contact feeds the pump through the current sensor, so the measured current is the pump current only.}
+    \label{fig:power}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \resizebox{0.92\textwidth}{!}{\input{fig/wiring.tex}}
+    \caption[Signal wiring of the edge node]{Signal wiring of the edge node. Arrows give the signal direction; the label on each wire is the conditioning between the device and the pin.}
+    \label{fig:wiring}
+\end{figure}
 
 The rig forms a closed water loop: a source bucket, the pump, the inlet flow sensor, the transparent main tank, a manual valve acting as the consumption load, and the outlet flow sensor. The ultrasonic bracket must be rigid, because vibration makes readings oscillate and would be misdiagnosed as a sensor fault. The circuit was assembled in steps, each with its own test program in the repository (\texttt{test\_level}, \texttt{test\_relay}, \texttt{test\_flow}, \texttt{test\_current}, \texttt{test\_floats} and others) that had to pass before moving on.
+
+\IfFileExists{fig/prototype.jpg}{%
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.85\textwidth]{fig/prototype.jpg}
+    \caption{The assembled prototype: tank with the ultrasonic bracket, pump, flow sensors and controller board.}
+    \label{fig:prototype}
+\end{figure}}{}
+\IfFileExists{fig/setup.jpg}{%
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.85\textwidth]{fig/setup.jpg}
+    \caption{Experimental setup: closed water loop with the source bucket, the drain valve and the laptop running the broker and backend.}
+    \label{fig:setup}
+\end{figure}}{}
 
 
 \section{Design principles and topic tree}
@@ -119,17 +152,18 @@ Payloads use JSON built with a statically allocated document, following the rule
 
 \begin{lstlisting}[caption={Telemetry message payload, abridged.},label={lst:telemetry}]
 { "dev":"esp32-01", "ts":1790160600, "ts_ms":1790160600123, "seq":10421,
-  "level_pct":62.4, "level_cm":8.74, "level_ok":true,
-  "level_rate_cms":0.036, "level_model_cm":8.71, "blind_ms":0,
+  "level_pct":62.4, "level_cm":7.74, "level_ok":true,
+  "level_rate_cms":0.036, "level_model_cm":7.71, "blind_ms":0,
   "flow_lpm":0.36, "volume_l":143.62, "volume_today_l":12.40,
   "flow_out_lpm":0.16, "volume_out_l":98.10, "flow_src":"level",
+  "sens_in_lpm":0.35, "sens_out_lpm":0.00, "sens_in_l":21.80,
   "pump":true, "state":"FILLING", "mode":"AUTO",
   "current_mv":36.1, "current_ma":390.2, "pump_health":"ok",
   "float_max":false, "float_min":false, "fault":"", "rssi":-55,
   "lv_try":605, "lv_ok":563, "rj_spread":31, "ctl_gap_ms":201 }
 \end{lstlisting}
 
-The \texttt{seq} field is a monotonically increasing counter allowing lost messages to be counted exactly in Section~\ref{sec:o8-5}. The \texttt{ts\_ms} field is produced by the device after time synchronisation and supports latency measurement. The \texttt{level\_ok} field states whether the reading can be trusted, letting the interface distinguish a genuinely low tank from a broken sensor. The \texttt{flow\_src} field states whether the flow figures come from the pulse sensors or are derived from the level, so no consumer can mistake one for the other. The \texttt{lv\_try}, \texttt{lv\_ok} and \texttt{rj\_*} counters record how many level pings were attempted, accepted and rejected at each filter stage; they turned out to be the most useful diagnostic in the project, as Appendix \ref{app:bench} shows. The \texttt{ctl\_gap\_ms} field reports the longest control period since the previous live message, so the first message after an outage proves whether the control loop was ever stalled by the network. Messages replayed after reconnection carry a \texttt{replay} flag and a reduced field set, and are excluded from latency statistics. The full message runs to several hundred bytes, so the serialisation buffer is 1024 bytes and the MQTT client buffer 1200 bytes; Appendix \ref{app:bench} explains why both margins are explicit.
+The \texttt{seq} field is a monotonically increasing counter allowing lost messages to be counted exactly in Section~\ref{sec:o8-5}. The \texttt{ts\_ms} field is produced by the device after time synchronisation and supports latency measurement. The \texttt{level\_ok} field states whether the reading can be trusted, letting the interface distinguish a genuinely low tank from a broken sensor. The \texttt{flow\_src} field states whether the flow figures come from the pulse sensors or are derived from the level, so no consumer can mistake one for the other. The \texttt{sens\_*} fields carry the turbine readings alongside, so the two estimates can be compared in the stored data. The \texttt{lv\_try}, \texttt{lv\_ok} and \texttt{rj\_*} counters record how many level pings were attempted, accepted and rejected at each filter stage; they turned out to be the most useful diagnostic in the project, as Appendix \ref{app:bench} shows. The \texttt{ctl\_gap\_ms} field reports the longest control period since the previous live message, so the first message after an outage proves whether the control loop was ever stalled by the network. Messages replayed after reconnection carry a \texttt{replay} flag and a reduced field set, and are excluded from latency statistics. The full message runs to several hundred bytes, so the serialisation buffer is 1024 bytes and the MQTT client buffer 1200 bytes; Appendix \ref{app:bench} explains why both margins are explicit.
 
 Eleven fault codes are generated on the device and one on the backend. They fall into three groups. The self clearing group, \texttt{SENSOR\_TIMEOUT}, \texttt{SENSOR\_CONFLICT} and \texttt{LEVEL\_LOST}, concerns signal quality and resolves on its own once the signal has been valid for long enough. The latching group, \texttt{OVERFLOW}, \texttt{NO\_CURRENT}, \texttt{DRY\_RUN}, \texttt{NO\_PROGRESS}, \texttt{FILL\_TIMEOUT}, \texttt{HARD\_LIMIT} and \texttt{VOLUME\_LIMIT}, requires the operator to confirm that the physical cause has been dealt with before the fault can be cleared. The warning group, \texttt{LEAK\_SUSPECTED} on the device and \texttt{LEAK\_BASELINE} on the backend, raises an alert without locking the pump. Every fault message also carries the pump health label and the pump current at the instant of the fault, captured before the pump is stopped, so the record states not only that something failed but which side of the pump failed. Trigger conditions are given in Section~\ref{sec:o6-4}.
 
@@ -155,6 +189,6 @@ The rejection table is worth more than a debugging aid: during the demonstration
 
 The firmware implements the four state connection machine described in the lectures. The critical point is the accompanying design note: connection logic must never sit inside a blocking wait loop, because that stalls the processor and suspends both analog sampling and safety checks for the whole outage \cite{slide03}. Our reconnection routine therefore never blocks, retries only once its interval has elapsed, and the control loop runs independently of network state. The retry interval grows exponentially with an upper bound, $T_{retry} = \min(T_{max}, T_{base} \cdot 2^{n})$ with $T_{base}$ of 1 second and $T_{max}$ of 30 seconds \cite{slide06}.
 
-A non blocking design still has to account for the calls it cannot avoid. Opening a TCP connection to an unreachable broker blocks inside the network stack, and the default timeout of the ESP32 client is three seconds, during which the control loop does not run. The firmware therefore opens the socket itself with a 500 millisecond limit before handing it to the MQTT client, and bounds the wait for the broker's connection acknowledgement to two seconds. After a Wi-Fi reconnection the device also resolves the broker's host name over multicast DNS, because a laptop that moves between networks receives a different address on each; a fixed fallback address is used if the name does not resolve.
+A non blocking design still has to account for the calls it cannot avoid. Opening a TCP connection to an unreachable broker blocks inside the network stack, and the default timeout of the ESP32 client is three seconds, during which the control loop does not run. The firmware therefore opens the socket itself with a 500 millisecond limit before handing it to the MQTT client, and bounds the wait for the broker's connection acknowledgement to two seconds. Two further bounds came from the outage test of Section~\ref{sec:o8-5}. Writing to a socket whose peer has silently vanished blocks until the transmit buffer drains, which in the first firmware stalled the control loop for up to ten seconds; the firmware now checks, without waiting, whether the socket can accept data before every publish, and closes it once it has refused data for three seconds, so the ring buffer of Section~\ref{sec:o7-3} takes over after about three seconds instead of after the 15 second keep alive. And a new Wi-Fi association is attempted at most once every ten seconds, because restarting it every second, as an earlier version did, never left the radio enough time to finish joining. After a Wi-Fi reconnection the device also resolves the broker's host name over multicast DNS, because a laptop that moves between networks receives a different address on each; a fixed fallback address is used if the name does not resolve.
 
 On connecting, the device pre registers a last will message announcing that it is offline, then overwrites it with an online message once the session is established. Should the node suffer an abrupt loss of power, the broker keep alive supervisor publishes the stored will by itself \cite{slide03}, so the interface switches to a disconnected state with no polling logic on the application side. A second backend check treats the device as offline when the newest telemetry message is older than 5 seconds. The two complement each other, since the will reacts quickly to a total power loss while the freshness check also catches a live session whose data stream has stopped.

@@ -40,3 +40,8 @@ STILL TO FILL
 
 NOTES
 - No en dash or em dash anywhere in the text.
+
+Anh that (tu dong chen khi co file):
+  fig/prototype.jpg  anh mo hinh da lap rap
+  fig/setup.jpg      anh bo tri thi nghiem (vong nuoc, van xa, laptop)
+Chep anh vao dung ten roi bien dich lai; khong co file thi hinh tu bo qua.
