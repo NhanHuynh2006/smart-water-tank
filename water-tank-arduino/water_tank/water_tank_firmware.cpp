@@ -257,7 +257,9 @@ float medianOf5() {
   const float dFloor = 3.0f;
   float dMin = TANK_SENSOR_TO_BOTTOM_CM - TANK_MAX_LEVEL_CM - LEVEL_GATE_MARGIN_CM;
   if (dMin < dFloor) dMin = dFloor;
-  const float dMax = TANK_SENSOR_TO_BOTTOM_CM + LEVEL_GATE_MARGIN_CM;
+  // Nuoc khong the o duoi day bon. So doc xa hon day qua LEVEL_FLOOR_MARGIN_CM
+  // la tieng doi lac (do 05/10: nuoc that cach cam bien 8 cm ma doc 21,3 cm).
+  const float dMax = TANK_SENSOR_TO_BOTTOM_CM + LEVEL_FLOOR_MARGIN_CM;
 
   float d = readDistanceOnce();
   lastRawDistCm = d;
@@ -772,9 +774,11 @@ void checkFaults() {
   //
   // Dang bom va mo hinh con dung duoc thi cho theo cua so cua mo hinh. Luc
   // ranh roi thi van la 9 giay, vi khong co gi phai vuot qua ca.
+  // Mo hinh con dung duoc (dang bom HOAC dang ranh) thi cho theo cua so cua
+  // mo hinh. Do 05/10: co mot VUNG MU khi mat nuoc cach cam bien ~8-9 cm,
+  // muc di qua vung nay mat 40-75 s ca luc bom lan luc xa.
   uint32_t levelTimeoutMs =
-      (state == ST_FILLING && levelModelCm >= 0) ? MODEL_MAX_BLIND_MS
-                                                 : SENSOR_TIMEOUT_MS;
+      (levelModelCm >= 0) ? MODEL_MAX_BLIND_MS : SENSOR_TIMEOUT_MS;
   if (!levelOk && sinceValid > levelTimeoutMs) {
     raiseFault("SENSOR_TIMEOUT"); state = ST_FAULT_SENSOR; return;
   }

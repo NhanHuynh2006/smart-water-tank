@@ -148,7 +148,7 @@
 //    YF-B10   (ren 1/2", 1-25 L/phut) : 6.6
 // Dat sai he so nay thi so doc lech dung bang ti so hai he so.
 // Gia tri duoi day PHAI duoc kiem chung lai bang thi nghiem E2.
-#define FLOW_K_FACTOR       98.0f   // cam bien DAU VAO
+#define FLOW_K_FACTOR       85.5f   // 05/10: hieu chuan theo thuoc (98 dem thieu 14,6 %)   // cam bien DAU VAO
 #define FLOW_OUT_K_FACTOR   98.0f   // cam bien DAU RA, doi neu hai con khac loai
 
 // Chan xung cam bien luu luong noi the nao.
@@ -544,7 +544,7 @@
 // va tu do len nguong dung 7,0 cm chi con 1,2 cm. O toc do rong 0,032 cm/s
 // la 38 giay. 45 giay du cho mo hinh hoan thanh lan bom, va khong du de no
 // di qua xa neu mo hinh sai.
-#define MODEL_MAX_BLIND_MS  45000UL
+#define MODEL_MAX_BLIND_MS  90000UL   // 05/10: vung mu ~8-9 cm duoi cam bien can toi ~75 s
 // Ha 5 -> 2,5 giay. Doi 5 giay LIEN TUC khong rot lan nao la qua kho voi cam
 // bien nay, nen thiet bi ket lai o nhom su co lau hon han thoi gian no that
 // su hong. levelOk gio da co san 5 giay du tru ben trong roi.
@@ -639,6 +639,8 @@
 // Bien ngoai dai hinh hoc con chap nhan, tinh bang cm. So doc nam ngoai
 // [15,5-10-6 , 15,5+6] = [-0,5 , 21,5] cm bi loai truoc khi vao cua so trung vi.
 #define LEVEL_GATE_MARGIN_CM   6.0f
+// So doc xa hon day bon qua muc nay la tieng doi lac, bo
+#define LEVEL_FLOOR_MARGIN_CM  1.0f
 
 // Do phan tan toi da trong cua so trung vi, tinh bang cm.
 //
