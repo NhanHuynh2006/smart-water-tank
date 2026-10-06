@@ -48,13 +48,13 @@ ACS712 Hall current sensor, 5 A variant & Pump current, used for the pump health
 \hline
 Two mechanical float switches on the storage tank & Upper level overflow guard and lower level fill permission \\
 \hline
-Single channel relay module on GPIO 10, 5 V submersible pump & Switching stage and actuator \\
+Single channel relay module on GPIO 10, supplied from 3.3 V; 5 V submersible pump & Switching stage and actuator \\
 \hline
-1N4007 diode, 100 nF ceramic, 470 $\mu$F electrolytic & Inductive protection, brush noise filtering, inrush buffering on the controller board \\
+470 $\mu$F on the 5 V rail; 100 nF and 100 $\mu$F at the ESP32 supply pin; 1N4007 and 100 nF at the pump & Bulk storage for motor inrush, local decoupling, inductive protection and brush noise filtering \\
 \hline
-10 k$\Omega$, 20 k$\Omega$ dividers, 4.7 k$\Omega$ pull ups & Level shifting of 5 V signals, pull ups on the open collector flow outputs \\
+Four 10 k$\Omega$ / 20 k$\Omega$ dividers; 220 $\Omega$ LED resistor & Bring the 5 V outputs of the echo, both flow sensors and the current sensor down to 3.3 V \\
 \hline
-12 V supply, 2 A fuse, 5 V 5 A buck converter & System power, distributed in a star from the converter output \\
+12 V input on a screw terminal; two step-down modules, 12 to 5 V and 12 to 3.3 V & 5 V rail: ESP32, ultrasonic, flow and current sensors; 3.3 V rail: relay module, floats, reset button \\
 \hline
 \end{tabular}
 \end{table}
@@ -67,49 +67,33 @@ Single channel relay module on GPIO 10, 5 V submersible pump & Switching stage a
 
 \textbf{Flow sensing.} Both inlet and outlet carry a YF-S401 turbine sensor, where pulse frequency relates to flow as $Q = f/K$. Because the assignment makes the flow sensor mandatory, the group states its status precisely rather than simply as met: the hardware requirement is implemented, the measurement path is only partly validated, and control and accounting use flow derived from the level.
 
-The history explains why. Until 22 September both signal lines carried about 1500 hertz of interference while the pump ran, forty times the real pulse rate, and a flyback diode and physical separation of the wiring did not reduce it (Section~\ref{sec:o8-2}). The firmware was therefore given two sources of flow, selected at compile time: the pulse counters, or flow derived from the level rate described in Section~\ref{sec:o6-2}. The prototype runs with the second. On 5 October the power stage was rewired: the relay now switches the supply ahead of the current sensor and the pump, the pump leads carry a diode and a capacitor at the motor, a 470 microfarad capacitor sits on the controller board, and the sensor lines were rerouted. The firmware also ignores any edge that arrives less than 1.2 milliseconds after the previous one, a pulse width filter that rejects spikes while passing the real pulses, which are about 30 milliseconds apart at these flows. After that change the inlet sensor reads 0 hertz with the pump off and 20 to 30 hertz with it running, which is water rather than interference. Its factor was calibrated against the ruler and the tank geometry, $K = 85.5$ pulses per second per litre per minute instead of the nominal 98, and its reading is now published as \texttt{sens\_in\_lpm} and drives the level model of Section~\ref{sec:o6-2}. The outlet sensor remains of limited use: the bench drain of 0.1 to 0.2 litres per minute is below the 0.3 litre per minute starting flow of the YF-S401, so it turns only intermittently.
+The history explains why. Until 22 September both signal lines carried about 1500 hertz of interference while the pump ran, forty times the real pulse rate, and a flyback diode and physical separation of the wiring did not reduce it (Section~\ref{sec:o8-2}). The firmware was therefore given two sources of flow, selected at compile time: the pulse counters, or flow derived from the level rate described in Section~\ref{sec:o6-2}. The prototype runs with the second. On 5 October the power stage was rewired: the relay now switches the supply ahead of the current sensor and the pump, the pump leads carry a diode and a capacitor at the motor, a 470 microfarad capacitor sits on the controller board, and the sensor lines were rerouted. The firmware also ignores any edge that arrives less than 1.2 milliseconds after the previous one, a pulse width filter that rejects spikes while passing the real pulses, which are about 30 milliseconds apart at these flows. After that change the inlet sensor reads 0 hertz with the pump off and 20 to 30 hertz with it running, which is water rather than interference. Each flow signal reaches its pin through a 10 k$\Omega$ and 20 k$\Omega$ divider, the same as the echo line. Its factor was calibrated against the ruler and the tank geometry, $K = 85.5$ pulses per second per litre per minute instead of the nominal 98, and its reading is now published as \texttt{sens\_in\_lpm} and drives the level model of Section~\ref{sec:o6-2}. The outlet sensor remains of limited use: the bench drain of 0.1 to 0.2 litres per minute is below the 0.3 litre per minute starting flow of the YF-S401, so it turns only intermittently.
 
-\textbf{Float switches.} The two floats are not there to measure level. The upper float forms an overflow guard that operates independently of the ultrasonic path, and the lower float gives the pump a second, independent permission to start when the tank is low. Because two independent sources exist, the firmware can detect a contradiction between them and conclude that one reading is wrong. This is how the system satisfies the requirement to handle implausible sensor readings, as detailed in Section~\ref{sec:o6-4}. Float polarity was measured rather than assumed, because a float wired with the opposite sense reads as permanently engaged.
+\textbf{Float switches.} The two floats are not there to measure level. The upper float forms an overflow guard that operates independently of the ultrasonic path, and the lower float gives the pump a second, independent permission to start when the tank is low. Because two independent sources exist, the firmware can detect a contradiction between them and conclude that one reading is wrong. This is how the system satisfies the requirement to handle implausible sensor readings, as detailed in Section~\ref{sec:o6-4}. On the board each float, like the fault reset button, switches its input to the 3.3 V rail (Figure~\ref{fig:schematic}). Float polarity was measured rather than assumed, because a float wired with the opposite sense reads as permanently engaged.
 
-\textbf{Current sensing.} The ACS712 output passes through a one to one divider that moves its no load point from 2.5 volts to 1.25 volts, the middle of the converter span. The 5 ampere variant produces 185 millivolts per ampere, which becomes 92.5 millivolts per ampere at the pin, or 10.81 milliamperes per millivolt. The firmware subtracts a startup offset averaged over 200 samples, reports the result in milliamperes, and reports zero below a 4 millivolt noise floor, since with the pump off the raw reading wanders between 0 and 2.7 millivolts, a single converter step being 0.8 millivolts. The measurement cannot resolve currents below about 40 milliamperes, which is enough to separate a running pump from a stopped one but not to characterise the motor, and Section~\ref{sec:o8-7} returns to this.
+\textbf{Current sensing.} The ACS712 output passes through a 10 k$\Omega$ and 20 k$\Omega$ divider, which scales it by two thirds and moves its no load point from 2.5 volts to about 1.67 volts, inside the converter span. The 5 ampere variant produces 185 millivolts per ampere, which becomes 123 millivolts per ampere at the pin, or 8.11 milliamperes per millivolt. The firmware subtracts a startup offset averaged over 200 samples, reports the result in milliamperes, and reports zero below a 4 millivolt noise floor, since with the pump off the raw reading wanders between 0 and 2.7 millivolts, a single converter step being 0.8 millivolts. The measurement cannot resolve currents below about 30 milliamperes, which is enough to separate a running pump from a stopped one but not to characterise the motor, and Section~\ref{sec:o8-7} returns to this.
 
 \section{Power stage, supply and mechanical build}
 \label{sec:o3-4}
 
 The pump is switched through a relay module. A power MOSFET was considered, since the lectures favour it in edge designs of modest power thanks to its very low on resistance \cite{slide01}, but the relay was chosen because a pump running in two states at a low switching rate never exercises the frequency advantage of a MOSFET, and because the module drives the load from its own supply. Inductive protection uses a 1N4007 diode antiparallel across the pump terminals, alongside a 100 nF ceramic capacitor at the motor terminals whose purpose is not spike suppression but damping of brush noise. The relay polarity was determined by measurement: the module fitted is active high, and an earlier configuration that assumed active low made every stop command start the pump, as recorded in Appendix \ref{app:bench}. The relay control pin is driven to the off level as the very first statement of the firmware, before the serial port or any sensor is initialised. The relay input moved to GPIO 10 on 5 October. That pin is wired to the flash chip on most ESP32 modules and is free only when the flash runs in dual line (DIO) mode, so the build sets \texttt{board\_build.flash\_mode = dio}; the group confirmed on the bench that the pin then switches the relay without resetting the chip.
 
-The system runs from a 12 volt supply through a 2 ampere fuse and a 5 volt, 5 ampere buck converter shared by the pump and the logic. Because the rail is shared, distribution matters: every load branch leaves the converter output terminal in a star, and the pump ground does not share a conductor with the controller ground. A 470 microfarad capacitor on the controller board buffers the inrush current of the motor, whose start peak would otherwise pull the rail below the brownout threshold and reset the chip \cite{slide01}.
+Figure~\ref{fig:schematic} is the schematic of the controller board. A 12 volt input on a screw terminal feeds two step-down modules. The 5 volt rail supplies the ESP32 through its 5 V pin, the ultrasonic sensor, both flow sensors and the current sensor, with a 470 microfarad capacitor on the rail and a 100 nanofarad and a 100 microfarad capacitor at the ESP32 supply pin; the large capacitor buffers the inrush of the motor, whose start peak would otherwise pull the rail below the brownout threshold and reset the chip \cite{slide01}. The separate 3.3 volt rail supplies the relay module, the two floats and the fault reset button. The pump circuit itself is wired off the board: the relay contact feeds the current sensor and then the pump, so the measured current is the pump current only. Figure~\ref{fig:prototype} shows the assembled rig.
 
-Figure~\ref{fig:power} shows the power distribution and Figure~\ref{fig:wiring} the signal wiring of every input and output.
-
-\begin{figure}[H]
+\begin{sidewaysfigure}
     \centering
-    \resizebox{\textwidth}{!}{\input{fig/power.tex}}
-    \caption[Power distribution and pump circuit]{Power distribution and pump circuit. The relay contact feeds the pump through the current sensor, so the measured current is the pump current only.}
-    \label{fig:power}
-\end{figure}
-
-\begin{figure}[H]
-    \centering
-    \resizebox{0.92\textwidth}{!}{\input{fig/wiring.tex}}
-    \caption[Signal wiring of the edge node]{Signal wiring of the edge node. Arrows give the signal direction; the label on each wire is the conditioning between the device and the pin.}
-    \label{fig:wiring}
-\end{figure}
+    \includegraphics[width=\textheight]{fig/schematic.png}
+    \caption[Schematic of the controller board]{Schematic of the controller board (KiCad). Signals: TRIG GPIO 5, ECHO GPIO 18 through 10 k$\Omega$/20 k$\Omega$; flow inlet GPIO 4 and outlet GPIO 19, current sensor GPIO 34, each through 10 k$\Omega$/20 k$\Omega$; relay input GPIO 10; upper float GPIO 27, lower float GPIO 14 and reset button GPIO 33, each switched to 3.3 V; fault lamp GPIO 25 through 220 $\Omega$.}
+    \label{fig:schematic}
+\end{sidewaysfigure}
 
 The rig forms a closed water loop: a source bucket, the pump, the inlet flow sensor, the transparent main tank, a manual valve acting as the consumption load, and the outlet flow sensor. The ultrasonic bracket must be rigid, because vibration makes readings oscillate and would be misdiagnosed as a sensor fault. The circuit was assembled in steps, each with its own test program in the repository (\texttt{test\_level}, \texttt{test\_relay}, \texttt{test\_flow}, \texttt{test\_current}, \texttt{test\_floats} and others) that had to pass before moving on.
 
 \begin{figure}[H]
     \centering
-    \IfFileExists{fig/prototype.jpg}{\includegraphics[width=0.85\textwidth]{fig/prototype.jpg}}{\chohinh{Photo of the assembled prototype}{prototype.jpg}}
-    \caption{The assembled prototype: tank with the ultrasonic bracket, pump, flow sensors and controller board.}
+    \includegraphics[width=0.8\textwidth]{fig/prototype.jpg}
+    \caption[The assembled prototype]{The assembled prototype: the main tank with the ultrasonic sensor and the upper float in the lid, the inlet and outlet flow sensors, the drain valve, and the controller board on the lid of the source bucket that holds the pump.}
     \label{fig:prototype}
-\end{figure}
-
-\begin{figure}[H]
-    \centering
-    \IfFileExists{fig/setup.jpg}{\includegraphics[width=0.85\textwidth]{fig/setup.jpg}}{\chohinh{Photo of the experimental setup}{setup.jpg}}
-    \caption{Experimental setup: closed water loop with the source bucket, the drain valve and the laptop running the broker and backend.}
-    \label{fig:setup}
 \end{figure}
 
 

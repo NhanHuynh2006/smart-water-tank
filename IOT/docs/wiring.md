@@ -2,17 +2,19 @@
 
 ## Bảng chân
 
+Nguồn: 12 V vào cọc vít, hai mạch hạ áp ra 5 V (ESP32, HC-SR04, 2 × YF-S401, ACS712) và 3,3 V (module rơ-le, hai phao, nút xóa lỗi). Bảng dưới theo sơ đồ KiCad ngày 06/10.
+
 | ESP32 | Nối tới | Mạch trung gian |
 |---|---|---|
 | GPIO 5 | TRIG cảm biến siêu âm | nối thẳng |
 | GPIO 18 | ECHO cảm biến siêu âm | chia áp 10k/20k |
-| GPIO 4 | dây tín hiệu cảm biến lưu lượng ĐẦU VÀO | xem ghi chú bên dưới |
-| GPIO 19 | dây tín hiệu cảm biến lưu lượng ĐẦU RA | xem ghi chú bên dưới |
+| GPIO 4 | dây tín hiệu cảm biến lưu lượng ĐẦU VÀO | chia áp 10k/20k (theo sơ đồ KiCad 06/10) |
+| GPIO 19 | dây tín hiệu cảm biến lưu lượng ĐẦU RA | chia áp 10k/20k |
 | GPIO 10 | chân IN module rơ le | nối thẳng |
-| GPIO 34 | ngõ ra ACS712 | chia áp 10k/10k |
-| GPIO 27 | phao mức cao | điện trở kéo lên nội bộ |
-| GPIO 14 | phao mức THẤP, trên bồn chứa | điện trở kéo lên nội bộ |
-| GPIO 33 | nút xóa lỗi | điện trở kéo lên nội bộ |
+| GPIO 34 | ngõ ra ACS712 | chia áp 10k/20k (hệ số 2/3, 8,11 mA/mV) |
+| GPIO 27 | phao mức cao | công tắc nối lên nguồn 3,3 V |
+| GPIO 14 | phao mức THẤP, trên bồn chứa | công tắc nối lên nguồn 3,3 V |
+| GPIO 33 | nút xóa lỗi | công tắc nối lên nguồn 3,3 V |
 | GPIO 2 | đèn báo trực tuyến | có sẵn trên bo |
 | GPIO 25 | đèn báo sự cố | qua điện trở 220 ohm |
 

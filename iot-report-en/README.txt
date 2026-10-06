@@ -30,13 +30,10 @@ STATUS (05/10)
   not used for accounting), NO_CURRENT not injected, MQTT not encrypted.
 
 STILL TO DO
-1. Photos of the prototype and the setup (see below).
-2. Optional: pull one pump wire during the demo to time NO_CURRENT.
+1. Optional: pull one pump wire during the demo to time NO_CURRENT.
+
+Figures 2.4.1 (KiCad schematic, fig/schematic.png) and 2.4.2 (photo, fig/prototype.jpg)
+come from the group; the hardware text of Section 2.3-2.4 follows that schematic.
 
 NOTES
 - No en dash or em dash anywhere in the text.
-
-Anh that (tu dong chen khi co file):
-  fig/prototype.jpg  anh mo hinh da lap rap
-  fig/setup.jpg      anh bo tri thi nghiem (vong nuoc, van xa, laptop)
-Chep anh vao dung ten roi bien dich lai; khong co file thi hinh tu bo qua.

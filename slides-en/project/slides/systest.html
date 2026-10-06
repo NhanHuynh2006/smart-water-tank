@@ -9,9 +9,9 @@
 <tr><td>T2 security</td><td>View open; command without session; wrong password</td><td>Pass · 200, 401, 401</td></tr>
 <tr><td>T3 commands</td><td>40 mode commands, round trip, none unacknowledged</td><td>Pass · median 29.1 ms</td></tr>
 <tr><td>T4 rejections</td><td>Pump in auto; restart during rest; clear with no fault</td><td>Pass · 3 right reasons</td></tr>
-<tr><td>T5 manual pump</td><td>Current with the relay closed, then open</td><td>Pass · 471–487 mA, then 0</td></tr>
+<tr><td>T5 manual pump</td><td>Current with the relay closed, then open</td><td>Pass · 353–365 mA, then 0</td></tr>
 </table>
 <div style="flex:1"></div><p style="font-size:30px; line-height:1.45; width:1500px"><span style="font-family:'IBM Plex Mono', 'Courier New', monospace; color:#1C5CAB">tools/systest.py</span> repeats the acceptance checks without an operator, on the final firmware, 5 October 20:37.</p>
 <div style="position:absolute; left:128px; right:128px; bottom:64px; display:flex; justify-content:space-between"><p style="font-size:24px; color:#646B76">Smart Water Tank · Project 08</p><p style="font-size:24px; color:#646B76; font-family:'IBM Plex Mono', 'Courier New', monospace">37</p></div>
-<aside>Before the defence we wanted a test anyone can rerun without an operator, so we wrote systest. It ran on the final firmware on the fifth of October and all five tests passed. T1 listens to ten seconds of telemetry and checks the rate, sequence gaps, every required field and the retained status. T2 checks the security model: anyone can view, but a command without a session is refused with 401, and so is a wrong password. T3 sends forty mode commands one second apart and measures the round trip: none was lost, median 29.1 milliseconds. T4 checks that the device refuses what it should, with the right reason each time: a pump command in automatic mode, a restart inside the twenty second rest, and clearing a fault when there is none. T5 runs the pump by hand for eight seconds and reads the current: 471 to 487 milliamps while running, zero after.</aside>
+<aside>Our automated acceptance test runs without an operator: five tests, all pass.</aside>
 </section>

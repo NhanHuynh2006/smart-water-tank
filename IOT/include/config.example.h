@@ -410,12 +410,14 @@
 // Dat 10 mV la khoang mot nua, du xa nhieu nen ma van bat duoc bom chay.
 #define CURRENT_ON_MV       10.0f
 
-// Doi dien ap cam bien dong ra mA. ACS712 ban 5 A: 185 mV moi ampe, qua chia
-// ap 10k/10k con 92,5 mV moi ampe tai chan ESP32, tuc 10,81 mA moi mV.
+// Doi dien ap cam bien dong ra mA. ACS712 ban 5 A: 185 mV moi ampe. Theo so do
+// mach (KiCad, 06/10) chia ap la R12 10k noi tiep, R13 20k xuong dat, he so 2/3,
+// con 123,3 mV moi ampe tai chan ESP32, tuc 8,11 mA moi mV. (Ban cu gia dinh
+// 10k/10k, 10,81 mA/mV, nen bao dong cao hon that 4/3 lan.)
 // Loai 20 A: 100 mV/A -> 20,0 mA/mV. Loai 30 A: 66 mV/A -> 30,3 mA/mV.
 // Neu KHONG co chia ap thi chia doi cac so tren.
 // Kiem chung mot lan bang dong ho van nang mac noi tiep voi bom.
-#define CURRENT_MA_PER_MV   10.81f
+#define CURRENT_MA_PER_MV   8.11f
 
 // Nen nhieu cua phep do dong. Do ngay 23/09, bom TAT, 40 mau: 0 .. 2,7 mV,
 // tuc 0 .. 29 mA — chi la nhieu cua bo ADC ESP32 (mot nac da la 0,8 mV).
