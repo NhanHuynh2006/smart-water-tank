@@ -38,5 +38,5 @@
 </div>
 </div>
 <div style="position:absolute; left:128px; right:128px; bottom:64px; display:flex; justify-content:space-between"><p style="font-size:24px; color:#646B76">Smart Water Tank · Project 08</p><p style="font-size:24px; color:#646B76; font-family:'IBM Plex Mono', 'Courier New', monospace">23</p></div>
-<aside>The backend learns normal use for each half hour of the day and alarms on a sustained excess. It needs three days per slot, which we do not have yet.</aside>
+<aside>This is advanced option B, running on the backend because it needs days of memory. The day is cut into 48 half-hour slots, each learning its normal use, and an alarm fires when use stays above mean plus three standard deviations for two slots in a row. Honestly, each slot needs three days of data before it may alarm, and we do not have that yet, so we show the mechanism, not a real detection.</aside>
 </section>

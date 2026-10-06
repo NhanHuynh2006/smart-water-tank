@@ -11,5 +11,5 @@
 <p style="font-size:32px; color:#FCFCFB; line-height:1.4">History · daily volume report · rolling leak baseline over days</p>
 </div>
 </div>
-<aside>Our key decision: anything that needs a safe stop runs on the ESP32. The server only keeps history and slow analysis. Lose the network and you lose the view, not the control.</aside>
+<aside>This is our central design decision. The lectures say anything that needs an immediate safe stop must run at the edge, so we put filtering, the state machine, all fault rules and the safety guard on the ESP32. The server keeps only what needs days of memory: history, daily volume and the leak baseline. So when the network drops, we lose the view and remote commands, but the tank still fills at the right level and every safety rule still applies.</aside>
 </section>

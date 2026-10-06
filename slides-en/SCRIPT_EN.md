@@ -1,181 +1,181 @@
 # Presentation script — Smart Water Tank (Project 08)
 
-Short version: only the key point of each slide, about 7 minutes, then the live demo. The same lines are the speaker notes in the deck: https://claude.ai/artifact/TmihFwubP3Ltox1HqgkGtL
+Each slide: the key point and why it matters, about 18 minutes in total, then the live demo. The same text is the speaker notes in the deck: https://claude.ai/artifact/TmihFwubP3Ltox1HqgkGtL
 
 | # | Slide | Presenter | Time | Ends at |
 |---|---|---|---|---|
-| 1 | Smart Water Tank | Bảo | 0:15 | 0:15 |
-| 2 | Seven parts, then the live demo | Bảo | 0:05 | 0:20 |
-| 3 | 01 · Problem and requirements | Bảo | 0:05 | 0:25 |
-| 4 | What a smart tank must do | Bảo | 0:10 | 0:35 |
-| 5 | Requirements and where they are met | Bảo | 0:15 | 0:50 |
-| 6 | 02 · Architecture and hardware | Bảo | 0:05 | 0:55 |
-| 7 | System architecture | Bảo | 0:20 | 1:15 |
-| 8 | The server never switches the pump. It asks, and the ESP32 decides. | Bảo | 0:15 | 1:30 |
-| 9 | The bench rig | Bảo | 0:15 | 1:45 |
-| 10 | The prototype on the bench | Bảo | 0:15 | 2:00 |
-| 11 | Controller board schematic | Bảo | 0:15 | 2:15 |
-| 12 | Three signal lessons, each found by measuring | Bảo | 0:15 | 2:30 |
-| 13 | 03 · MQTT protocol | Nhân | 0:05 | 2:35 |
-| 14 | MQTT topic design | Nhân | 0:15 | 2:50 |
-| 15 | Commands with acknowledgement | Nhân | 0:10 | 3:00 |
-| 16 | 04 · Control and intelligence | Nhân | 0:05 | 3:05 |
-| 17 | Level measurement pipeline | Nhân | 0:10 | 3:15 |
-| 18 | Model bridging and flow from level | Nhân | 0:10 | 3:25 |
-| 19 | Controller state machine | Nhân | 0:10 | 3:35 |
-| 20 | Eleven fault rules | Nhân | 0:10 | 3:45 |
-| 21 | Safety guard and overflow layers | Nhân | 0:10 | 3:55 |
-| 22 | Pump health classification | Nhân | 0:10 | 4:05 |
-| 23 | Rolling baseline and daily volume | Nhân | 0:15 | 4:20 |
-| 24 | 05 · Backend, dashboard, security | Ngân | 0:05 | 4:25 |
-| 25 | Backend and data model | Ngân | 0:05 | 4:30 |
-| 26 | Dashboard and remote access | Ngân | 0:10 | 4:40 |
-| 27 | Security model | Ngân | 0:10 | 4:50 |
-| 28 | Behaviour during a network outage | Ngân | 0:10 | 5:00 |
-| 29 | 06 · Experiments and results | Uyên | 0:05 | 5:05 |
-| 30 | Experiment plan | Uyên | 0:10 | 5:15 |
-| 31 | Level calibration against a ruler | Uyên | 0:15 | 5:30 |
-| 32 | Control response and switching | Uyên | 0:10 | 5:40 |
-| 33 | Volume estimation error | Uyên | 0:10 | 5:50 |
-| 34 | Command latency | Uyên | 0:05 | 5:55 |
-| 35 | Fault detection | Uyên | 0:10 | 6:05 |
-| 36 | Network outage with the pump running | Uyên | 0:10 | 6:15 |
-| 37 | Automated system test, 5/5 pass | Uyên | 0:05 | 6:20 |
-| 38 | 07 · Lessons and conclusion | Dương | 0:05 | 6:25 |
-| 39 | Bugs found on the bench | Dương | 0:10 | 6:35 |
-| 40 | Limitations and next steps | Dương | 0:10 | 6:45 |
-| 41 | Conclusion | Dương | 0:10 | 6:55 |
-| 42 | Live demonstration | Dương | 0:15 | 7:10 |
-| 43 | Thank you | Dương | 0:05 | 7:15 |
+| 1 | Smart Water Tank | Bảo | 0:30 | 0:30 |
+| 2 | Seven parts, then the live demo | Bảo | 0:15 | 0:45 |
+| 3 | 01 · Problem and requirements | Bảo | 0:05 | 0:50 |
+| 4 | What a smart tank must do | Bảo | 0:25 | 1:15 |
+| 5 | Requirements and where they are met | Bảo | 0:30 | 1:45 |
+| 6 | 02 · Architecture and hardware | Bảo | 0:05 | 1:50 |
+| 7 | System architecture | Bảo | 0:35 | 2:25 |
+| 8 | The server never switches the pump. It asks, and the ESP32 decides. | Bảo | 0:35 | 3:00 |
+| 9 | The bench rig | Bảo | 0:30 | 3:30 |
+| 10 | The prototype on the bench | Bảo | 0:25 | 3:55 |
+| 11 | Controller board schematic | Bảo | 0:35 | 4:30 |
+| 12 | Three signal lessons, each found by measuring | Bảo | 0:35 | 5:05 |
+| 13 | 03 · MQTT protocol | Nhân | 0:05 | 5:10 |
+| 14 | MQTT topic design | Nhân | 0:30 | 5:40 |
+| 15 | Commands with acknowledgement | Nhân | 0:30 | 6:10 |
+| 16 | 04 · Control and intelligence | Nhân | 0:05 | 6:15 |
+| 17 | Level measurement pipeline | Nhân | 0:35 | 6:50 |
+| 18 | Model bridging and flow from level | Nhân | 0:35 | 7:25 |
+| 19 | Controller state machine | Nhân | 0:35 | 8:00 |
+| 20 | Eleven fault rules | Nhân | 0:30 | 8:30 |
+| 21 | Safety guard and overflow layers | Nhân | 0:30 | 9:00 |
+| 22 | Pump health classification | Nhân | 0:30 | 9:30 |
+| 23 | Rolling baseline and daily volume | Nhân | 0:30 | 10:00 |
+| 24 | 05 · Backend, dashboard, security | Ngân | 0:05 | 10:05 |
+| 25 | Backend and data model | Ngân | 0:25 | 10:30 |
+| 26 | Dashboard and remote access | Ngân | 0:30 | 11:00 |
+| 27 | Security model | Ngân | 0:35 | 11:35 |
+| 28 | Behaviour during a network outage | Ngân | 0:30 | 12:05 |
+| 29 | 06 · Experiments and results | Uyên | 0:05 | 12:10 |
+| 30 | Experiment plan | Uyên | 0:20 | 12:30 |
+| 31 | Level calibration against a ruler | Uyên | 0:35 | 13:05 |
+| 32 | Control response and switching | Uyên | 0:20 | 13:25 |
+| 33 | Volume estimation error | Uyên | 0:30 | 13:55 |
+| 34 | Command latency | Uyên | 0:25 | 14:20 |
+| 35 | Fault detection | Uyên | 0:30 | 14:50 |
+| 36 | Network outage with the pump running | Uyên | 0:30 | 15:20 |
+| 37 | Automated system test, 5/5 pass | Uyên | 0:15 | 15:35 |
+| 38 | 07 · Lessons and conclusion | Dương | 0:05 | 15:40 |
+| 39 | Bugs found on the bench | Dương | 0:30 | 16:10 |
+| 40 | Limitations and next steps | Dương | 0:25 | 16:35 |
+| 41 | Conclusion | Dương | 0:25 | 17:00 |
+| 42 | Live demonstration | Dương | 0:35 | 17:35 |
+| 43 | Thank you | Dương | 0:05 | 17:40 |
 
 **1. Smart Water Tank** (Bảo)  
-Good morning. We are group [number], Project 08, the Smart Water Tank. One idea to remember: every control and safety decision runs on the ESP32, so the tank keeps working without the network.
+Good morning. We are group [number], and our project is Project 08, the Smart Water Tank. We built a real small tank whose pump is controlled by an ESP32: it measures level and flow, detects faults, and can be watched from anywhere. If you remember one idea, remember this: every control and safety decision runs on the ESP32 itself, so the tank keeps working even when the network does not.
 
 **2. Seven parts, then the live demo** (Bảo)  
-Seven parts, then a live demo on the real tank.
+The talk has seven parts: the problem, the architecture and hardware, the MQTT protocol, the control logic, the platform, our experiments, and our lessons. Then we switch to the real tank for a live demo.
 
 **3. 01 · Problem and requirements** (Bảo)  
-Part one: the problem.
+Part one: the problem and the requirements.
 
 **4. What a smart tank must do** (Bảo)  
-The brief asks for six things: measure, control, protect, diagnose, supervise, and keep working offline. The last one shaped the whole design.
+Most homes still use a mechanical float: cheap, but it only knows when the tank is full. The brief asks for six things: measure level and flow against a real reference, control the level without chattering, never overflow, diagnose pump faults, supervise remotely, and keep working when the network is gone. That last requirement, shown in the dark card, decided our whole architecture.
 
 **5. Requirements and where they are met** (Bảo)  
-Every requirement is done except two, stated honestly: the flow sensors are fitted and the inlet is calibrated, but control still uses flow from the level; and the leak baseline needs more days of data.
+This table is Table 1.3.1 of the report. Nearly every requirement is done and demonstrated. We are upfront about two. The flow sensors are fitted and the inlet sensor is calibrated, but control still uses flow derived from the level, so we call it partly validated. And the leak baseline is built, but it needs three days of data per half-hour slot before it may raise an alarm.
 
 **6. 02 · Architecture and hardware** (Bảo)  
 Part two: architecture and hardware.
 
 **7. System architecture** (Bảo)  
-Sensors feed the ESP32, which closes the loop every 200 ms. MQTT carries telemetry to the broker and commands back. FastAPI stores data in SQLite and serves the dashboard; a tunnel makes it public. The only path to the pump goes through the ESP32.
+The whole system is four blocks in series. Inside the blue boundary, the sensors feed the ESP32, which closes the control loop every 200 ms and switches the pump itself. The ESP32 talks MQTT to a Mosquitto broker; FastAPI stores everything in SQLite and serves the dashboard, and a Cloudflare tunnel makes it public over HTTPS. The key point is the dark box: the only path to the pump goes through the ESP32. The server can ask, but it never switches.
 
 **8. The server never switches the pump. It asks, and the ESP32 decides.** (Bảo)  
-Our key decision: anything that needs a safe stop runs on the ESP32. The server only keeps history and slow analysis. Lose the network and you lose the view, not the control.
+This is our central design decision. The lectures say anything that needs an immediate safe stop must run at the edge, so we put filtering, the state machine, all fault rules and the safety guard on the ESP32. The server keeps only what needs days of memory: history, daily volume and the leak baseline. So when the network drops, we lose the view and remote commands, but the tank still fills at the right level and every safety rule still applies.
 
 **9. The bench rig** (Bảo)  
-A small tank, 10 by 10 cm, 1.24 litres. The pump gives 0.36 litres per minute, five times less than the datasheet, and we size every threshold from that measured number.
+The tank is deliberately small: a 10 by 10 cm base, so one centimetre is exactly 0.1 litre, and 12.4 cm of working range, 1.24 litres. The orange number matters most: the datasheet promises 1.67 litres per minute, but we measured 0.36, and only 0.24 with a low source bucket. Every timing threshold in the firmware is sized from these measured numbers, not from the datasheet.
 
 **10. The prototype on the bench** (Bảo)  
-This is the real rig: the tank with the sensor and float in the lid, the water loop with two flow sensors and a valve, and the controller board on the source bucket.
+This is the real rig. The main tank has the ultrasonic sensor and the upper float in its lid. Water goes in a loop: from the source bucket through the pump and the inlet flow sensor into the tank, and out through the drain valve and the outlet flow sensor. The controller board sits on the lid of the source bucket.
 
 **11. Controller board schematic** (Bảo)  
-Our board. 12 V comes in and two modules give 5 V and 3.3 V. Every 5 V sensor signal goes through a 10k/20k divider; the relay, floats and reset button sit on the 3.3 V rail.
+This is our board, from the KiCad schematic. 12 V comes in and two step-down modules give a 5 V rail and a 3.3 V rail. Every 5 V sensor output, the echo, both flow sensors and the current sensor, goes through a 10k and 20k divider so the ESP32 sees at most 3.3 V. The relay module, the two floats and the reset button sit on the 3.3 V rail, and the relay uses GPIO 10, which needs the flash in DIO mode.
 
 **12. Three signal lessons, each found by measuring** (Bảo)  
-Three wiring lessons, all found by measuring: a level shifter that ate the echo, a floating input that read mains, and pump noise that disappeared only after we rebuilt the power stage.
+Three wiring lessons, each found by measuring, not by reading code. A level shifter distorted the echo and lost 30 percent of readings; a plain divider fixed it. A floating flow input picked up exactly 50 Hz from the mains with the valve closed. And the pump injected 1500 Hz of noise into the flow lines until we rebuilt the power stage on 5 October; since then the inlet counts real water and is calibrated, though control still uses flow from the level.
 
 **13. 03 · MQTT protocol** (Nhân)  
 Part three: the MQTT protocol.
 
 **14. MQTT topic design** (Nhân)  
-One topic per job, with QoS chosen by the cost of losing a message. Status uses the last will, every message has a sequence number, and the device account cannot publish commands.
+Each topic has one job, and we chose its QoS by asking what it costs to lose one message. Telemetry at 1 Hz uses QoS 0, because one lost sample changes nothing; faults, commands and acknowledgements use QoS 1. The status topic carries the last will, so the broker itself announces when the device disappears. Every message has a sequence number to count losses, and the ACL means the device account cannot publish commands.
 
 **15. Commands with acknowledgement** (Nhân)  
-A button press becomes a command with an id. The screen changes only when the ESP32 acknowledges it, with the reason if it refuses.
+This follows one press of the pump button. The dashboard sends a command with a unique id, the ESP32 checks its safety guard and answers on cmd/ack with the result, the reason and the real pump state. The button never changes on its own; the screen shows only what the device confirmed. If the device refuses, for example inside the 20 second rest time, the user sees the reason and a countdown.
 
 **16. 04 · Control and intelligence** (Nhân)  
-Part four: control and intelligence.
+Part four: control and intelligence on the ESP32.
 
 **17. Level measurement pipeline** (Nhân)  
-One ping is never trusted. Each reading passes five steps, from a 15-ping window to an alpha-beta filter. In parallel, a raw-distance check can trip overflow on its own.
+In this narrow tank some echoes come back from the wall or the floor, so we never trust one ping. Each reading goes through five steps: a window of 15 pings, a spread check, the lower quartile, physical plausibility, and an alpha-beta filter that tracks level and rate without lag. Counting rejections showed one bad statistic was throwing away most readings; switching to the interquartile range raised acceptance from 60 to 93 percent. In parallel, a raw distance check can trip the overflow protection on its own.
 
 **18. Model bridging and flow from level** (Nhân)  
-A tank model runs beside the sensor. When the sensor is blind, the model carries control for up to 90 seconds; then the pump stops.
+Next to the sensor we run a simple model of the tank: inflow minus outflow over the base area, pulled towards every good reading. When the sensor goes blind, the model takes over control for at most 90 seconds, then the pump stops with LEVEL_LOST. This fixed fills that used to stop at about 50 percent. The model also gives the outflow on the dashboard, measured only when the pump is off so it does not jump when the pump starts.
 
 **19. Controller state machine** (Nhân)  
-Seven states with a 30 to 70 percent band and minimum on and off times. Fault states are sticky, so a faulty pump never restarts by itself.
+The controller has seven states. It starts the pump below 30 percent and stops above 70, with a minimum on time of 3 s and off time of 20 s, so it never chatters. A manual start goes to MANUAL_ON only if the safety guard allows it. Any fault rule stops the pump and moves to a fault state, and those states are sticky: a pump fault waits for an operator, so a dry pump never restarts by itself.
 
 **20. Eleven fault rules** (Nhân)  
-Eleven fault rules, checked every 200 ms. Any rule stops the pump. NO_PROGRESS is the brief's 'pump on but no flow' rule, measured by the level.
+The brief asks for one fault rule; we have eleven, checked every 200 ms, and any rule that fires stops the pump at once. OVERFLOW has three independent triggers: the float, the raw distance and the filtered level. NO_PROGRESS is the brief's example rule, pump on with no flow, measured by the level not rising. The sensor timeout is long on purpose, 90 seconds while the model is valid, because shorter limits stopped normal fills.
 
 **21. Safety guard and overflow layers** (Nhân)  
-Every pump start, automatic or manual, goes through one guard function. Overflow has seven independent layers, from the 70 percent stop to the mechanical float.
+Manual mode must not bypass safety, so every pump start, automatic or manual, goes through one single guard function. It is re-checked every cycle while a manual pump runs, so lifting the float stops it within 200 ms. Overflow is protected by seven independent layers, from the 70 percent stop to the mechanical float and the relay being switched off first at boot. No single failure disables them all.
 
 **22. Pump health classification** (Nhân)  
-Current plus water movement tells two faults apart: current but no water is a hydraulic problem; no current is an electrical one.
+This is advanced option A: classify pump faults from current and water movement. Current with water moving means a healthy pump. Current but no water after 25 seconds means a hydraulic problem: a dry intake or a blocked pipe. No current means an electrical problem: a broken wire, relay or motor. The same symptom, a tank that does not fill, now sends the technician to the right place.
 
 **23. Rolling baseline and daily volume** (Nhân)  
-The backend learns normal use for each half hour of the day and alarms on a sustained excess. It needs three days per slot, which we do not have yet.
+This is advanced option B, running on the backend because it needs days of memory. The day is cut into 48 half-hour slots, each learning its normal use, and an alarm fires when use stays above mean plus three standard deviations for two slots in a row. Honestly, each slot needs three days of data before it may alarm, and we do not have that yet, so we show the mechanism, not a real detection.
 
 **24. 05 · Backend, dashboard, security** (Ngân)  
 Part five: backend, dashboard and security.
 
 **25. Backend and data model** (Ngân)  
-One Python process, six SQLite tables, a REST API. Commands and configuration need an admin session.
+The backend is one Python process: it subscribes to MQTT, writes six SQLite tables, and serves a REST API. We chose SQLite because one row per second is far below where a relational database struggles. Reads use GET, configuration uses PUT, and commands use POST; anything that changes the physical world needs an admin session.
 
 **26. Dashboard and remote access** (Ngân)  
-Anyone with the link can watch; only an admin with the password can control. The tank drawing shows the thresholds at their real height.
+The dashboard is one web page that works on a computer and on a phone; on a phone the panels stack into one column. Anyone with the public link can watch, but the controls appear only after logging in with the admin password. We first tried to allow control by IP address and dropped it, because through the tunnel every request looks like it comes from the laptop itself.
 
 **27. Security model** (Ngân)  
-Broker passwords and ACLs, session cookies, login lockout. The float and minimum switching times stop attacks by design. Our open gap: MQTT in the lab is not encrypted.
+Security is checked layer by layer. The broker needs a password and an ACL, the API needs a session cookie, and five wrong passwords lock the address. Two attacks are stopped by the control design itself: fake telemetry cannot cause overflow because the float is on the device, and spamming commands cannot wear the pump because of the minimum times. Our open gap is stated plainly: MQTT inside the lab is not encrypted; TLS on port 8883 is the deployment step.
 
 **28. Behaviour during a network outage** (Ngân)  
-When the network drops, the loop never waits, data goes into a 4-minute buffer, the broker announces the device offline, and the device reconnects by itself.
+When the network fails, four things keep the system correct. The control loop never waits for the network; we bound every network call and close a dead socket after 3 seconds. Telemetry goes into a 4-minute ring buffer and is replayed in order later. The broker publishes the last will so everyone knows the device is offline, and the device reconnects by itself and finds the broker again by name.
 
 **29. 06 · Experiments and results** (Uyên)  
 Part six: experiments and results.
 
 **30. Experiment plan** (Uyên)  
-Every result has an independent reference and comes from the database by a script. Two sessions: 23 September for control, 5 October for the final firmware.
+Our rule: every result needs a reference independent of the system, and every number comes from the database by a script anyone can rerun. We analysed two sessions: 23 September for control quality, and 5 October on the final firmware for calibration, the outage test and the system test.
 
 **31. Level calibration against a ruler** (Uyên)  
-Against a ruler, the level error is 0.68 cm outside one blind zone, where the sensor returns a stable false echo. The firmware rejects it and crosses the zone on the model.
+We calibrated the level with the valve closed, pumping in 20-second steps and using one ruler reading plus the pumped volume as the reference. Outside one band, the error is 0.68 cm RMS. Inside that band, when the water is about 8 cm below the sensor, all 40 pings return the same false echo. Because it is stable, it cannot be filtered as noise; the firmware rejects it and crosses the band on the tank model.
 
 **32. Control response and switching** (Uyên)  
-Every automatic fill stopped between 70.1 and 70.8 percent, about 13 starts per hour, no chatter and no false alarm in 84 minutes.
+This is 76 minutes of real operation. Every automatic fill stopped between 70.1 and 70.8 percent, with about 1.4 percent overshoot from water still in the pipe. The pump started about 13 times per hour, the shortest rest was 32 seconds, so it never chattered, and no fault rule fired falsely.
 
 **33. Volume estimation error** (Uyên)  
-Volume error is minus 5.2 percent on average, because we assume a constant pump flow. The calibrated inlet sensor is the fix.
+To check the volume, we compare the device's pumped volume with a reference from the level rise plus the measured drain. The mean error is minus 5.2 percent. The largest errors match the largest drain rates, which tells us the cause: we assume the pump always gives 0.36 litres per minute, but it varies with the source bucket. Using the calibrated inlet sensor for volume is the fix.
 
 **34. Command latency** (Uyên)  
-Commands are confirmed in 29 ms median. Turning off Wi-Fi power saving was the biggest gain.
+Our headline latency is the command round trip, because it is timed by one server clock, so clock skew cancels. The final firmware confirms commands in 29 ms median and 48.5 ms at the 95th percentile, with none lost. The biggest step came from turning off Wi-Fi power saving, which cut the 95th percentile from 884 to 315 ms.
 
 **35. Fault detection** (Uyên)  
-Faults stop the pump in the same 200 ms cycle. We did not inject NO_CURRENT; we measured its signal instead, 353 to 365 mA on and zero off.
+When a fault fires, the pump stops in the same 200 ms cycle; we saw that in all 18 overflow and no-progress events. Unplugging the echo wire raised the sensor timeout as designed, and every manual start during a fault was refused. We did not physically trigger NO_CURRENT, so its 2 s is a design value; what we measured is its signal, 353 to 365 mA with the relay on and zero with it off.
 
 **36. Network outage with the pump running** (Uyên)  
-We cut the network for 120 seconds while pumping. The tank kept filling and stopped itself at 70.7 percent; 125 messages were replayed and only 4 lost.
+This is the test the brief cares most about. We cut the device off the network for 120 seconds while the pump was running at 9 percent. The tank kept filling to 51 percent with no pump change, then stopped itself at 70.7 percent. 125 buffered messages were replayed in order and only 4 were lost, the ones sent in the 3 seconds before the device noticed the link was dead.
 
 **37. Automated system test, 5/5 pass** (Uyên)  
-Our automated acceptance test runs without an operator: five tests, all pass.
+We also wrote an automated acceptance test that anyone can run without an operator. It checks connectivity, security, 40 commands, the right refusals, and the pump current. On the final firmware all five tests passed.
 
 **38. 07 · Lessons and conclusion** (Dương)  
 Part seven: lessons and conclusion.
 
 **39. Bugs found on the bench** (Dương)  
-Four bugs, each found by counting: an inverted relay, a pump start after every reboot, a repeating false echo, and silently truncated messages.
+Four bugs taught us the most, and each was found by counting something. An inverted relay started the pump on every stop command. The pump started after every reboot because the level was marked valid before any reading. A false echo repeated perfectly and fooled a rule that trusted repeats. And messages were silently cut by a too-small buffer, so everything looked fine while nothing was stored.
 
 **40. Limitations and next steps** (Dương)  
-Open items: flow sensors only partly validated, current not checked with a meter, NO_CURRENT not injected, the blind zone, and no TLS on MQTT.
+We think stating limits is as important as showing results. The flow sensors are only partly validated. The pump current reads higher than the pump rating and needs one multimeter check. NO_CURRENT has not been triggered physically. The ultrasonic sensor has a blind zone. And the MQTT link inside the lab has no TLS.
 
 **41. Conclusion** (Dương)  
-Control lives on the edge, safety is structural, and we trusted measurements over datasheets. Now the real tank.
+Three ideas carry the project. Control and safety live on the edge, so the tank keeps working without the network, as the outage test showed. Safety is structural: one guard function and seven independent overflow layers. And we trusted measurements over datasheets; every surprise in this project was found by measuring. Now let us show you the real tank.
 
 **42. Live demonstration** (Dương)  
-Eight steps on the real tank: automatic fill, a manual command, the float, a dry intake, network loss, a pulled pump wire, and a reboot. A backup video is ready.
+Eight steps on the real tank. We let the level fall and the pump starts and stops by itself; we send a manual command and see the confirmed answer; we lift the float and the pump stops; we lift the intake and the health changes to no flow; we switch off the Wi-Fi and the pump still stops at 70 percent; we pull a pump wire; and we reset the ESP32 to show the pump stays off. A backup video is ready.
 
 **43. Thank you** (Dương)  
-Thank you. We are happy to take questions.
+Thank you for your attention. We are happy to answer your questions.
 
 ## Appendix: likely questions and short answers
 

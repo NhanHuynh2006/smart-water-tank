@@ -22,5 +22,5 @@
 </div>
 </div>
 <div style="position:absolute; left:128px; right:128px; bottom:64px; display:flex; justify-content:space-between"><p style="font-size:24px; color:#646B76">Smart Water Tank · Project 08</p><p style="font-size:24px; color:#646B76; font-family:'IBM Plex Mono', 'Courier New', monospace">28</p></div>
-<aside>When the network drops, the loop never waits, data goes into a 4-minute buffer, the broker announces the device offline, and the device reconnects by itself.</aside>
+<aside>When the network fails, four things keep the system correct. The control loop never waits for the network; we bound every network call and close a dead socket after 3 seconds. Telemetry goes into a 4-minute ring buffer and is replayed in order later. The broker publishes the last will so everyone knows the device is offline, and the device reconnects by itself and finds the broker again by name.</aside>
 </section>

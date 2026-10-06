@@ -23,5 +23,5 @@
 </table>
 </div>
 <div style="position:absolute; left:128px; right:128px; bottom:64px; display:flex; justify-content:space-between"><p style="font-size:24px; color:#646B76">Smart Water Tank · Project 08</p><p style="font-size:24px; color:#646B76; font-family:'IBM Plex Mono', 'Courier New', monospace">25</p></div>
-<aside>One Python process, six SQLite tables, a REST API. Commands and configuration need an admin session.</aside>
+<aside>The backend is one Python process: it subscribes to MQTT, writes six SQLite tables, and serves a REST API. We chose SQLite because one row per second is far below where a relational database struggles. Reads use GET, configuration uses PUT, and commands use POST; anything that changes the physical world needs an admin session.</aside>
 </section>

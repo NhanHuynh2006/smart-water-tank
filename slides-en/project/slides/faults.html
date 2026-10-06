@@ -21,5 +21,5 @@
     <tr><td>VOLUME_LIMIT</td><td>More than 2.5 L pumped in one run</td><td>Lock</td></tr>
     <tr><td>LEAK_SUSPECTED</td><td>Pump off, inflow over 0.2 L/min for 60 s</td><td>Warn</td></tr>
   </table>
-  <aside>Eleven fault rules, checked every 200 ms. Any rule stops the pump. NO_PROGRESS is the brief's 'pump on but no flow' rule, measured by the level.</aside>
+  <aside>The brief asks for one fault rule; we have eleven, checked every 200 ms, and any rule that fires stops the pump at once. OVERFLOW has three independent triggers: the float, the raw distance and the filtered level. NO_PROGRESS is the brief's example rule, pump on with no flow, measured by the level not rising. The sensor timeout is long on purpose, 90 seconds while the model is valid, because shorter limits stopped normal fills.</aside>
 </section>

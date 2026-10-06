@@ -30,5 +30,5 @@
 <p style="position:absolute; left:200px; top:322px; width:300px; font-size:24px; text-align:right; color:#646B76">2.5 s of good signal</p>
 </div>
 <div style="position:absolute; left:128px; right:128px; bottom:64px; display:flex; justify-content:space-between"><p style="font-size:24px; color:#646B76">Smart Water Tank · Project 08</p><p style="font-size:24px; color:#646B76; font-family:'IBM Plex Mono', 'Courier New', monospace">19</p></div>
-<aside>Seven states with a 30 to 70 percent band and minimum on and off times. Fault states are sticky, so a faulty pump never restarts by itself.</aside>
+<aside>The controller has seven states. It starts the pump below 30 percent and stops above 70, with a minimum on time of 3 s and off time of 20 s, so it never chatters. A manual start goes to MANUAL_ON only if the safety guard allows it. Any fault rule stops the pump and moves to a fault state, and those states are sticky: a pump fault waits for an operator, so a dry pump never restarts by itself.</aside>
 </section>

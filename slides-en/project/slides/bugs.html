@@ -26,5 +26,5 @@
 </div>
 </div>
 <div style="position:absolute; left:128px; right:128px; bottom:64px; display:flex; justify-content:space-between"><p style="font-size:24px; color:#646B76">Smart Water Tank · Project 08</p><p style="font-size:24px; color:#646B76; font-family:'IBM Plex Mono', 'Courier New', monospace">39</p></div>
-<aside>Four bugs, each found by counting: an inverted relay, a pump start after every reboot, a repeating false echo, and silently truncated messages.</aside>
+<aside>Four bugs taught us the most, and each was found by counting something. An inverted relay started the pump on every stop command. The pump started after every reboot because the level was marked valid before any reading. A false echo repeated perfectly and fooled a rule that trusted repeats. And messages were silently cut by a too-small buffer, so everything looked fine while nothing was stored.</aside>
 </section>

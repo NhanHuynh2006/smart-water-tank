@@ -14,5 +14,5 @@
 </div>
 <img src="/_blob/01761450d2f9d524a3e5f06bf4bfea91" alt="Sequence: operator presses pump on; dashboard posts the command to FastAPI, which publishes it to Mosquitto and returns a pending id; the ESP32 receives the command, decides, and returns an acknowledgement with reason and state; the dashboard polls and shows the confirmed result" style="width:1040px; height:792px; object-fit:contain; background:#FCFCFB; border:1px solid #E1E0D9; border-radius:12px">
 <div style="position:absolute; left:128px; right:128px; bottom:64px; display:flex; justify-content:space-between"><p style="font-size:24px; color:#646B76">Smart Water Tank · Project 08</p><p style="font-size:24px; color:#646B76; font-family:'IBM Plex Mono', 'Courier New', monospace">15</p></div>
-<aside>A button press becomes a command with an id. The screen changes only when the ESP32 acknowledges it, with the reason if it refuses.</aside>
+<aside>This follows one press of the pump button. The dashboard sends a command with a unique id, the ESP32 checks its safety guard and answers on cmd/ack with the result, the reason and the real pump state. The button never changes on its own; the screen shows only what the device confirmed. If the device refuses, for example inside the 20 second rest time, the user sees the reason and a countdown.</aside>
 </section>

@@ -17,5 +17,5 @@
 <p style="flex:1; font-size:28px; color:#3D4552; line-height:1.4; border-top:1px solid #D6D4CB; padding:20px 0px 0px 0px"><b style="color:#0E1A2B">ACL:</b> the device account cannot publish commands.</p>
 </div>
 <div style="position:absolute; left:128px; right:128px; bottom:64px; display:flex; justify-content:space-between"><p style="font-size:24px; color:#646B76">Smart Water Tank · Project 08</p><p style="font-size:24px; color:#646B76; font-family:'IBM Plex Mono', 'Courier New', monospace">14</p></div>
-<aside>One topic per job, with QoS chosen by the cost of losing a message. Status uses the last will, every message has a sequence number, and the device account cannot publish commands.</aside>
+<aside>Each topic has one job, and we chose its QoS by asking what it costs to lose one message. Telemetry at 1 Hz uses QoS 0, because one lost sample changes nothing; faults, commands and acknowledgements use QoS 1. The status topic carries the last will, so the broker itself announces when the device disappears. Every message has a sequence number to count losses, and the ACL means the device account cannot publish commands.</aside>
 </section>

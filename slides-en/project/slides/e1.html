@@ -19,5 +19,5 @@
 </div></div>
 </div>
 <div style="position:absolute; left:128px; right:128px; bottom:64px; display:flex; justify-content:space-between"><p style="font-size:24px; color:#646B76">Smart Water Tank · Project 08</p><p style="font-size:24px; color:#646B76; font-family:'IBM Plex Mono', 'Courier New', monospace">31</p></div>
-<aside>Against a ruler, the level error is 0.68 cm outside one blind zone, where the sensor returns a stable false echo. The firmware rejects it and crosses the zone on the model.</aside>
+<aside>We calibrated the level with the valve closed, pumping in 20-second steps and using one ruler reading plus the pumped volume as the reference. Outside one band, the error is 0.68 cm RMS. Inside that band, when the water is about 8 cm below the sensor, all 40 pings return the same false echo. Because it is stable, it cannot be filtered as noise; the firmware rejects it and crosses the band on the tank model.</aside>
 </section>

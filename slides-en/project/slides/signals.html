@@ -22,5 +22,5 @@
 </div>
 <p style="font-size:32px; line-height:1.4">Inlet sensor now calibrated (K = 85.5) and feeding the model; control and volume still use <b>flow derived from the level</b>.</p>
 <div style="position:absolute; left:128px; right:128px; bottom:64px; display:flex; justify-content:space-between"><p style="font-size:24px; color:#646B76">Smart Water Tank · Project 08</p><p style="font-size:24px; color:#646B76; font-family:'IBM Plex Mono', 'Courier New', monospace">12</p></div>
-<aside>Three wiring lessons, all found by measuring: a level shifter that ate the echo, a floating input that read mains, and pump noise that disappeared only after we rebuilt the power stage.</aside>
+<aside>Three wiring lessons, each found by measuring, not by reading code. A level shifter distorted the echo and lost 30 percent of readings; a plain divider fixed it. A floating flow input picked up exactly 50 Hz from the mains with the valve closed. And the pump injected 1500 Hz of noise into the flow lines until we rebuilt the power stage on 5 October; since then the inlet counts real water and is calibrated, though control still uses flow from the level.</aside>
 </section>

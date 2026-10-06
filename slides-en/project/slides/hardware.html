@@ -29,5 +29,5 @@
 <tr><td>Floats, relay, pump</td><td>Overflow guard, fill permission · relay on GPIO 10, 3.3 V rail · 5 V pump with 1N4007</td></tr>
 </table>
 <div style="position:absolute; left:128px; right:128px; bottom:64px; display:flex; justify-content:space-between"><p style="font-size:24px; color:#646B76">Smart Water Tank · Project 08</p><p style="font-size:24px; color:#646B76; font-family:'IBM Plex Mono', 'Courier New', monospace">09</p></div>
-<aside>A small tank, 10 by 10 cm, 1.24 litres. The pump gives 0.36 litres per minute, five times less than the datasheet, and we size every threshold from that measured number.</aside>
+<aside>The tank is deliberately small: a 10 by 10 cm base, so one centimetre is exactly 0.1 litre, and 12.4 cm of working range, 1.24 litres. The orange number matters most: the datasheet promises 1.67 litres per minute, but we measured 0.36, and only 0.24 with a low source bucket. Every timing threshold in the firmware is sized from these measured numbers, not from the datasheet.</aside>
 </section>

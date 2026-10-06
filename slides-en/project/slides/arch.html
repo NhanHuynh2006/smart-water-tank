@@ -27,5 +27,5 @@
 <p style="position:absolute; left:1246px; top:572px; width:74px; font-size:24px; line-height:1.25; text-align:center; color:#3D4552;">HTTPS</p>
 </div>
 <div style="position:absolute; left:128px; right:128px; bottom:64px; display:flex; justify-content:space-between"><p style="font-size:24px; color:#646B76">Smart Water Tank · Project 08</p><p style="font-size:24px; color:#646B76; font-family:'IBM Plex Mono', 'Courier New', monospace">07</p></div>
-<aside>Sensors feed the ESP32, which closes the loop every 200 ms. MQTT carries telemetry to the broker and commands back. FastAPI stores data in SQLite and serves the dashboard; a tunnel makes it public. The only path to the pump goes through the ESP32.</aside>
+<aside>The whole system is four blocks in series. Inside the blue boundary, the sensors feed the ESP32, which closes the control loop every 200 ms and switches the pump itself. The ESP32 talks MQTT to a Mosquitto broker; FastAPI stores everything in SQLite and serves the dashboard, and a Cloudflare tunnel makes it public over HTTPS. The key point is the dark box: the only path to the pump goes through the ESP32. The server can ask, but it never switches.</aside>
 </section>

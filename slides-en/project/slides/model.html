@@ -24,5 +24,5 @@
 </div>
 </div>
 <div style="position:absolute; left:128px; right:128px; bottom:64px; display:flex; justify-content:space-between"><p style="font-size:24px; color:#646B76">Smart Water Tank · Project 08</p><p style="font-size:24px; color:#646B76; font-family:'IBM Plex Mono', 'Courier New', monospace">18</p></div>
-<aside>A tank model runs beside the sensor. When the sensor is blind, the model carries control for up to 90 seconds; then the pump stops.</aside>
+<aside>Next to the sensor we run a simple model of the tank: inflow minus outflow over the base area, pulled towards every good reading. When the sensor goes blind, the model takes over control for at most 90 seconds, then the pump stops with LEVEL_LOST. This fixed fills that used to stop at about 50 percent. The model also gives the outflow on the dashboard, measured only when the pump is off so it does not jump when the pump starts.</aside>
 </section>

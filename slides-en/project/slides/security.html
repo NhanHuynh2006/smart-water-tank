@@ -15,5 +15,5 @@
 <div style="flex:1"></div>
 <p style="font-size:30px; line-height:1.45; width:1400px">The blue rows are stopped by physics and control design: no message can lift a float or switch the relay faster than the firmware allows. The orange row is our open gap: <b>no end-to-end TLS</b>.</p>
 <div style="position:absolute; left:128px; right:128px; bottom:64px; display:flex; justify-content:space-between"><p style="font-size:24px; color:#646B76">Smart Water Tank · Project 08</p><p style="font-size:24px; color:#646B76; font-family:'IBM Plex Mono', 'Courier New', monospace">27</p></div>
-<aside>Broker passwords and ACLs, session cookies, login lockout. The float and minimum switching times stop attacks by design. Our open gap: MQTT in the lab is not encrypted.</aside>
+<aside>Security is checked layer by layer. The broker needs a password and an ACL, the API needs a session cookie, and five wrong passwords lock the address. Two attacks are stopped by the control design itself: fake telemetry cannot cause overflow because the float is on the device, and spamming commands cannot wear the pump because of the minimum times. Our open gap is stated plainly: MQTT inside the lab is not encrypted; TLS on port 8883 is the deployment step.</aside>
 </section>

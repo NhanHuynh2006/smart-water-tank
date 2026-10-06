@@ -1,4 +1,4 @@
-English slide deck, 43 slides (about 7 min of short talking points + 10-15 min demo).
+English slide deck, 43 slides (about 18 min of talking points + 10-15 min demo).
 Live deck (present, download as PPTX/PDF): https://claude.ai/artifact/TmihFwubP3Ltox1HqgkGtL
 
 project/            source of every slide; speaker notes = English script

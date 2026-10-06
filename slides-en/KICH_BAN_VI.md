@@ -1,181 +1,181 @@
 # Kịch bản thuyết trình — Bồn nước thông minh (Project 08)
 
-Bản rút gọn: mỗi slide chỉ nói ý chính, khoảng 7 phút, sau đó demo. Lên thuyết trình thì nói theo bản tiếng Anh `SCRIPT_EN.md` (cũng là ghi chú người nói trong slide); bản này để hiểu và tập.
+Mỗi slide: ý chính và lý do, tổng khoảng 18 phút, sau đó demo. Lên thuyết trình thì nói theo bản tiếng Anh `SCRIPT_EN.md` (cũng là ghi chú người nói trong slide); bản này để hiểu và tập.
 
 | # | Slide | Người nói | Thời gian | Hết lúc |
 |---|---|---|---|---|
-| 1 | Smart Water Tank | Bảo | 0:15 | 0:15 |
-| 2 | Seven parts, then the live demo | Bảo | 0:05 | 0:20 |
-| 3 | 01 · Problem and requirements | Bảo | 0:05 | 0:25 |
-| 4 | What a smart tank must do | Bảo | 0:10 | 0:35 |
-| 5 | Requirements and where they are met | Bảo | 0:15 | 0:50 |
-| 6 | 02 · Architecture and hardware | Bảo | 0:05 | 0:55 |
-| 7 | System architecture | Bảo | 0:20 | 1:15 |
-| 8 | The server never switches the pump. It asks, and the ESP32 decides. | Bảo | 0:15 | 1:30 |
-| 9 | The bench rig | Bảo | 0:15 | 1:45 |
-| 10 | The prototype on the bench | Bảo | 0:15 | 2:00 |
-| 11 | Controller board schematic | Bảo | 0:15 | 2:15 |
-| 12 | Three signal lessons, each found by measuring | Bảo | 0:15 | 2:30 |
-| 13 | 03 · MQTT protocol | Nhân | 0:05 | 2:35 |
-| 14 | MQTT topic design | Nhân | 0:15 | 2:50 |
-| 15 | Commands with acknowledgement | Nhân | 0:10 | 3:00 |
-| 16 | 04 · Control and intelligence | Nhân | 0:05 | 3:05 |
-| 17 | Level measurement pipeline | Nhân | 0:10 | 3:15 |
-| 18 | Model bridging and flow from level | Nhân | 0:10 | 3:25 |
-| 19 | Controller state machine | Nhân | 0:10 | 3:35 |
-| 20 | Eleven fault rules | Nhân | 0:10 | 3:45 |
-| 21 | Safety guard and overflow layers | Nhân | 0:10 | 3:55 |
-| 22 | Pump health classification | Nhân | 0:10 | 4:05 |
-| 23 | Rolling baseline and daily volume | Nhân | 0:15 | 4:20 |
-| 24 | 05 · Backend, dashboard, security | Ngân | 0:05 | 4:25 |
-| 25 | Backend and data model | Ngân | 0:05 | 4:30 |
-| 26 | Dashboard and remote access | Ngân | 0:10 | 4:40 |
-| 27 | Security model | Ngân | 0:10 | 4:50 |
-| 28 | Behaviour during a network outage | Ngân | 0:10 | 5:00 |
-| 29 | 06 · Experiments and results | Uyên | 0:05 | 5:05 |
-| 30 | Experiment plan | Uyên | 0:10 | 5:15 |
-| 31 | Level calibration against a ruler | Uyên | 0:15 | 5:30 |
-| 32 | Control response and switching | Uyên | 0:10 | 5:40 |
-| 33 | Volume estimation error | Uyên | 0:10 | 5:50 |
-| 34 | Command latency | Uyên | 0:05 | 5:55 |
-| 35 | Fault detection | Uyên | 0:10 | 6:05 |
-| 36 | Network outage with the pump running | Uyên | 0:10 | 6:15 |
-| 37 | Automated system test, 5/5 pass | Uyên | 0:05 | 6:20 |
-| 38 | 07 · Lessons and conclusion | Dương | 0:05 | 6:25 |
-| 39 | Bugs found on the bench | Dương | 0:10 | 6:35 |
-| 40 | Limitations and next steps | Dương | 0:10 | 6:45 |
-| 41 | Conclusion | Dương | 0:10 | 6:55 |
-| 42 | Live demonstration | Dương | 0:15 | 7:10 |
-| 43 | Thank you | Dương | 0:05 | 7:15 |
+| 1 | Smart Water Tank | Bảo | 0:30 | 0:30 |
+| 2 | Seven parts, then the live demo | Bảo | 0:15 | 0:45 |
+| 3 | 01 · Problem and requirements | Bảo | 0:05 | 0:50 |
+| 4 | What a smart tank must do | Bảo | 0:25 | 1:15 |
+| 5 | Requirements and where they are met | Bảo | 0:30 | 1:45 |
+| 6 | 02 · Architecture and hardware | Bảo | 0:05 | 1:50 |
+| 7 | System architecture | Bảo | 0:35 | 2:25 |
+| 8 | The server never switches the pump. It asks, and the ESP32 decides. | Bảo | 0:35 | 3:00 |
+| 9 | The bench rig | Bảo | 0:30 | 3:30 |
+| 10 | The prototype on the bench | Bảo | 0:25 | 3:55 |
+| 11 | Controller board schematic | Bảo | 0:35 | 4:30 |
+| 12 | Three signal lessons, each found by measuring | Bảo | 0:35 | 5:05 |
+| 13 | 03 · MQTT protocol | Nhân | 0:05 | 5:10 |
+| 14 | MQTT topic design | Nhân | 0:30 | 5:40 |
+| 15 | Commands with acknowledgement | Nhân | 0:30 | 6:10 |
+| 16 | 04 · Control and intelligence | Nhân | 0:05 | 6:15 |
+| 17 | Level measurement pipeline | Nhân | 0:35 | 6:50 |
+| 18 | Model bridging and flow from level | Nhân | 0:35 | 7:25 |
+| 19 | Controller state machine | Nhân | 0:35 | 8:00 |
+| 20 | Eleven fault rules | Nhân | 0:30 | 8:30 |
+| 21 | Safety guard and overflow layers | Nhân | 0:30 | 9:00 |
+| 22 | Pump health classification | Nhân | 0:30 | 9:30 |
+| 23 | Rolling baseline and daily volume | Nhân | 0:30 | 10:00 |
+| 24 | 05 · Backend, dashboard, security | Ngân | 0:05 | 10:05 |
+| 25 | Backend and data model | Ngân | 0:25 | 10:30 |
+| 26 | Dashboard and remote access | Ngân | 0:30 | 11:00 |
+| 27 | Security model | Ngân | 0:35 | 11:35 |
+| 28 | Behaviour during a network outage | Ngân | 0:30 | 12:05 |
+| 29 | 06 · Experiments and results | Uyên | 0:05 | 12:10 |
+| 30 | Experiment plan | Uyên | 0:20 | 12:30 |
+| 31 | Level calibration against a ruler | Uyên | 0:35 | 13:05 |
+| 32 | Control response and switching | Uyên | 0:20 | 13:25 |
+| 33 | Volume estimation error | Uyên | 0:30 | 13:55 |
+| 34 | Command latency | Uyên | 0:25 | 14:20 |
+| 35 | Fault detection | Uyên | 0:30 | 14:50 |
+| 36 | Network outage with the pump running | Uyên | 0:30 | 15:20 |
+| 37 | Automated system test, 5/5 pass | Uyên | 0:15 | 15:35 |
+| 38 | 07 · Lessons and conclusion | Dương | 0:05 | 15:40 |
+| 39 | Bugs found on the bench | Dương | 0:30 | 16:10 |
+| 40 | Limitations and next steps | Dương | 0:25 | 16:35 |
+| 41 | Conclusion | Dương | 0:25 | 17:00 |
+| 42 | Live demonstration | Dương | 0:35 | 17:35 |
+| 43 | Thank you | Dương | 0:05 | 17:40 |
 
 **1. Smart Water Tank** (Bảo)  
-Chào thầy và các bạn. Nhóm em là nhóm [số], đề tài Project 08: Bồn nước thông minh. Ý chính: mọi quyết định điều khiển và an toàn chạy trên ESP32, nên mất mạng bồn vẫn tự chạy.
+Chào thầy và các bạn. Nhóm em là nhóm [số], đề tài Project 08: Bồn nước thông minh. Nhóm làm một bồn nước thật cỡ nhỏ, bơm do ESP32 điều khiển: đo mức và lưu lượng, phát hiện lỗi, và theo dõi được từ bất cứ đâu. Nếu chỉ nhớ một ý thì là: mọi quyết định điều khiển và an toàn đều chạy trên ESP32, nên mất mạng bồn vẫn tự chạy đúng.
 
 **2. Seven parts, then the live demo** (Bảo)  
-Bảy phần, sau đó demo trên bồn thật.
+Bài có bảy phần: bài toán, kiến trúc và phần cứng, giao thức MQTT, phần điều khiển, nền tảng phía máy chủ, thí nghiệm, và bài học. Sau đó chuyển sang demo trên bồn thật.
 
 **3. 01 · Problem and requirements** (Bảo)  
-Phần một: bài toán.
+Phần một: bài toán và yêu cầu.
 
 **4. What a smart tank must do** (Bảo)  
-Đề yêu cầu sáu việc: đo, điều khiển, bảo vệ, chẩn đoán, giám sát, và vẫn chạy khi mất mạng. Yêu cầu cuối quyết định toàn bộ thiết kế.
+Phần lớn nhà vẫn dùng phao cơ: rẻ nhưng chỉ biết bồn đầy hay chưa. Đề yêu cầu sáu việc: đo mức và lưu lượng có chuẩn đối chiếu, giữ mức không bật tắt liên tục, không bao giờ tràn, chẩn đoán lỗi bơm, giám sát từ xa, và vẫn chạy khi mất mạng. Yêu cầu cuối, ô màu tối, quyết định toàn bộ kiến trúc.
 
 **5. Requirements and where they are met** (Bảo)  
-Mọi yêu cầu đều xong, trừ hai chỗ nói thẳng: cảm biến lưu lượng có lắp và đầu vào đã hiệu chuẩn nhưng điều khiển vẫn dùng lưu lượng suy từ mức nước; đường nền rò rỉ cần thêm ngày dữ liệu.
+Bảng này là Bảng 1.3.1 trong báo cáo. Gần như mọi yêu cầu đều xong và có chứng minh. Nhóm nói thẳng hai chỗ. Cảm biến lưu lượng có lắp, đầu vào đã hiệu chuẩn, nhưng điều khiển vẫn dùng lưu lượng suy từ mức nước, nên ghi là kiểm chứng một phần. Và đường nền rò rỉ đã làm, nhưng mỗi khe nửa giờ cần ba ngày dữ liệu mới được báo động.
 
 **6. 02 · Architecture and hardware** (Bảo)  
 Phần hai: kiến trúc và phần cứng.
 
 **7. System architecture** (Bảo)  
-Cảm biến vào ESP32, ESP32 khép vòng điều khiển mỗi 200 ms. MQTT đưa dữ liệu lên broker và lệnh xuống. FastAPI lưu SQLite và phục vụ dashboard, đường hầm đưa ra công khai. Đường duy nhất tới bơm là qua ESP32.
+Hệ thống gồm bốn khối nối tiếp. Trong khung xanh, cảm biến đưa dữ liệu vào ESP32, ESP32 khép vòng điều khiển mỗi 200 ms và tự đóng cắt bơm. ESP32 nói chuyện MQTT với broker Mosquitto; FastAPI lưu mọi thứ vào SQLite và phục vụ dashboard, đường hầm Cloudflare đưa ra công khai qua HTTPS. Điểm chính là ô màu tối: đường duy nhất tới bơm là qua ESP32. Máy chủ chỉ được hỏi, không bao giờ tự bật bơm.
 
 **8. The server never switches the pump. It asks, and the ESP32 decides.** (Bảo)  
-Quyết định chính: cái gì cần dừng an toàn thì chạy trên ESP32. Máy chủ chỉ giữ lịch sử và phân tích chậm. Mất mạng chỉ mất phần xem, không mất điều khiển.
+Đây là quyết định thiết kế trung tâm. Bài giảng nói cái gì cần dừng an toàn tức thì thì phải chạy ở biên, nên nhóm đặt bộ lọc, máy trạng thái, mọi luật lỗi và hàm bảo vệ trên ESP32. Máy chủ chỉ giữ những thứ cần nhớ nhiều ngày: lịch sử, thể tích theo ngày và đường nền rò rỉ. Vì vậy khi mất mạng, ta chỉ mất phần xem và lệnh từ xa; bồn vẫn bơm đúng ngưỡng và mọi luật an toàn vẫn chạy.
 
 **9. The bench rig** (Bảo)  
-Bồn nhỏ 10 nhân 10 cm, 1,24 lít. Bơm thật chỉ cho 0,36 lít/phút, kém datasheet năm lần, và mọi ngưỡng đều lấy theo số đo này.
+Bồn cố ý làm nhỏ: đáy 10 nhân 10 cm nên một centimet đúng 0,1 lít, dải làm việc 12,4 cm, tức 1,24 lít. Con số màu cam quan trọng nhất: datasheet hứa 1,67 lít/phút, nhóm đo được 0,36, và chỉ 0,24 khi xô nguồn thấp. Mọi ngưỡng thời gian trong firmware đều lấy theo số đo, không lấy theo datasheet.
 
 **10. The prototype on the bench** (Bảo)  
-Đây là mô hình thật: bồn có cảm biến và phao trên nắp, vòng nước có hai cảm biến lưu lượng và van xả, bo điều khiển đặt trên xô nguồn.
+Đây là mô hình thật. Bồn chính có cảm biến siêu âm và phao trên ở nắp. Nước chạy vòng: từ xô nguồn qua bơm và cảm biến lưu lượng đầu vào vào bồn, rồi ra qua van xả và cảm biến lưu lượng đầu ra. Bo điều khiển đặt trên nắp xô nguồn.
 
 **11. Controller board schematic** (Bảo)  
-Bo mạch của nhóm. Vào 12 V, hai mạch hạ áp ra 5 V và 3,3 V. Mọi tín hiệu 5 V của cảm biến qua cầu chia 10k/20k; rơ-le, phao và nút reset nằm trên nguồn 3,3 V.
+Đây là bo mạch của nhóm, theo sơ đồ KiCad. Vào 12 V, hai mạch hạ áp tạo nguồn 5 V và 3,3 V. Mọi ngõ ra 5 V của cảm biến, gồm echo, hai cảm biến lưu lượng và cảm biến dòng, đều qua cầu chia 10k và 20k để ESP32 chỉ thấy tối đa 3,3 V. Module rơ-le, hai phao và nút reset dùng nguồn 3,3 V; rơ-le nối GPIO 10, chân này cần flash chạy chế độ DIO.
 
 **12. Three signal lessons, each found by measuring** (Bảo)  
-Ba bài học đi dây, đều nhờ đo mà ra: bộ chuyển mức làm mất tiếng dội, chân thả nổi bắt nhiễu điện lưới, và nhiễu bơm chỉ hết sau khi làm lại tầng công suất.
+Ba bài học đi dây, đều nhờ đo mà ra chứ không phải đọc code. Bộ chuyển mức làm méo xung echo, mất 30 phần trăm số đo; cầu chia điện trở sửa được. Chân lưu lượng thả nổi bắt đúng 50 Hz điện lưới dù van đóng. Và bơm gây 1500 Hz nhiễu vào dây lưu lượng cho tới khi làm lại tầng công suất ngày 5/10; từ đó cảm biến đầu vào đếm được nước thật và đã hiệu chuẩn, dù điều khiển vẫn dùng lưu lượng suy từ mức nước.
 
 **13. 03 · MQTT protocol** (Nhân)  
 Phần ba: giao thức MQTT.
 
 **14. MQTT topic design** (Nhân)  
-Mỗi topic một việc, QoS chọn theo cái giá khi mất tin. Trạng thái dùng last will, mỗi bản tin có số thứ tự, và tài khoản thiết bị không gửi được lệnh.
+Mỗi topic làm một việc, và QoS được chọn bằng cách hỏi: mất một tin thì tốn gì. Telemetry 1 Hz dùng QoS 0 vì mất một mẫu không đổi gì; lỗi, lệnh và xác nhận dùng QoS 1. Topic trạng thái mang last will, nên broker tự báo khi thiết bị biến mất. Mỗi bản tin có số thứ tự để đếm mất mát, và ACL làm tài khoản thiết bị không gửi được lệnh.
 
 **15. Commands with acknowledgement** (Nhân)  
-Bấm nút thành một lệnh có mã riêng. Màn hình chỉ đổi khi ESP32 xác nhận, kèm lý do nếu từ chối.
+Đây là đường đi của một lần bấm nút bơm. Dashboard gửi lệnh có mã riêng, ESP32 kiểm tra hàm bảo vệ rồi trả lời ở cmd/ack kèm kết quả, lý do và trạng thái bơm thật. Nút không tự đổi; màn hình chỉ hiện điều thiết bị đã xác nhận. Nếu thiết bị từ chối, ví dụ trong 20 giây nghỉ, người dùng thấy lý do và đếm ngược.
 
 **16. 04 · Control and intelligence** (Nhân)  
-Phần bốn: điều khiển và trí tuệ.
+Phần bốn: điều khiển và trí tuệ trên ESP32.
 
 **17. Level measurement pipeline** (Nhân)  
-Không bao giờ tin một lần đo. Mỗi số đo qua năm bước, từ cửa sổ 15 lần đo tới bộ lọc alpha-beta. Song song, phép đo khoảng cách thô có thể tự kích hoạt chống tràn.
+Trong bồn hẹp, một số tiếng dội về từ thành hoặc đáy, nên không bao giờ tin một lần đo. Mỗi số đo qua năm bước: cửa sổ 15 lần đo, kiểm tra độ phân tán, lấy phân vị 25, kiểm tra hợp lý vật lý, và bộ lọc alpha-beta theo dõi mức và tốc độ không bị trễ. Đếm số lần loại cho thấy một thống kê sai đang vứt gần hết số đo; đổi sang khoảng tứ phân vị nâng tỉ lệ nhận từ 60 lên 93 phần trăm. Song song, phép đo khoảng cách thô có thể tự kích hoạt chống tràn.
 
 **18. Model bridging and flow from level** (Nhân)  
-Một mô hình bồn chạy song song với cảm biến. Khi cảm biến mù, mô hình điều khiển tối đa 90 giây; quá thì dừng bơm.
+Bên cạnh cảm biến, nhóm chạy một mô hình bồn đơn giản: lưu lượng vào trừ ra chia diện tích đáy, luôn được kéo về mỗi số đo tốt. Khi cảm biến mù, mô hình nắm điều khiển tối đa 90 giây, quá thì dừng bơm và báo LEVEL_LOST. Nhờ vậy hết cảnh bơm dừng ở khoảng 50 phần trăm. Mô hình cũng cho lưu lượng ra trên dashboard, chỉ đo khi bơm tắt nên không nhảy khi bơm bật.
 
 **19. Controller state machine** (Nhân)  
-Bảy trạng thái, dải 30 tới 70 phần trăm, có thời gian chạy và nghỉ tối thiểu. Trạng thái lỗi được giữ lại, nên bơm lỗi không tự chạy lại.
+Bộ điều khiển có bảy trạng thái. Bơm bật dưới 30 phần trăm và tắt trên 70, có thời gian chạy tối thiểu 3 giây và nghỉ 20 giây nên không bật tắt liên tục. Bật tay chỉ vào MANUAL_ON khi hàm bảo vệ cho phép. Luật lỗi nào kích hoạt cũng dừng bơm và vào trạng thái lỗi, và trạng thái lỗi được giữ lại: lỗi bơm chờ người vận hành, nên bơm chạy khô không tự chạy lại.
 
 **20. Eleven fault rules** (Nhân)  
-Mười một luật lỗi, xét mỗi 200 ms. Luật nào kích hoạt cũng dừng bơm. NO_PROGRESS là luật "bơm chạy mà không có dòng chảy" của đề, đo bằng mực nước.
+Đề yêu cầu một luật lỗi; nhóm có mười một luật, xét mỗi 200 ms, luật nào kích hoạt cũng dừng bơm ngay. OVERFLOW có ba nguồn độc lập: phao, khoảng cách thô và mức đã lọc. NO_PROGRESS là luật ví dụ của đề, bơm chạy mà không có dòng chảy, đo bằng việc mực nước không lên. Thời gian chờ cảm biến cố ý dài, 90 giây khi mô hình còn hợp lệ, vì ngưỡng ngắn hơn làm dừng các lần bơm bình thường.
 
 **21. Safety guard and overflow layers** (Nhân)  
-Mọi lần bật bơm, tự động hay tay, đều qua một hàm bảo vệ. Chống tràn có bảy lớp độc lập, từ ngưỡng 70 phần trăm tới phao cơ.
+Chế độ tay không được vượt an toàn, nên mọi lần bật bơm, tự động hay tay, đều đi qua một hàm bảo vệ duy nhất. Hàm này được xét lại mỗi chu kỳ khi bơm tay đang chạy, nên nhấc phao là bơm dừng trong 200 ms. Chống tràn có bảy lớp độc lập, từ ngưỡng 70 phần trăm tới phao cơ và việc ngắt rơ-le ngay khi khởi động. Không một hỏng hóc đơn lẻ nào tắt được tất cả.
 
 **22. Pump health classification** (Nhân)  
-Dòng điện cộng với việc nước có chảy hay không phân biệt hai lỗi: có dòng mà không có nước là lỗi thủy lực; không có dòng là lỗi điện.
+Đây là lựa chọn nâng cao A: phân loại lỗi bơm từ dòng điện và việc nước có chảy. Có dòng và nước chảy là bơm khỏe. Có dòng mà sau 25 giây nước không chảy là lỗi thủy lực: hút khô hoặc tắc ống. Không có dòng là lỗi điện: đứt dây, hỏng rơ-le hoặc động cơ. Cùng một triệu chứng bồn không đầy, giờ chỉ đúng chỗ cần sửa.
 
 **23. Rolling baseline and daily volume** (Nhân)  
-Backend học mức dùng bình thường cho từng nửa giờ trong ngày và báo khi vượt kéo dài. Mỗi khe cần ba ngày dữ liệu, nhóm chưa đủ.
+Đây là lựa chọn nâng cao B, chạy trên backend vì cần nhớ nhiều ngày. Một ngày chia 48 khe nửa giờ, mỗi khe học mức dùng bình thường, và báo động khi mức dùng vượt trung bình cộng ba độ lệch chuẩn trong hai khe liền. Nói thật là mỗi khe cần ba ngày dữ liệu mới được báo, nhóm chưa đủ, nên chỉ trình bày được cơ chế.
 
 **24. 05 · Backend, dashboard, security** (Ngân)  
 Phần năm: backend, dashboard và bảo mật.
 
 **25. Backend and data model** (Ngân)  
-Một tiến trình Python, sáu bảng SQLite, một REST API. Lệnh và cấu hình cần phiên quản trị.
+Backend là một tiến trình Python: nhận MQTT, ghi sáu bảng SQLite và phục vụ REST API. Chọn SQLite vì một dòng mỗi giây còn rất xa mức cơ sở dữ liệu quan hệ gặp khó. Đọc dùng GET, cấu hình dùng PUT, lệnh dùng POST; mọi thứ tác động tới thế giới thật đều cần phiên quản trị.
 
 **26. Dashboard and remote access** (Ngân)  
-Ai có link cũng xem được; chỉ quản trị có mật khẩu mới điều khiển được. Hình bồn vẽ ngưỡng đúng độ cao thật.
+Dashboard là một trang web dùng được cả trên máy tính và điện thoại; trên điện thoại các khung tự xếp thành một cột. Ai có link công khai cũng xem được, nhưng nút điều khiển chỉ hiện sau khi đăng nhập mật khẩu quản trị. Nhóm từng thử cho phép điều khiển theo địa chỉ IP rồi bỏ, vì qua đường hầm mọi yêu cầu đều trông như đến từ chính laptop.
 
 **27. Security model** (Ngân)  
-Mật khẩu và ACL ở broker, cookie phiên, khóa khi sai nhiều lần. Phao và thời gian đóng cắt tối thiểu chặn tấn công bằng chính thiết kế. Lỗ hổng còn lại: MQTT trong lab chưa mã hóa.
+Bảo mật xét theo từng lớp. Broker cần mật khẩu và ACL, API cần cookie phiên, sai mật khẩu năm lần thì khóa địa chỉ. Hai kiểu tấn công bị chặn bởi chính thiết kế điều khiển: dữ liệu giả không gây tràn được vì phao nằm trên thiết bị, gửi lệnh liên tục không làm hỏng bơm vì có thời gian tối thiểu. Lỗ hổng còn lại nói thẳng: MQTT trong lab chưa mã hóa; TLS cổng 8883 là bước khi triển khai.
 
 **28. Behaviour during a network outage** (Ngân)  
-Khi mất mạng: vòng điều khiển không chờ, dữ liệu vào bộ đệm 4 phút, broker báo thiết bị mất kết nối, và thiết bị tự nối lại.
+Khi mất mạng, bốn cơ chế giữ hệ thống đúng. Vòng điều khiển không bao giờ chờ mạng; mọi lệnh mạng đều có giới hạn thời gian và socket chết bị đóng sau 3 giây. Telemetry vào bộ đệm vòng 4 phút và được phát lại đúng thứ tự. Broker gửi last will để ai cũng biết thiết bị mất kết nối, và thiết bị tự nối lại, tự tìm lại broker theo tên.
 
 **29. 06 · Experiments and results** (Uyên)  
 Phần sáu: thí nghiệm và kết quả.
 
 **30. Experiment plan** (Uyên)  
-Mỗi kết quả có chuẩn đối chiếu độc lập và lấy từ cơ sở dữ liệu bằng script. Hai buổi: 23/9 cho điều khiển, 5/10 cho firmware cuối.
+Quy tắc của nhóm: mỗi kết quả phải có chuẩn đối chiếu độc lập với hệ thống, và mọi con số lấy từ cơ sở dữ liệu bằng script ai cũng chạy lại được. Có hai buổi được phân tích: 23/9 cho chất lượng điều khiển, và 5/10 trên firmware cuối cho hiệu chuẩn, mất mạng và kiểm thử hệ thống.
 
 **31. Level calibration against a ruler** (Uyên)  
-So với thước, sai số mực nước 0,68 cm ngoài một vùng mù, nơi cảm biến trả về tiếng dội sai ổn định. Firmware loại nó và đi qua vùng đó bằng mô hình.
+Nhóm hiệu chuẩn mực nước khi đóng van, bơm từng bậc 20 giây, lấy chuẩn là một lần đọc thước cộng thể tích đã bơm. Ngoài một dải hẹp, sai số là 0,68 cm. Trong dải đó, khi mặt nước cách cảm biến khoảng 8 cm, cả 40 lần đo cho cùng một tiếng dội sai. Vì nó ổn định nên không lọc như nhiễu được; firmware loại nó và đi qua dải đó bằng mô hình bồn.
 
 **32. Control response and switching** (Uyên)  
-Mọi lần bơm tự động dừng trong khoảng 70,1 tới 70,8 phần trăm, khoảng 13 lần bật mỗi giờ, không bật tắt liên tục, không báo động nhầm trong 84 phút.
+Đây là 76 phút vận hành thật. Mọi lần bơm tự động dừng trong khoảng 70,1 tới 70,8 phần trăm, vượt khoảng 1,4 phần trăm do nước còn trong ống. Bơm bật khoảng 13 lần mỗi giờ, nghỉ ngắn nhất 32 giây nên không bật tắt liên tục, và không luật lỗi nào báo nhầm.
 
 **33. Volume estimation error** (Uyên)  
-Sai số thể tích trung bình âm 5,2 phần trăm, do giả định lưu lượng bơm không đổi. Cảm biến đầu vào đã hiệu chuẩn là cách sửa.
+Để kiểm thể tích, nhóm so lượng thiết bị tính với chuẩn lấy từ độ dâng mực nước cộng lượng xả đo riêng. Sai số trung bình âm 5,2 phần trăm. Sai số lớn nhất trùng lúc xả nhanh nhất, cho thấy nguyên nhân: nhóm giả định bơm luôn cho 0,36 lít/phút, nhưng thực tế thay đổi theo xô nguồn. Dùng cảm biến đầu vào đã hiệu chuẩn để tính thể tích là cách sửa.
 
 **34. Command latency** (Uyên)  
-Lệnh được xác nhận trong 29 ms trung vị. Tắt chế độ tiết kiệm điện Wi-Fi là bước cải thiện lớn nhất.
+Độ trễ chính nhóm báo cáo là thời gian khứ hồi của lệnh, vì nó được đo bằng một đồng hồ của máy chủ nên lệch đồng hồ tự triệt tiêu. Firmware cuối xác nhận lệnh trong 29 ms trung vị, 48,5 ms ở phân vị 95, không mất lệnh nào. Bước cải thiện lớn nhất là tắt chế độ tiết kiệm điện Wi-Fi, giảm phân vị 95 từ 884 xuống 315 ms.
 
 **35. Fault detection** (Uyên)  
-Lỗi dừng bơm ngay trong cùng chu kỳ 200 ms. Nhóm chưa gây lỗi NO_CURRENT thật; thay vào đó đo tín hiệu của nó, 353 tới 365 mA khi chạy và 0 khi tắt.
+Khi một lỗi xảy ra, bơm dừng ngay trong cùng chu kỳ 200 ms; điều này đúng ở cả 18 sự kiện tràn và không tiến triển. Rút dây echo thì báo lỗi cảm biến đúng thiết kế, và mọi lần bật tay khi đang lỗi đều bị từ chối. Nhóm chưa gây lỗi NO_CURRENT thật, nên 2 giây là giá trị thiết kế; cái đo được là tín hiệu của nó, 353 tới 365 mA khi rơ-le đóng và 0 khi mở.
 
 **36. Network outage with the pump running** (Uyên)  
-Nhóm cắt mạng 120 giây khi đang bơm. Bồn vẫn bơm và tự dừng ở 70,7 phần trăm; 125 bản tin được phát lại, chỉ mất 4.
+Đây là bài thử đề quan tâm nhất. Nhóm cắt mạng thiết bị 120 giây khi bơm đang chạy ở 9 phần trăm. Bồn vẫn bơm lên 51 phần trăm không đổi trạng thái, rồi tự dừng ở 70,7 phần trăm. 125 bản tin đệm được phát lại đúng thứ tự, chỉ mất 4, là những tin gửi trong 3 giây trước khi thiết bị nhận ra đường truyền đã chết.
 
 **37. Automated system test, 5/5 pass** (Uyên)  
-Bài kiểm thử nghiệm thu tự động chạy không cần người: năm bài, đều đạt.
+Nhóm còn viết bài kiểm thử nghiệm thu tự động, ai cũng chạy được mà không cần người thao tác. Nó kiểm tra kết nối, bảo mật, 40 lệnh, các lần từ chối đúng lý do và dòng điện bơm. Trên firmware cuối cả năm bài đều đạt.
 
 **38. 07 · Lessons and conclusion** (Dương)  
 Phần bảy: bài học và kết luận.
 
 **39. Bugs found on the bench** (Dương)  
-Bốn lỗi, đều tìm ra nhờ đếm: rơ-le bị đảo, bơm tự bật sau mỗi lần khởi động, tiếng dội sai lặp lại, và bản tin bị cắt âm thầm.
+Bốn lỗi dạy nhóm nhiều nhất, và lỗi nào cũng tìm ra nhờ đếm. Rơ-le bị đảo làm mọi lệnh dừng lại bật bơm. Bơm tự bật sau mỗi lần khởi động vì mức nước được coi là hợp lệ trước khi có số đo. Một tiếng dội sai lặp lại hoàn hảo đánh lừa luật tin vào sự lặp lại. Và bản tin bị cắt âm thầm do bộ đệm nhỏ, mọi thứ trông bình thường mà không có gì được lưu.
 
 **40. Limitations and next steps** (Dương)  
-Còn mở: cảm biến lưu lượng mới kiểm chứng một phần, dòng điện chưa đo bằng đồng hồ, chưa gây lỗi NO_CURRENT thật, vùng mù siêu âm, và MQTT chưa có TLS.
+Nhóm cho rằng nói rõ hạn chế cũng quan trọng như khoe kết quả. Cảm biến lưu lượng mới kiểm chứng một phần. Dòng điện bơm đọc cao hơn định mức, cần một lần đo bằng đồng hồ. NO_CURRENT chưa được gây lỗi thật. Cảm biến siêu âm có vùng mù. Và đường MQTT trong lab chưa có TLS.
 
 **41. Conclusion** (Dương)  
-Điều khiển nằm ở biên, an toàn nằm trong cấu trúc, và nhóm tin số đo hơn datasheet. Giờ xin mời xem bồn thật.
+Ba ý làm nên dự án. Điều khiển và an toàn nằm ở biên, nên bồn vẫn chạy khi mất mạng, như bài thử mất mạng đã cho thấy. An toàn nằm trong cấu trúc: một hàm bảo vệ và bảy lớp chống tràn độc lập. Và nhóm tin số đo hơn datasheet; mọi bất ngờ trong dự án đều nhờ đo mà ra. Giờ xin mời xem bồn thật.
 
 **42. Live demonstration** (Dương)  
-Tám bước trên bồn thật: bơm tự động, lệnh tay, phao, hút khô, mất mạng, rút dây bơm và khởi động lại. Có sẵn video dự phòng.
+Tám bước trên bồn thật. Cho mực nước tụt, bơm tự bật và tự tắt; gửi lệnh tay và thấy câu trả lời đã xác nhận; nhấc phao thì bơm dừng; nhấc đầu hút thì nhãn sức khỏe chuyển sang không có dòng chảy; tắt Wi-Fi mà bơm vẫn dừng ở 70 phần trăm; rút một dây bơm; và khởi động lại ESP32 để thấy bơm vẫn tắt. Có sẵn video dự phòng.
 
 **43. Thank you** (Dương)  
-Cảm ơn thầy và các bạn. Nhóm xin nhận câu hỏi.
+Cảm ơn thầy và các bạn đã lắng nghe. Nhóm xin nhận câu hỏi.
 
 ## Câu hỏi có thể gặp và cách trả lời ngắn
 
