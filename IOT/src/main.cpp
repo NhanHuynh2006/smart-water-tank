@@ -705,7 +705,15 @@ const char* pumpBlockReason() {
   if (floatMax)                             return "float_max_triggered";
   if (waterTooClose())                      return "water_too_close";
   if (levelOk && levelPct >= LEVEL_OVERFLOW_PCT) return "overflow_guard";
-  if (!levelOk)                             return "level_sensor_invalid";
+  // Bom DANG chay ma cam bien vua mat tin hieu (vung mu ~7-8 cm): cho chay
+  // tiep theo mo hinh nhu che do tu dong, toi da MODEL_MAX_BLIND_MS, va chan
+  // tran theo muc mo hinh. Bat bom MOI thi van bat buoc co so do that.
+  // Truoc day bom tay bi ngat moi lan di qua vung mu, khong bao gio len duoc
+  // toi phao tren.
+  bool modelBridge = !levelOk && pumpOn && levelModelCm >= 0 &&
+                     blindSinceMs != 0 && millis() - blindSinceMs < MODEL_MAX_BLIND_MS;
+  if (modelBridge && controlPct() >= LEVEL_OVERFLOW_PCT) return "overflow_guard";
+  if (!levelOk && !modelBridge)             return "level_sensor_invalid";
   if (!pumpOn && pumpOffSince && millis() - pumpOffSince < MIN_OFF_MS)
                                             return "min_off_time";
   return nullptr;
