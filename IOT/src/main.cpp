@@ -1275,17 +1275,27 @@ void mqttTryConnect() {
 
   // Hoi mang xem may chay broker dang o IP nao. Chi hoi mot lan cho moi lan
   // noi lai Wi-Fi; khong tra loi thi dung dia chi du phong trong config.
+  // Neu lan hoi truoc khong thay (vi du laptop vao diem phat sau ESP32) thi
+  // dia chi du phong gan nhu chac chan sai: hoi lai o moi lan thu ket noi
+  // that bai, voi han ngan 500 ms de vong dieu khien khong dung lau.
   static String brokerAddr;
-  if (wifiLost) { wifiLost = false; brokerAddr = ""; wifiAnnounced = false; }
+  static bool brokerFallback = false;
+  static bool mdnsStarted = false;      // MDNS.begin mot lan cho moi lan noi Wi-Fi
+  static bool firstQuery = true;
+  if (wifiLost) { wifiLost = false; brokerAddr = ""; wifiAnnounced = false;
+                  mdnsStarted = false; firstQuery = true; }
   if (brokerAddr.isEmpty()) {
     brokerAddr = MQTT_HOST;
+    brokerFallback = false;
     if (MQTT_HOST_NAME[0] != '\0') {
-      MDNS.begin("watertank");
-      IPAddress ip = MDNS.queryHost(MQTT_HOST_NAME, 2000);
+      if (!mdnsStarted) { MDNS.begin("watertank"); mdnsStarted = true; }
+      IPAddress ip = MDNS.queryHost(MQTT_HOST_NAME, firstQuery ? 2000 : 500);
+      firstQuery = false;
       if (ip != IPAddress((uint32_t)0)) {
         brokerAddr = ip.toString();
         Serial.printf("[mDNS] %s.local -> %s\n", MQTT_HOST_NAME, brokerAddr.c_str());
       } else {
+        brokerFallback = true;
         Serial.printf("[mDNS] khong thay %s.local, dung dia chi du phong %s\n",
                       MQTT_HOST_NAME, MQTT_HOST);
       }
@@ -1319,6 +1329,7 @@ void mqttTryConnect() {
     if (wait > RECONNECT_MAX_MS) wait = RECONNECT_MAX_MS;
     nextReconnectMs = millis() + wait;
     net.stop();
+    if (brokerFallback) brokerAddr = "";   // lan sau hoi mDNS lai
     Serial.printf("that bai rc=%d, thu lai sau %lu ms\n", mqtt.state(), wait);
   }
 }
