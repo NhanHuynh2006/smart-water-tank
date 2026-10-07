@@ -707,11 +707,16 @@ const char* pumpBlockReason() {
   if (levelOk && levelPct >= LEVEL_OVERFLOW_PCT) return "overflow_guard";
   // Bom DANG chay ma cam bien vua mat tin hieu (vung mu ~7-8 cm): cho chay
   // tiep theo mo hinh nhu che do tu dong, toi da MODEL_MAX_BLIND_MS, va chan
-  // tran theo muc mo hinh. Bat bom MOI thi van bat buoc co so do that.
-  // Truoc day bom tay bi ngat moi lan di qua vung mu, khong bao gio len duoc
-  // toi phao tren.
-  bool modelBridge = !levelOk && pumpOn && levelModelCm >= 0 &&
-                     blindSinceMs != 0 && millis() - blindSinceMs < MODEL_MAX_BLIND_MS;
+  // tran theo muc mo hinh. Truoc day bom tay bi ngat moi lan di qua vung mu,
+  // khong bao gio len duoc toi phao tren.
+  // Bat MOI khi dang mu cung cho phep, mien la mo hinh hop le: neu khong,
+  // nuoc dung yen trong vung mu thi bom tay khong bao gio bat duoc (06/10).
+  // Thoi gian mu tinh tu luc bom bat, nen moi lan bat chi duoc chay mu toi
+  // da MODEL_MAX_BLIND_MS; phao tren va khoang cach tho van chan tran.
+  uint32_t blindFor = blindSinceMs ? millis() - blindSinceMs : 0;
+  if (pumpOn && millis() - pumpOnSince < blindFor) blindFor = millis() - pumpOnSince;
+  bool modelBridge = !levelOk && levelModelCm >= 0 &&
+                     (!pumpOn || blindFor < MODEL_MAX_BLIND_MS);
   if (modelBridge && controlPct() >= LEVEL_OVERFLOW_PCT) return "overflow_guard";
   if (!levelOk && !modelBridge)             return "level_sensor_invalid";
   if (!pumpOn && pumpOffSince && millis() - pumpOffSince < MIN_OFF_MS)
