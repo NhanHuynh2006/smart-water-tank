@@ -91,14 +91,14 @@ if [ "${1:-}" != "local" ]; then
     echo "  Cong khai   : CHUA CO cloudflared — xem LENH.md muc 2"
   else
     if pgrep -f "cloudflared tunnel --url http://localhost:8000" > /dev/null; then
-      URL="$(grep -o "https://[a-z0-9-]*\.trycloudflare\.com" "$LOG/tunnel.log" 2>/dev/null | tail -1)"
+      URL="$(grep -ao "https://[a-z0-9-]*\.trycloudflare\.com" "$LOG/tunnel.log" 2>/dev/null | tail -1)"
     else
       : > "$LOG/tunnel.log"
       nohup cloudflared tunnel --no-autoupdate --url http://localhost:8000 \
             > "$LOG/tunnel.log" 2>&1 &
       URL=""
       for _ in $(seq 60); do
-        URL="$(grep -o "https://[a-z0-9-]*\.trycloudflare\.com" "$LOG/tunnel.log" | head -1)"
+        URL="$(grep -ao "https://[a-z0-9-]*\.trycloudflare\.com" "$LOG/tunnel.log" | head -1)"
         [ -n "$URL" ] && break
         sleep 0.5
       done
