@@ -97,7 +97,7 @@ The system implements eleven rules where the assignment asks for at least one. T
 \hline
 \texttt{OVERFLOW} & Upper float, or raw distance guard, or level at or above 85 percent & Lock \\
 \hline
-\texttt{DRY\_RUN} & Pulse flow below 0.25 L/min for 6 s with pump on; active only with sensor flow & Lock \\
+\texttt{DRY\_RUN} & Pump current present but below 270 mA for 3 s after the start transient: the motor is running without water & Lock \\
 \hline
 \texttt{NO\_CURRENT} & Pump commanded on, no current for 2 s & Lock \\
 \hline
@@ -118,7 +118,7 @@ The system implements eleven rules where the assignment asks for at least one. T
 
 \texttt{SENSOR\_CONFLICT} is a direct application of the independent source consistency principle of Section~\ref{sec:o2-6} \cite{isermann2006}. With only an ultrasonic sensor the system cannot tell a right reading from a wrong one as long as the value stays plausible; a mechanical float turns a wrong reading into a detectable contradiction.
 
-The assignment's example rule, pump on with near zero flow, appears twice. \texttt{DRY\_RUN} implements it literally on the turbine signal, and is disabled when flow is derived from level, because inlet flow is then a constant that can never fall below any threshold: leaving the rule enabled would have been a guard that could not fire. \texttt{NO\_PROGRESS} implements the same physical idea on a measured quantity: a pump that draws current while the level does not rise is not moving water. Its mark only ever moves down with noise and moves up only on real progress, so a single high outlier cannot hide a stalled fill. Appendix \ref{app:bench} records a bench episode in which the level reading was false for the whole of a fill and this rule, which never consults the validity flag, still stopped the pump.
+The assignment's example rule, pump on with near zero flow, appears twice. \texttt{DRY\_RUN} detects it from the pump current. A submerged pump pushing water draws 320 to 330 milliamperes; the same pump lifted out of the water draws 215 to 230, because the motor runs without load (measured on 7 October). The rule fires when current is present but below 270 milliamperes for three seconds after the start transient, so a dry pump is stopped within about five seconds instead of ninety. \texttt{NO\_PROGRESS} implements the same physical idea on a second, independent quantity: a pump that draws current while the level does not rise is not moving water. Its mark only ever moves down with noise and moves up only on real progress, so a single high outlier cannot hide a stalled fill. Appendix \ref{app:bench} records a bench episode in which the level reading was false for the whole of a fill and this rule, which never consults the validity flag, still stopped the pump.
 
 The sensor timeout is long by design. The ultrasonic sensor in this tank drops out for tens of seconds during normal fills, and crossing the blind zone takes up to 75 seconds; the parallel model bridges those gaps, and a short timeout would stop every fill early, which the first version did at 4 seconds and the 45 second version still did inside the blind zone. The limit is therefore 90 seconds while the model is valid and 45 seconds otherwise. The price is that a disconnected sensor is reported after up to 90 seconds rather than 4, which is acceptable because every overflow layer that does not rely on the sensor remains active meanwhile.
 
@@ -151,14 +151,15 @@ Two safeguards were added after the detector learned from bad data. A slot in wh
 \section{Pump health classification}
 \label{sec:o6-7}
 
-The second advanced option in the assignment is to use the consistency between pump current and flow to classify pump faults. The firmware assigns the pump one of five labels on every cycle:
+The second advanced option in the assignment is to use the consistency between pump current and flow to classify pump faults. The firmware assigns the pump one of six labels on every cycle:
 
 \begin{itemize}
 \item \texttt{idle}: the pump is off.
 \item \texttt{starting}: on for less than 2 seconds, or less than 25 seconds with no evidence yet.
 \item \texttt{ok}: current is present and the water is moving, meaning the level rate $\hat{v}$ exceeds 0.010 centimetres per second (or the turbine reads flow, when that source is selected).
 \item \texttt{no\_current}: commanded on but no current, pointing at the electrical side: an open wire, a failed relay, a dead motor.
-\item \texttt{no\_flow}: current present but no water moving after 25 seconds, pointing at the hydraulic side: a dry suction, a blocked or detached pipe.
+\item \texttt{dry}: current present but below the 270 milliampere level of a pump moving water, which is the signature of a motor spinning in air.
+\item \texttt{no\_flow}: normal current but no water moving after 25 seconds, pointing at the hydraulic side downstream of the pump: a blocked or detached pipe, or a drain that matches the pump.
 \end{itemize}
 
 The label is diagnostic, not protective: stopping the pump remains the job of \texttt{NO\_CURRENT} and \texttt{NO\_PROGRESS}. Its value is that the same symptom, a tank that does not fill, is split into two causes that send the operator to two different places, and that the label is captured at the instant of every fault, before the pump is stopped, and stored with the fault record. The 25 second evidence window is chosen from the measured fill rate: at 0.036 centimetres per second of net rise, 25 seconds produce 0.9 centimetres, well clear of the filter noise.

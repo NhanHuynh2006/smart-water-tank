@@ -663,8 +663,8 @@ void readFloats() {
 //  lam. Moi su co cong bo kem nhan nay, nen biet ngay hong phan dien hay
 //  hong phia nuoc.
 // ------------------------------------------------------------
-enum PumpHealth { PH_IDLE, PH_STARTING, PH_OK, PH_NO_CURRENT, PH_NO_FLOW };
-const char* PUMP_HEALTH_NAME[] = { "idle", "starting", "ok", "no_current", "no_flow" };
+enum PumpHealth { PH_IDLE, PH_STARTING, PH_OK, PH_NO_CURRENT, PH_NO_FLOW, PH_DRY };
+const char* PUMP_HEALTH_NAME[] = { "idle", "starting", "ok", "no_current", "no_flow", "dry" };
 
 PumpHealth pumpHealth() {
   static PumpHealth last = PH_IDLE;
@@ -672,6 +672,8 @@ PumpHealth pumpHealth() {
   uint32_t on = millis() - pumpOnSince;
   if (on < PUMP_START_MS) return last = PH_STARTING;       // xung dong, ro le
   if (currentMv < CURRENT_ON_MV) return last = PH_NO_CURRENT;
+  // Co dong nhung thap han muc bom ngap nuoc: dong co quay khong tai.
+  if (currentMv * CURRENT_MA_PER_MV < DRY_CURRENT_MA) return last = PH_DRY;
 
   bool evidence;
 #if FLOW_FROM_LEVEL
@@ -829,6 +831,18 @@ void checkFaults() {
     } else dryRunSince = 0;
   } else dryRunSince = 0;
 #endif
+
+  // 4b. Bom chay kho theo DONG DIEN: co dong (khong phai dut day) nhung thap
+  //     hon han muc luc bom day nuoc. Nhanh hon NO_PROGRESS rat nhieu.
+  static uint32_t dryCurrentSince = 0;
+  if (pumpOn && now - pumpOnSince >= PUMP_START_MS &&
+      currentMv >= CURRENT_ON_MV && currentMv * CURRENT_MA_PER_MV < DRY_CURRENT_MA) {
+    if (dryCurrentSince == 0) dryCurrentSince = now;
+    else if (now - dryCurrentSince > DRY_CURRENT_MS) {
+      dryCurrentSince = 0;
+      raiseFault("DRY_RUN"); state = ST_FAULT_DRYRUN; return;
+    }
+  } else dryCurrentSince = 0;
 
   // 5. Bom duoc lenh bat nhung khong co dong dien
   if (pumpOn) {
@@ -1459,7 +1473,7 @@ void loop() {
     readCurrent();
     readFloats();
 
-    pumpNoFlow = (pumpHealth() == PH_NO_FLOW);
+    { PumpHealth h = pumpHealth(); pumpNoFlow = (h == PH_NO_FLOW || h == PH_DRY); }
     updateLevelModel(dt);
     checkFaults();
     runStateMachine();

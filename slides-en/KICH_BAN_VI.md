@@ -126,7 +126,7 @@ Bộ điều khiển là máy trạng thái bảy trạng thái. Khi khởi đ�
 
 ## 20. Eleven fault rules · Nhân · 1:00
 
-Đề yêu cầu ít nhất một luật lỗi; nhóm làm mười một luật. Các luật được xét mỗi 200 mili giây theo thứ tự ưu tiên, luật nào kích hoạt cũng dừng bơm ngay và gửi bản tin lỗi. Ba luật đầu liên quan tới tín hiệu và tự xóa khi tín hiệu trở lại. Các luật còn lại khóa bơm cho tới khi người vận hành xóa, trừ cảnh báo rò rỉ. Hai dòng được tô màu. OVERFLOW có ba nguồn kích hoạt độc lập: phao cơ, khoảng cách thô và mực nước đã lọc. NO_PROGRESS là dạng vật lý của luật ví dụ trong đề, "bơm chạy mà gần như không có dòng chảy": bơm có dòng điện nhưng mực nước không lên. Thời gian chờ cảm biến cố ý dài, 90 giây khi mô hình còn hợp lệ, vì ngưỡng ngắn hơn làm dừng cả những lần bơm bình thường. Trong lúc chờ, phao và phép đo khoảng cách thô vẫn bảo vệ bồn.
+Đề yêu cầu ít nhất một luật lỗi; nhóm làm mười một luật. Các luật được xét mỗi 200 mili giây theo thứ tự ưu tiên, luật nào kích hoạt cũng dừng bơm ngay và gửi bản tin lỗi. Ba luật đầu liên quan tới tín hiệu và tự xóa khi tín hiệu trở lại. Các luật còn lại khóa bơm cho tới khi người vận hành xóa, trừ cảnh báo rò rỉ. Ba dòng được tô màu. OVERFLOW có ba nguồn kích hoạt độc lập: phao cơ, khoảng cách thô và mực nước đã lọc. DRY_RUN là luật ví dụ của đề, "bơm chạy mà gần như không có dòng chảy", đọc từ dòng điện bơm: bơm đang đẩy nước ăn khoảng 325 mA, nhưng nhấc khỏi nước chỉ còn khoảng 220 mA vì động cơ quay không tải. Dưới 270 mA liên tục ba giây thì dừng bơm. NO_PROGRESS là lớp kiểm tra thứ hai, độc lập: bơm chạy mà mực nước không lên. Thời gian chờ cảm biến cố ý dài, 90 giây khi mô hình còn hợp lệ, vì ngưỡng ngắn hơn làm dừng cả lần bơm bình thường; trong lúc chờ, phao và phép đo khoảng cách thô vẫn bảo vệ bồn.
 
 ## 21. Safety guard and overflow layers · Nhân · 1:05
 
@@ -134,7 +134,7 @@ Bộ điều khiển là máy trạng thái bảy trạng thái. Khi khởi đ�
 
 ## 22. Pump health classification · Nhân · 1:00
 
-Đề có hai lựa chọn nâng cao và nhóm làm cả hai. Lựa chọn thứ nhất là phân loại lỗi bơm bằng cách so dòng điện của bơm với việc nước có chảy hay không. Có dòng điện và nước chảy thì bơm khỏe. Có dòng điện mà sau 25 giây nước không chảy thì nhãn là no_flow: lỗi thủy lực, như đầu hút khô hay ống tắc. Rơ-le đóng mà không có dòng điện thì nhãn là no_current: lỗi điện, như đứt dây, hỏng rơ-le hay chết động cơ. Như vậy cùng một triệu chứng là bồn không đầy, giờ được tách thành hai nguyên nhân, chỉ cho thợ hai chỗ khác nhau để sửa. Nhãn này được lưu kèm mỗi lỗi, và trong demo nhóm sẽ nhấc đầu hút khỏi nước để thấy nó đổi.
+Đề có hai lựa chọn nâng cao và nhóm làm cả hai. Lựa chọn thứ nhất là phân loại lỗi bơm bằng cách so dòng điện với việc nước có chảy hay không, và slide này cho thấy bốn trường hợp. Dòng bình thường và nước chảy là bơm khỏe. Dòng thấp, khoảng 220 mA thay vì khoảng 325, là bơm đang chạy khô: đầu hút ra khỏi nước, động cơ quay không tải, nên nhóm dừng bơm trong khoảng năm giây. Dòng bình thường mà sau 25 giây nước không chảy thì nhãn là no_flow: lỗi thủy lực phía sau bơm, như ống tắc hoặc tuột. Còn không có dòng thì nhãn là no_current: lỗi điện, như đứt dây, hỏng rơ-le hay chết động cơ. Như vậy cùng một triệu chứng bồn không đầy, giờ chỉ đúng chỗ cần sửa. Nhãn được lưu kèm mỗi lỗi, và trong demo nhóm sẽ nhấc bơm khỏi nước để thấy trường hợp chạy khô.
 
 ## 23. Rolling baseline and daily volume · Nhân · 1:00
 
@@ -214,7 +214,7 @@ Nhóm cho rằng nói rõ hạn chế cũng có giá trị như khoe kết quả
 
 ## 42. Live demonstration · Dương · 1:15
 
-Bây giờ là demo, tám bước trên bồn thật. Một: mở van xả, mực nước tụt trên máy chiếu và trên điện thoại dùng 4G. Hai: dưới 30 phần trăm bơm tự bật và dừng ở 70. Ba: gửi lệnh tay và xem chữ "đang gửi" chuyển thành câu trả lời đã xác nhận của thiết bị. Bốn: khi bơm đang chạy, nhấc phao trên; bơm dừng ngay và không xóa được lỗi khi phao còn nhấc. Năm: nhấc đầu hút của bơm ra khỏi nước, nhãn sức khỏe chuyển sang không có dòng chảy. Sáu: tắt Wi-Fi khi đang bơm; dashboard chuyển đỏ, nhưng bơm vẫn tự dừng ở 70 phần trăm, và dữ liệu bị thiếu được lấp lại khi có mạng. Bảy: rút một dây bơm để thấy NO_CURRENT. Tám: khởi động lại ESP32 khi bồn trên 30 phần trăm, bơm vẫn tắt. Nếu phần cứng trục trặc, nhóm có sẵn video dự phòng các bước này.
+Bây giờ là demo, tám bước trên bồn thật. Một: mở van xả, mực nước tụt trên máy chiếu và trên điện thoại dùng 4G. Hai: dưới 30 phần trăm bơm tự bật và dừng ở 70. Ba: gửi lệnh tay và xem chữ "đang gửi" chuyển thành câu trả lời đã xác nhận của thiết bị. Bốn: khi bơm đang chạy, nhấc phao trên; bơm dừng ngay và không xóa được lỗi khi phao còn nhấc. Năm: nhấc bơm ra khỏi nước; dòng điện tụt từ khoảng 325 xuống khoảng 220 mA, nhãn chuyển sang chạy khô, và bơm bị dừng với lỗi DRY_RUN trong khoảng năm giây. Sáu: tắt Wi-Fi khi đang bơm; dashboard chuyển đỏ, nhưng bơm vẫn tự dừng ở 70 phần trăm, và dữ liệu bị thiếu được lấp lại khi có mạng. Bảy: rút một dây bơm để thấy NO_CURRENT. Tám: khởi động lại ESP32 khi bồn trên 30 phần trăm, bơm vẫn tắt. Nếu phần cứng trục trặc, nhóm có sẵn video dự phòng các bước này.
 
 ## 43. Thank you · Dương · 0:05
 

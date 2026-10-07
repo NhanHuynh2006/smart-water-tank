@@ -3,16 +3,21 @@
     <p style="font-family:'IBM Plex Mono', 'Courier New', monospace; font-size:24px; font-weight:600; letter-spacing:3px; text-transform:uppercase; color:#1c5cab">04 · Advanced component A</p>
     <h2 style="font-family:'IBM Plex Sans', Arial, sans-serif; font-size:64px; font-weight:600; line-height:1.1; letter-spacing:-1px; color:#0e1a2b">Pump health classification</h2>
   </div>
-  <div style="display:grid; gap:24px; grid-template-columns:1fr 1fr 1fr">
+  <div style="display:grid; gap:24px; grid-template-columns:1fr 1fr 1fr 1fr">
     <div style="display:flex; flex-direction:column; gap:16px; padding:40px; background:#fcfcfb; border-top:6px solid #2a78d6">
       <p style="font-family:'IBM Plex Mono', 'Courier New', monospace; font-size:40px; font-weight:600; color:#0e1a2b">Good</p>
       <p style="font-family:'IBM Plex Sans', Arial, sans-serif; font-size:26px; line-height:1.45; color:#3d4552">Current: yes<br>Water moving: yes</p>
       <p style="font-family:'IBM Plex Sans', Arial, sans-serif; font-size:28px; line-height:1.4; color:#0e1a2b">Healthy pump</p>
     </div>
     <div style="display:flex; flex-direction:column; gap:16px; padding:40px; background:#fcfcfb; border-top:6px solid #eb6834">
+      <p style="font-family:'IBM Plex Mono', 'Courier New', monospace; font-size:40px; font-weight:600; color:#0e1a2b">dry</p>
+      <p style="font-family:'IBM Plex Sans', Arial, sans-serif; font-size:26px; line-height:1.45; color:#3d4552">Current: low, ~220 mA<br>vs ~325 mA in water</p>
+      <p style="font-family:'IBM Plex Sans', Arial, sans-serif; font-size:28px; line-height:1.4; color:#0e1a2b"><b>Running dry:</b> intake out of water, stopped in ~5 s</p>
+    </div>
+    <div style="display:flex; flex-direction:column; gap:16px; padding:40px; background:#fcfcfb; border-top:6px solid #eb6834">
       <p style="font-family:'IBM Plex Mono', 'Courier New', monospace; font-size:40px; font-weight:600; color:#0e1a2b">no_flow</p>
-      <p style="font-family:'IBM Plex Sans', Arial, sans-serif; font-size:26px; line-height:1.45; color:#3d4552">Current: yes<br>Water moving: no, after 25 s</p>
-      <p style="font-family:'IBM Plex Sans', Arial, sans-serif; font-size:28px; line-height:1.4; color:#0e1a2b"><b>Hydraulic:</b> dry intake, blocked or detached pipe</p>
+      <p style="font-family:'IBM Plex Sans', Arial, sans-serif; font-size:26px; line-height:1.45; color:#3d4552">Current: normal<br>Water moving: no, after 25 s</p>
+      <p style="font-family:'IBM Plex Sans', Arial, sans-serif; font-size:28px; line-height:1.4; color:#0e1a2b"><b>Hydraulic:</b> blocked or detached pipe</p>
     </div>
     <div style="display:flex; flex-direction:column; gap:16px; padding:40px; background:#fcfcfb; border-top:6px solid #eb6834">
       <p style="font-family:'IBM Plex Mono', 'Courier New', monospace; font-size:40px; font-weight:600; color:#0e1a2b">no_current</p>
@@ -29,5 +34,5 @@
     <p style="font-family:'IBM Plex Sans', Arial, sans-serif; font-size:24px; color:#646b76">Smart Water Tank · Project 08</p>
     <p style="font-family:'IBM Plex Mono', 'Courier New', monospace; font-size:24px; color:#646b76">22</p>
   </div>
-  <aside>The brief offers two advanced options and we built both. The first is classifying pump faults by comparing pump current with water movement. If there is current and the water is moving, the pump is healthy. If there is current but no water moves after 25 seconds, the label is no_flow: a hydraulic problem, such as a dry intake or a blocked pipe. If the relay is closed but there is no current, the label is no_current: an electrical problem, such as a broken wire, a bad relay or a dead motor. So the same symptom, a tank that does not fill, is split into two causes that send the technician to two different places. The label is saved with every fault, and in the demo we will lift the intake out of the water to show it change.</aside>
+  <aside>The brief offers two advanced options and we built both. The first is classifying pump faults by comparing pump current with water movement, and this slide shows the four cases. Normal current with the water moving means a healthy pump. Low current, about 220 milliamps instead of about 325, means the pump is running dry: the intake is out of the water and the motor spins without load, so we stop it within about five seconds. Normal current but no water moving after 25 seconds is labelled no_flow: a hydraulic problem after the pump, such as a blocked or detached pipe. And no current at all is labelled no_current: an electrical problem, such as a broken wire, a bad relay or a dead motor. So the same symptom, a tank that does not fill, now points the technician to the right place. The label is saved with every fault, and in the demo we will lift the intake out of the water to show the dry case.</aside>
 </section>

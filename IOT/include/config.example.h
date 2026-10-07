@@ -438,6 +438,14 @@
 // Muc nuoc len rong 0,032 cm/s do duoc khi van xa mo. Lay mot phan ba lam
 // nguong, va cho 25 giay de bo loc toc do on dinh sau khi bom bat.
 #define PUMP_START_MS        2000UL
+
+// Bom chay KHO nhan ra bang DONG DIEN (do 07/10 tren bom that): ngap nuoc
+// 39-41 mV ~ 320-330 mA; nhac khoi nuoc 26-28 mV ~ 215-230 mA. Dong co mat
+// tai nen an it dong hon. Duoi nguong nay lien tuc DRY_CURRENT_MS (sau
+// PUMP_START_MS khoi dong) thi bao DRY_RUN va khoa bom, khong phai cho 90 s
+// cua NO_PROGRESS. Dat giua hai muc, cach moi ben khoang 45 mA.
+#define DRY_CURRENT_MA      270.0f
+#define DRY_CURRENT_MS     3000UL
 #define FLOW_EVIDENCE_MS    25000UL
 #define FLOW_EVIDENCE_CMS    0.010f
 
